@@ -2,3 +2,5 @@
 ./dist
 ./aybu_core.egg-info
 ./development.ini
+*development.ini
+./data
