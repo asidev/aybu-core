@@ -1,0 +1,4 @@
+./.coverage
+./dist
+./aybu_core.egg-info
+./development.ini
