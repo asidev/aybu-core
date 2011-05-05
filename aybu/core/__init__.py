@@ -39,5 +39,5 @@ def setup_database(settings):
     AybuRequest.dbmetadata = metadata
 
 def add_views(config):
-    config.add_static_view('static/pyramid', "aybu.core:static")
+    config.add_static_view('static', "aybu.cms:public/static")
 
