@@ -8,15 +8,15 @@ Copyright © 2010 Asidev s.r.l. - www.asidev.com
 from elixir import using_options_defaults
 from elixir import options_defaults
 
-from aybu.core.model.file import File, Image
-from aybu.core.model.types import SHA1
-from aybu.core.model.language import Language
-from aybu.core.model.setting import SettingType, Setting
-from aybu.core.model.theme import Theme
-from aybu.core.model.user import User, Group
-from aybu.core.model.view import View, ViewDescription
-from aybu.core.model.keyword import Keyword
-from aybu.core.model.graph import NodeInfo, Page,\
+from aybu.cms.model.file import File, Image
+from aybu.cms.model.types import SHA1
+from aybu.cms.model.language import Language
+from aybu.cms.model.setting import SettingType, Setting
+from aybu.cms.model.theme import Theme
+from aybu.cms.model.user import User, Group
+from aybu.cms.model.view import View, ViewDescription
+from aybu.cms.model.keyword import Keyword
+from aybu.cms.model.graph import NodeInfo, Page,\
                                  Section, ExternalLink, InternalLink,\
                                  Node, Menu
 
