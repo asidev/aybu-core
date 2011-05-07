@@ -21,9 +21,7 @@ def main(global_config, **settings):
     add_fallback_to(config, pylons)
 
     setup_database(settings)
-
-    # configure views
-    config.include(add_views)
+    config.include(setup_assets)
 
     return config.make_wsgi_app()
 
@@ -38,6 +36,40 @@ def setup_database(settings):
     AybuRequest.dbsession = dbsession
     AybuRequest.dbmetadata = metadata
 
-def add_views(config):
-    config.add_static_view('static', "aybu.cms:public/static")
+
+def setup_assets(config):
+    """ Setup search paths for static files and for templates """
+    from aybu.core.model.entities import Theme, Setting
+    from aybu.cms.model.meta import dbsession
+
+    theme_name = dbsession.query(Setting.value).\
+            filter(Setting.name == 'theme_name').subquery()
+    theme = Theme.query.filter(Theme.name.in_(theme_name)).one()
+
+    log.info("Adding static view for aybu")
+    config.add_static_view('static', 'aybu.core:static')
+
+    log.info("Preparing static search path for %s", theme)
+
+    themes_path = []
+    while theme:
+        themes_path.insert(0, theme)
+        theme = theme.parent
+
+    for theme in themes_path:
+        theme_static_spec = 'aybu.themes:%s/public/' % theme.name
+        log.info("Adding '%s' as override for static files", theme_static_spec)
+        config.override_asset(
+            to_override='aybu.core:static/',
+            override_with=theme_static_spec
+        )
+        theme_templates_spec = 'aybu.themes:%s/templates/' % theme.name
+        log.info("Adding '%s' as override for templates", theme_templates_spec)
+        config.override_asset(
+            to_override='aybu.core:templates/',
+            override_with=theme_templates_spec
+        )
+
+    # TODO: add instance-data!
+
 
