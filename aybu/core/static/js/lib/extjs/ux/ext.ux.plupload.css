@@ -1,0 +1,50 @@
+.x-plupload-body {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.x-plupload-body dl {
+    padding: 5px;
+    border-bottom: 1px solid #D0D0D0;
+    font: normal 11px arial,tahoma,verdana,helvetica;
+    width: 100%;
+}
+
+.x-plupload-body dt {
+    float: left;
+    cursor: pointer;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.plupload_over {
+    background-color: #EFF5FB;
+}
+
+.plupload_selected {
+    background-color: #EFF5FB;
+}
+
+.plupload_emptytext {
+    font: 11px Arial,Helvetica,sans-serif;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.plupload_emptytext span {
+    line-height: 100px;
+}
+
+.silk-accept { background-image: url(../../../../icons/accept.png) !important; background-repeat: no-repeat; }
+.silk-add { background-image: url(../../../../icons/add.png) !important; background-repeat: no-repeat; }
+.silk-cross { background-image: url(../../../../icons/cross.png) !important; background-repeat: no-repeat; }
+.silk-stop { background-image: url(../../../../icons/stop.png) !important; background-repeat: no-repeat; }
+.silk-arrow-up { background-image: url(../../../../icons/arrow_up.png) !important; background-repeat: no-repeat; }
+.silk-edit { background-image: url(../../../../icons/image_edit.png) !important; background-repeat: no-repeat; }
+.silk-image_add { background-image: url(../../../../icons/image_add.png) !important; background-repeat: no-repeat; }
+.silk-disk { background-image: url(../../../../icons/disk.png) !important; background-repeat: no-repeat; }
+.silk-clear { background-image: url(../../../../icons/clear.gif) !important; background-repeat: no-repeat; }
+.silk-attach { background-image: url(../../../../icons/attach.png) !important; background-repeat: no-repeat; }
+.silk-zoomin { background-image: url(../../../../icons/zoom_in.png) !important; background-repeat: no-repeat; }
+.silk-zoomout { background-image: url(../../../../icons/zoom_out.png) !important; background-repeat: no-repeat; }

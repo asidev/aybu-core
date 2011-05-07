@@ -1,0 +1,25 @@
+@charset "utf-8";
+
+/*
+ * Copyright © 2010 Asidev s.r.l. - www.asidev.com
+ */
+
+#admin_languages ul, #admin_languages ol {
+	list-style-type:	none;
+	margin-left:		0px;
+}
+
+#admin_languages ul li, #admin_languages ol li {
+    margin-bottom: 		0px;
+	display:			inline-block;
+	height:				32px;
+	margin-right:		25px;
+}
+
+#admin_languages ul li input, #admin_languages ol li input{
+	height:				32px;
+	line-height:		32px !important;
+	vertical-align:		top;
+	margin-top:			10px;
+	margin-right:		5px;
+}

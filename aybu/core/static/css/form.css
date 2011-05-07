@@ -1,0 +1,44 @@
+@charset "utf-8";
+
+/*
+ * Copyright © 2010 Asidev s.r.l. - www.asidev.com
+ */
+
+.error {
+	color:			#FF0000;
+	font-weight:	bold;
+}
+
+.success {
+	color:			green;
+	font-weight:	bold;
+}
+
+form fieldset {
+	border:	none;
+}
+
+form fieldset label {
+	display:block;
+	padding:2px 0;
+}
+
+form fieldset label.error,  form fieldset label.success {
+	font-size:	70%;
+}
+
+form fieldset input {
+	display:block;
+	width: 	350px;
+}
+
+form fieldset textarea {
+	width:	350px;
+	height:	150px;
+
+}
+
+#submit {
+	margin-top:	10px;
+	width:		100px;
+}

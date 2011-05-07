@@ -1,0 +1,29 @@
+.Page {
+    background-image: url("../js/lib/extjs/resources/images/default/tree/leaf.gif") !important;
+}
+
+.InternalLink {
+    background-image: url("../icons/internal_link.gif") !important;
+}
+
+.ExternalLink {
+    background-image: url("../icons/external_link.png") !important;
+}
+
+.x-tree-node-leaf .Section {
+    background-image: url("../js/lib/extjs/resources/images/default/tree/folder.gif") !important;
+}
+
+.enabled_true {
+    background-image: url("../icons/accept.png");
+    width: 16px;
+    height: 16px;
+    margin: 0 auto;
+}
+
+.enabled_false {
+    background-image: url("../icons/cross.png");
+    width: 16px;
+    height: 16px;
+    margin: 0 auto;
+}

@@ -1,0 +1,42 @@
+@charset "utf-8";
+
+/*
+ * Copyright © 2010 Asidev s.r.l. - www.asidev.com
+ */
+
+form fieldset p.size {
+	font-size:	80%;
+	margin-bottom:	0px !important;
+}
+
+form fieldset div {
+	margin-bottom:	20px;
+}
+
+
+form fieldset div.remove label {
+	display:	inline;
+	width:		auto;
+}
+
+#remove_banner, #remove_logo {
+	float:	left;
+	margin:	0px 5px 0px 0px;
+	width:	auto;
+}
+
+#remove_banner + label.error, #remove_logo + label.error,
+#remove_banner + label.success, #remove_logo + label.success {
+	display:	block;
+}
+
+/*
+form fieldset label[for=remove_banner],  form fieldset label[for=remove_logo]{
+	display:	inline;
+	width:		auto;
+}
+*/
+
+#footer_management {
+	margin-top:	20px;
+}
