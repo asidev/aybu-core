@@ -8,6 +8,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = ['pyramid',
             'WebError',
+            'Babel',
             'pasteuwsgi',
             'Elixir',
             'Mako>=0.4.1']
@@ -33,6 +34,18 @@ setup(name='aybu-core',
       install_requires=requires,
       tests_require=requires,
       test_suite="aybu.core",
+      message_extractors = {
+            'aybu.core': [
+                ('**.py', 'python', None),
+                ('templates/**.mako', 'mako', {'input_encoding': 'utf-8'}),
+                ('static/**', 'ignore', None)
+            ],
+            'aybu.themes': [
+                ('*/templates/**.mako', 'mako', {'input_encoding': 'utf-8'}),
+                ('*/static/**', 'ignore', None)
+
+            ]
+      },
       entry_points = """\
       [paste.app_factory]
       main = aybu.core:main

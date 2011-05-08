@@ -23,3 +23,7 @@ def dynamic(nodeinfo, request):
     templ = "aybu.core:templates%s" % (nodeinfo.node.view.fs_view_path)
     return render_to_response(templ, {}, request=request)
 
+
+def static(context, request):
+    raise NotImplementedError
+

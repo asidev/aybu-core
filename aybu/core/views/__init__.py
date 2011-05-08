@@ -14,7 +14,9 @@ def add_context(system):
         tmpl_context=r.tmpl_context,
         h=aybu.core.lib.helpers,
         helpers=aybu.core.lib.helpers,
-        url=aybu.core.lib.helpers.url
+        url=aybu.core.lib.helpers.url,
+        _=r.translate,
+        localizer=r.localizer
     )
 
 

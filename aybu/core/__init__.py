@@ -21,6 +21,9 @@ def main(global_config, **settings):
     pylons = get_pylons_app(global_config)
     add_fallback_to(config, pylons)
 
+    # initialize babel
+    config.add_translation_dirs('aybu.core:locale')
+
     setup_database(settings)
     config.include(setup_assets)
     config.include(add_subscribers)
