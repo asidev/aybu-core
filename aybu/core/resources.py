@@ -20,6 +20,7 @@ class Root(object):
             # we need to use first as 'lang' attribute alone can be not unique
             self.log.debug("Searching for lang '%s'", part)
             lang = self.languages[part]
+            self.request.lang = lang
             return NodeTraverser(self.request, lang=lang, parents=self.menus)
 
         except NoResultFound:
@@ -51,7 +52,7 @@ class NodeTraverser(object):
             if url_part != part:
                 self.log.debug("Url is a leaf, searching a nodeinfo")
                 # this is a leaf, so it must be one!
-                nodeinfo = next_node_q.one()
+                nodeinfo = next_node_q.one()[self.lang]
                 self.log.debug("Found %s", nodeinfo)
                 return nodeinfo
 
