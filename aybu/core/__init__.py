@@ -1,4 +1,5 @@
 import logging
+import pkg_resources
 from pyramid.config import Configurator
 #from sqlalchemy import engine_from_config
 
@@ -22,6 +23,8 @@ def main(global_config, **settings):
 
     setup_database(settings)
     config.include(setup_assets)
+    config.include(add_subscribers)
+    config.include('aybu.core.views.add_views')
 
     return config.make_wsgi_app()
 
@@ -35,6 +38,10 @@ def setup_database(settings):
     from aybu.cms.model.meta import dbsession, metadata
     AybuRequest.dbsession = dbsession
     AybuRequest.dbmetadata = metadata
+
+
+def add_subscribers(config):
+    config.set_renderer_globals_factory('aybu.core.views.add_context')
 
 
 def setup_assets(config):
@@ -51,12 +58,13 @@ def setup_assets(config):
 
     log.info("Preparing static search path for %s", theme)
 
-    themes_path = []
+    themes_inheritance_chain = []
+    themes_paths = [ pkg_resources.resource_filename('aybu.core', 'templates') ]
     while theme:
-        themes_path.insert(0, theme)
+        themes_inheritance_chain.insert(0, theme)
         theme = theme.parent
 
-    for theme in themes_path:
+    for theme in themes_inheritance_chain:
         theme_static_spec = 'aybu.themes:%s/public/' % theme.name
         log.info("Adding '%s' as override for static files", theme_static_spec)
         config.override_asset(
@@ -69,7 +77,20 @@ def setup_assets(config):
             to_override='aybu.core:templates/',
             override_with=theme_templates_spec
         )
+        theme_path = pkg_resources.\
+                resource_filename('aybu.themes',
+                                  '%s/templates' % (theme.name))
+
+        log.info("Adding '%s' to mako directories", theme_path)
+        themes_paths.insert(0, theme_path)
 
     # TODO: add instance-data!
+    config.add_settings({
+        'mako.directories': themes_paths,
+        'mako.strict_undefined': 'true',
+#        'mako.imports': 'from webhelpers.html import escape'
+#        'mako.default_filters': 'escape',
+    })
+
 
 

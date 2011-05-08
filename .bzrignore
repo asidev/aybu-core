@@ -4,3 +4,4 @@
 ./development.ini
 *development.ini
 ./data
+./*.sock
