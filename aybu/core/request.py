@@ -10,6 +10,7 @@ class AybuRequest(Request):
         super(AybuRequest, self).__init__(*args, **kwargs)
         self._log = logging.getLogger(__name__)
         self._log.debug("Created new request")
+        self.lang = None
         self.add_finished_callback(self.finished_callback)
 
     def finished_callback(self, request):
