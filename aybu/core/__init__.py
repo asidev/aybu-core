@@ -44,7 +44,7 @@ def setup_database(settings):
 
 
 def add_subscribers(config):
-    config.set_renderer_globals_factory('aybu.core.views.add_context')
+    config.set_renderer_globals_factory('aybu.core.views.add_renderer_globals')
 
 
 def setup_assets(config):
