@@ -2,8 +2,6 @@ import os
 import logging
 from paste.deploy import loadapp
 from paste.script.util.logging_config import fileConfig
-from pyramid.wsgi import wsgiapp
-from pyramid.exceptions import NotFound
 
 log = logging.getLogger(__name__)
 
@@ -22,8 +20,4 @@ def get_pylons_app(global_conf):
         app.__name__ = "Wrapped Pylons app"
     return app
 
-
-def add_fallback_to(config, app):
-    notfound_view = wsgiapp(app)
-    config.add_view(notfound_view, context=NotFound)
 

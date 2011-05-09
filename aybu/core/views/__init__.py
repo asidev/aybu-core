@@ -23,3 +23,5 @@ def add_renderer_globals(system):
 def add_views(config):
     log.info("Adding views")
     config.add_view(context=NodeInfo, view='aybu.core.views.page.dynamic')
+
+
