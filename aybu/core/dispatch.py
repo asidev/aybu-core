@@ -1,6 +1,6 @@
 import os
 import logging
-from paste.deploy import loadapp
+import pyramid.paster
 from paste.script.util.logging_config import fileConfig
 
 log = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ def get_pylons_app(global_conf):
 
     fileConfig(config_file)
     log.info("Loading application from %s", config_file)
-    app = loadapp("config:%s" % (config_file))
+    app = pyramid.paster.get_app(config_file, 'main')
     if not hasattr(app, "__name__"):
         app.__name__ = "Wrapped Pylons app"
     return app
