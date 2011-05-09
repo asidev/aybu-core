@@ -1,6 +1,10 @@
 import logging
+import sys
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
+
+
+__all__ = ['Root', 'ViewInfo', 'ContactsViewInfo', 'add_view_info']
 
 
 class Root(object):
@@ -52,9 +56,9 @@ class NodeTraverser(object):
             if url_part != part:
                 self.log.debug("Url is a leaf, searching a nodeinfo")
                 # this is a leaf, so it must be one!
-                nodeinfo = next_node_q.one()[self.lang]
-                self.log.debug("Found %s", nodeinfo)
-                return nodeinfo
+                node = next_node_q.one()
+                self.log.debug("Found %s", node[self.lang])
+                return ViewInfo(node, self.lang)
 
             else:
                 self.log.debug("Not a leaf: searching for parents")
@@ -69,3 +73,41 @@ class NodeTraverser(object):
             self.log.debug("No Result found for '%s'", part)
             raise KeyError(part)
 
+
+def add_view_info(cls):
+    """ Add cls to available ViewInfo objects """
+    ViewInfo._classes[cls.__name__] = cls
+
+
+class ViewInfo(object):
+    """ Represent a match on a NodeInfo, and
+        acts as a Factory for specialized classes"""
+    _classes = dict()
+
+    def __new__(cls, node, lang):
+        classname = "{0}ViewInfo".format(node.view.name.lower().title())
+        try:
+            kls = cls._classes[classname]
+            return super(type(kls), kls).__new__(kls, node, lang)
+
+        except KeyError:
+            return super(ViewInfo, cls).__new__(cls, node, lang)
+
+    def __init__(self, node, lang):
+        self.node = node
+        self.nodeinfo = self.node[lang]
+        self.view = self.node.view
+        self.lang = lang
+        self.log = logging.getLogger("%s.%s" % (self.__class__.__module__,
+                                                self.__class__.__name__))
+        self.log.debug("Created object for %s (%s) (%s)", self.node,
+                                                          self.nodeinfo,
+                                                          self.view.name)
+
+
+class ContactsViewInfo(ViewInfo):
+    """ Represent a match for those NodeInfo whose view name is CONTACTS """
+    pass
+
+
+add_view_info(ContactsViewInfo)

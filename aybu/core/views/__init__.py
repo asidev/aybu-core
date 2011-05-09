@@ -1,5 +1,5 @@
 import logging
-from aybu.cms.model.entities import NodeInfo
+from aybu.core.resources import ViewInfo, ContactsViewInfo
 import aybu.core.lib.helpers
 
 log = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ def add_renderer_globals(system):
 
 def add_views(config):
     log.info("Adding views")
-    config.add_view(context=NodeInfo, view='aybu.core.views.page.dynamic')
+    config.add_view(context=ViewInfo, view='aybu.core.views.page.dynamic')
+    config.add_view(context=ContactsViewInfo, view='aybu.core.views.page.contacts')
 
 
