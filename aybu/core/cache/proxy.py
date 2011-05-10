@@ -54,7 +54,7 @@ class CacheProxy(object):
                 obj = self._back_from_cache(obj)
             return obj
         else:
-            self.log.warn("[%s] Cache is disabled, getting key '%s' "
+            self.log.debug("[%s] Cache is disabled, getting key '%s' "
                           "from database", self, key)
             return load_from_db()
 
