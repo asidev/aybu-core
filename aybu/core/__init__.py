@@ -3,6 +3,7 @@ import pkg_resources
 from pyramid.config import Configurator
 from pyramid.exceptions import NotFound
 from pyramid.wsgi import wsgiapp
+from pyramid_beaker import session_factory_from_settings
 #from sqlalchemy import engine_from_config
 
 from aybu.core.resources import Root
@@ -19,8 +20,11 @@ def main(global_config, **settings):
     config = Configurator(root_factory=Root,
                           request_factory=AybuRequest,
                           settings=settings)
-
     config.begin()
+    # Configure beaker session
+    session_factory = session_factory_from_settings(settings)
+    config.set_session_factory(session_factory)
+
     # Add fallback to old pylons application
     pylons = get_pylons_app(global_config)
     fallback_view = wsgiapp(pylons)

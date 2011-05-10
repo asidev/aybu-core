@@ -10,6 +10,7 @@ requires = ['pyramid',
             'WebError',
             'Babel',
             'pasteuwsgi',
+            'pyramid_beaker',
             'Elixir',
             'Mako>=0.4.1']
 
