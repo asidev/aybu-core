@@ -11,7 +11,7 @@
 	</li>
 	%else:
 	<li>
-		<a href="${h.url('login-render', lang=c.lang.lang, country=c.lang.country)}">Login</a>
+		<a href="/admin/login.html?lang=${c.lang.lang}&country=${c.lang.country}">Login</a>
 	</li>
 	%endif
 </ul>
