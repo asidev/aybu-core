@@ -20,6 +20,7 @@ def main(global_config, **settings):
                           request_factory=AybuRequest,
                           settings=settings)
 
+    config.begin()
     # Add fallback to old pylons application
     pylons = get_pylons_app(global_config)
     fallback_view = wsgiapp(pylons)
@@ -38,6 +39,7 @@ def main(global_config, **settings):
     config.include(setup_assets)
     config.include(add_subscribers)
     config.include('aybu.core.views.add_views')
+    config.end()
 
     return config.make_wsgi_app()
 
