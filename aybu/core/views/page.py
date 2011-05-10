@@ -1,4 +1,4 @@
-from aybu.cms.lib.cache.proxies import SettingsCacheProxy,\
+from aybu.core.cache.proxies import SettingsCacheProxy,\
                                        MenusProxy,\
                                        LanguagesCacheProxy
 
