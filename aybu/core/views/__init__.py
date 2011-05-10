@@ -1,5 +1,4 @@
 import logging
-from aybu.core.resources import ViewInfo, ContactsViewInfo
 import aybu.core.lib.helpers
 
 log = logging.getLogger(__name__)
@@ -18,11 +17,3 @@ def add_renderer_globals(system):
         _=r.translate,
         localizer=r.localizer
     )
-
-
-def add_views(config):
-    log.info("Adding views")
-    config.add_view(context=ViewInfo, view='aybu.core.views.page.dynamic')
-    config.add_view(context=ContactsViewInfo, view='aybu.core.views.page.contacts')
-
-

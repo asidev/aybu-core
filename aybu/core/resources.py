@@ -1,10 +1,9 @@
 import logging
-import sys
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 
-__all__ = ['Root', 'ViewInfo', 'ContactsViewInfo', 'add_view_info']
+__all__ = ['Root', 'Capthcha', 'ViewInfo', 'ContactsViewInfo', 'add_view_info']
 
 
 class Root(object):
@@ -27,8 +26,22 @@ class Root(object):
             self.request.lang = lang
             return NodeTraverser(self.request, lang=lang, parents=self.menus)
 
-        except NoResultFound:
+        except (KeyError, TypeError):
+            self.log.debug("No language '%s' found.", part)
+            if part == 'captcha':
+                self.log.debug("Found Captcha() for %s", part)
+                return Captcha()
+            if part == 'admin':
+                self.log.debug("Offloading admin to pylons")
+                return Admin()
             return KeyError(part)
+
+
+class Captcha(object):
+    pass
+
+class Admin(object):
+    pass
 
 
 class NodeTraverser(object):

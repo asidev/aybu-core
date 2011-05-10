@@ -6,9 +6,9 @@ from pyramid.wsgi import wsgiapp
 from pyramid_beaker import session_factory_from_settings
 #from sqlalchemy import engine_from_config
 
-from aybu.core.resources import Root
 #from aybu.core.model import init_model
 from aybu.core.request import AybuRequest
+from aybu.core.resources import Root
 from aybu.core.dispatch import get_pylons_app
 
 log = logging.getLogger(__name__)
@@ -32,9 +32,14 @@ def main(global_config, **settings):
     # Fallback on 404
     config.add_view(fallback_view, context=NotFound)
     # Fallback on "normal" pages in admin mode
-    config.add_view(context='aybu.cms.model.graph.NodeInfo',
+    config.add_view(context='aybu.core.resources.ViewInfo',
                     view=fallback_view,
                     request_param='admin')
+    config.add_view(context='aybu.core.resources.ContactsViewInfo',
+                    view=fallback_view,
+                    request_param='admin')
+    config.add_view(context='aybu.core.resources.Admin',
+                    view=fallback_view)
 
     # initialize babel
     config.add_translation_dirs('aybu.core:locale')
@@ -42,7 +47,7 @@ def main(global_config, **settings):
     setup_database(settings)
     config.include(setup_assets)
     config.include(add_subscribers)
-    config.include('aybu.core.views.add_views')
+    config.include(add_views)
     config.end()
 
     return config.make_wsgi_app()
@@ -61,6 +66,16 @@ def setup_database(settings):
 
 def add_subscribers(config):
     config.set_renderer_globals_factory('aybu.core.views.add_renderer_globals')
+
+
+def add_views(config):
+    log.info("Adding views")
+    config.add_view(context='aybu.core.resources.ViewInfo',
+                    view='aybu.core.views.page.dynamic')
+    config.add_view(context='aybu.core.resources.ContactsViewInfo',
+                    view='aybu.core.views.page.contacts')
+    config.add_view(context='aybu.core.resources.Captcha', name='show',
+                    view='captchalib.pyramid.captcha_view')
 
 
 def setup_assets(config):
