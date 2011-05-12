@@ -49,6 +49,7 @@ def validate_captcha(request, value):
 
 
 def contact(request):
+    log.debug("Building contacts form")
     ctx = request.tmpl_context
     _ = request.translate
     ctx.error = {}
@@ -71,7 +72,10 @@ def contact(request):
     ctx.result_message = None
     ctx.success = True
 
-    if request.params.get('submit', False):
+    # FIXME: why old "submit" value is not submitted by the form?
+    #if request.params.get('submit', False):
+    if len(request.params):
+        log.debug("Form has been submitter, validating fields")
         validate_name(request, ctx.name, 'name')
         validate_name(request, ctx.surname, 'surname')
 
@@ -95,6 +99,7 @@ def contact(request):
                         .filter(Setting.name.like(u'contact_dst_email_%')).all()
 
         for email in emails:
+            log.debug("Adding recipient '<%s>'", email.value)
             mail = Mail()
             mail.setSubject(u"Nuovo messaggio dal form di contatto sul sito web")
 
@@ -117,16 +122,16 @@ def contact(request):
             mail.attachTextMessage(message)
 
         if ctx.success:
-
-                try:
-                    mail.send()
-                    ctx.result_message = _(u"Grazie per averci contattato. " +\
-                                         u"Le risponderemo al più presto.")
-                except  Exception as e:
-                    log.exception("Errore nell'invio del messaggio. \n%s", e)
-                    ctx.result_message = _(u"Errore nell'invio del messaggio. " +\
-                                         u"Si prega di riprovare più tardi.")
-                    ctx.success = False
+            log.debug('Form is valid, sending emails')
+            try:
+                mail.send()
+                ctx.result_message = _(u"Grazie per averci contattato. " +\
+                                     u"Le risponderemo al più presto.")
+            except  Exception as e:
+                log.exception("Errore nell'invio del messaggio. \n%s", e)
+                ctx.result_message = _(u"Errore nell'invio del messaggio. " +\
+                                     u"Si prega di riprovare più tardi.")
+                ctx.success = False
         else:
             ctx.result_message = _(u"Errore nell'invio del form. "
                                  "Ricontrollare i campi e riprovare.")
