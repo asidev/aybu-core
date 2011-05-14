@@ -8,6 +8,7 @@ Copyright © 2011 Asidev s.r.l. - www.asidev.com
 import logging
 import sqlalchemy.orm.session
 import sqlalchemy.exc
+from beaker.cache import CacheManager
 
 from exc import IntegrityError
 from aybu.cms.model.meta import dbsession, session_cache_extension
@@ -16,7 +17,8 @@ log = logging.getLogger(__name__)
 
 
 class CacheProxy(object):
-    cachemgr = None
+    cache_manager = None
+    cache_settings = None
 
     @classmethod
     def init_cache(settings):
@@ -26,8 +28,12 @@ class CacheProxy(object):
         obj = super(CacheProxy, cls).__new__(cls)
         object.__setattr__(obj, "prefix", prefix)
         object.__setattr__(obj, "log", logging.getLogger(cls.__name__))
-        if cls.cachemgr:
-            object.__setattr__(obj, "_cache", cls.cachemgr.get_cache(prefix))
+        if CacheProxy.cache_settings and not CacheProxy.cache_manager:
+            log.info("Creating cache manager for proxies")
+            CacheProxy.cache_manager = CacheManager(**CacheProxy.cache_settings)
+        if CacheProxy.cache_manager:
+            object.__setattr__(obj, "_cache",
+                               CacheProxy.cache_manager.get_cache(prefix))
         else:
             object.__setattr__(obj, "_cache", None)
         return obj

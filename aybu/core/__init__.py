@@ -4,16 +4,18 @@ from pyramid.config import Configurator
 from pyramid.exceptions import NotFound
 from pyramid.wsgi import wsgiapp
 from pyramid_beaker import session_factory_from_settings
-#from sqlalchemy import engine_from_config
+from pyramid.settings import asbool
 
+#from sqlalchemy import engine_from_config
 #from aybu.core.model import init_model
+
 from aybu.core.request import AybuRequest
 from aybu.core.resources import Root
 from aybu.core.dispatch import get_pylons_app
-
 from captchalib.pyramid import CaptchaView
 
 log = logging.getLogger(__name__)
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
@@ -30,6 +32,15 @@ def main(global_config, **settings):
     # Add fallback to old pylons application
     pylons = get_pylons_app(global_config)
     fallback_view = wsgiapp(pylons)
+
+    # Configure caching
+    if not "disable_cache" in settings or not asbool(settings['disable_cache']):
+        from aybu.core.cache.proxy import CacheProxy
+        CacheProxy.cache_settings = {k.replace("cache.", "") : settings[k]
+                                              for k in settings
+                                              if k.startswith("cache.")}
+    else:
+        log.warn("Disabling cache globally")
 
     # Fallback on 404
     config.add_view(fallback_view, context=NotFound)
