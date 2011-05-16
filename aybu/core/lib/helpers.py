@@ -38,6 +38,7 @@ def url(url, *args, **kwargs):
     finally:
         del frame
 
+
 def get_tree(root):
     return root.get_tree()
 

@@ -17,21 +17,23 @@ log = logging.getLogger(__name__)
 
 def validate_name(request, value, field):
     ctx = request.tmpl_context
+    _ = request.translate
     pattern = "[(0-9@*(\)[\]+.,/?:;\"`~\\#$%^&<>)+]"
     compiled = re.compile(pattern)
     if compiled.search(value) is None:
         if len(value) < 2:
-            ctx.error[field] = request.translate(u"Inserisci almeno 2 caratteri.")
+            ctx.error[field] = _(u"Inserisci almeno 2 caratteri.")
             ctx.success = False
     else:
-        ctx.error[field] = request.translate(u"Numeri o caratteri speciali non sono ammessi.")
+        ctx.error[field] = _(u"Numeri o caratteri speciali non sono ammessi.")
         ctx.success = False
 
 
 def validate_message(request, message):
     ctx = request.tmpl_context
+    _ = request.translate
     if len(ctx.message) < 10:
-        ctx.error['message'] = request.translate(u"Inserisci almeno 10 caratteri.")
+        ctx.error['message'] = _(u"Inserisci almeno 10 caratteri.")
         ctx.success = False
 
 
@@ -42,7 +44,7 @@ def validate_captcha(request, value):
             raise Exception()
     except:
         ctx.error['captcha'] = request.translate(
-                                u"Il testo da lei inserito non corrisponde con "
+                               u"Il testo da lei inserito non corrisponde con "
                                  "quello visualizzato nell'immagine. "
                                  "La preghiamo di riprovare.")
         ctx.success = False
@@ -96,12 +98,12 @@ def contact(request):
         validate_captcha(request, captcha)
 
         emails = Setting.query\
-                        .filter(Setting.name.like(u'contact_dst_email_%')).all()
+                 .filter(Setting.name.like(u'contact_dst_email_%')).all()
 
         for email in emails:
             log.debug("Adding recipient '<%s>'", email.value)
             mail = Mail()
-            mail.setSubject(u"Nuovo messaggio dal form di contatto sul sito web")
+            mail.setSubject(u"Nuovo messaggio dal form di contatto web")
 
             mail.setRecipient(email.value)
 
@@ -110,7 +112,7 @@ def contact(request):
             message = u"%sCognome : %s \n" % (message, ctx.surname)
             message = u"%sTelefono : %s \n\n" % (message, ctx.phone)
 
-            for key,value in request.params.iteritems():
+            for key, value in request.params.iteritems():
                 if key not in ('name', 'surname', 'email', 'phone',
                                  'agreement', 'message', 'captcha',
                                  'submit'):

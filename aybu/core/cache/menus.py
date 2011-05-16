@@ -202,12 +202,12 @@ class NodeInfoProxy(CacheProxy):
             obj.lang_proxy = LanguagesCacheProxy()
             obj.node = node
             obj.__nodeinfo = nodeinfo
-            for attr in ('label', 'title', 'id', 'url_part', 'meta_description',
-                         'head_content', 'content'):
+            for attr in ('label', 'title', 'id', 'url_part',
+                         'meta_description', 'head_content', 'content'):
                 setattr(obj, attr, getattr(nodeinfo, attr))
             return obj
 
-        obj =  super(NodeInfoProxy, cls).__new__(cls, cls.region_name)
+        obj = super(NodeInfoProxy, cls).__new__(cls, cls.region_name)
         return add_attrs(obj)
 
     @classmethod

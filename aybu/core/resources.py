@@ -13,9 +13,9 @@ class Root(object):
         self.log = logging.getLogger("%s.%s" % (self.__class__.__module__,
                                                 self.__class__.__name__))
         self.log.debug("Starting Traversal for %s", request.path_info)
-        self.languages = { l.lang: l
-                            for l in Language.query.\
-                                      filter(Language.enabled == True).all() }
+        self.languages = {l.lang: l
+                          for l in Language.query.\
+                                   filter(Language.enabled == True).all()}
         self.menus = Menu.query.all()
 
     def __getitem__(self, part):
@@ -39,6 +39,7 @@ class Root(object):
 
 class Captcha(object):
     pass
+
 
 class Admin(object):
     pass

@@ -27,7 +27,6 @@ else:
     log.info("AYBU Starting behind uWSGI")
 
 
-
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -45,9 +44,10 @@ def main(global_config, **settings):
     fallback_view = wsgiapp(pylons)
 
     # Configure caching
-    if not "disable_cache" in settings or not asbool(settings['disable_cache']):
+    if not "disable_cache" in settings or \
+       not asbool(settings['disable_cache']):
         from aybu.core.cache.proxy import CacheProxy
-        CacheProxy.cache_settings = {k.replace("cache.", "") : settings[k]
+        CacheProxy.cache_settings = {k.replace("cache.", ""): settings[k]
                                               for k in settings
                                               if k.startswith("cache.")}
     else:
@@ -83,6 +83,7 @@ def setup_database(settings):
     # the legacy pylons app
     #engine = engine_from_config(settings, "sqlalchemy.")
     #sess, mtd = init_model(engine)
+
     def _setup_model():
         from aybu.cms.model.meta import dbsession, metadata
         AybuRequest.dbsession = dbsession
@@ -133,7 +134,7 @@ def setup_assets(config):
     log.info("Preparing static search path for %s", theme)
 
     themes_inheritance_chain = []
-    themes_paths = [ pkg_resources.resource_filename('aybu.core', 'templates') ]
+    themes_paths = [pkg_resources.resource_filename('aybu.core', 'templates')]
     while theme:
         themes_inheritance_chain.insert(0, theme)
         if theme.parent_name:
@@ -168,6 +169,3 @@ def setup_assets(config):
 #        'mako.imports': 'from webhelpers.html import escape'
 #        'mako.default_filters': 'escape',
     })
-
-
-

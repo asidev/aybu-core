@@ -31,8 +31,3 @@ Copyright © 2010 Asidev s.r.l. - www.asidev.com
 #    LanguagesCacheProxy().clear()
 #    SettingsCacheProxy().clear()
 #    MenusProxy().clear()
-
-
-
-
-

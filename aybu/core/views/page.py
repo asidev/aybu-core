@@ -37,7 +37,3 @@ def contacts(viewinfo, request):
     templ = setup_template_context(viewinfo, request)
     aybu.core.forms.contact(request)
     return render_to_response(templ, {}, request=request)
-
-
-
-

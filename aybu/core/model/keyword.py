@@ -9,6 +9,7 @@ from elixir import Entity, Field, Unicode
 from elixir import using_options
 from elixir import ManyToMany
 
+
 class Keyword(Entity):
     name = Field(Unicode(64), primary_key=True)
     used_in = ManyToMany("NodeInfo",

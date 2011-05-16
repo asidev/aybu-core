@@ -19,5 +19,3 @@ def get_pylons_app(global_conf):
     if not hasattr(app, "__name__"):
         app.__name__ = "Wrapped Pylons app"
     return app
-
-

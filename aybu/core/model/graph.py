@@ -17,6 +17,7 @@ from collections import deque
 import logging
 log = logging.getLogger(__name__)
 
+
 class Node(Entity):
     id = Field(Integer, primary_key=True)
     enabled = Field(Boolean, default=True)
@@ -78,9 +79,8 @@ class Node(Entity):
         path = [self]
         while n.parent:
             n = n.parent
-            path.insert(0,n)
+            path.insert(0, n)
         return path
-
 
     def __str__(self):
         return "<Node (%s) [id: %d, parent: %s, weigth:%d]>" % \

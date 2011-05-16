@@ -30,7 +30,8 @@ class CacheProxy(object):
         object.__setattr__(obj, "log", logging.getLogger(cls.__name__))
         if CacheProxy.cache_settings and not CacheProxy.cache_manager:
             log.info("Creating cache manager for proxies")
-            CacheProxy.cache_manager = CacheManager(**CacheProxy.cache_settings)
+            mgr = CacheManager(**CacheProxy.cache_settings)
+            CacheProxy.cache_manager = mgr
         if CacheProxy.cache_manager:
             object.__setattr__(obj, "_cache",
                                CacheProxy.cache_manager.get_cache(prefix))
@@ -125,7 +126,7 @@ class SingletonProxy(CacheProxy):
     def __str__(self):  # pragma: nocover
         return "<%s>" % (self.__class__.__name__)
 
-    def __repr__(self): # pragma: nocover
+    def __repr__(self):  # pragma: nocover
         return "<%s %s>" % (self.__class__.__name__, self._values)
 
 
