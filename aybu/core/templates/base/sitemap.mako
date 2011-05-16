@@ -4,15 +4,17 @@
 <%self.seen_url = set() %>\
 <%def name="menu_tree(tree, domain)">\
 	% for page in tree.pages:
-		% if page.lang.enabled:
-			% if page.url not in self.seen_url:
-				<url>
-					<loc>${domain}${page.url}</loc>
-					<priority>${page.node.sitemap_priority}</priority>
-				</url>
-				<% self.seen_url.add(page.url) %>\
-			% endif
-		%endif
+		% for translation in page.translations:
+			% if translation.lang.enabled:
+				% if translation.url not in self.seen_url:
+					<url>
+						<loc>${domain}${translation.url}</loc>
+						<priority>${page.sitemap_priority}</priority>
+					</url>
+					<% self.seen_url.add(translation.url) %>\
+				% endif
+			%endif
+		%endfor
 	% endfor
 </%def>\
 <?xml version="1.0" encoding="UTF-8"?>
