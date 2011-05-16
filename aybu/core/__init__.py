@@ -55,7 +55,7 @@ def main(global_config, **settings):
         log.warn("Disabling cache globally")
 
     # Fallback on 404
-    config.add_view(fallback_view, context=NotFound)
+    #config.add_view(fallback_view, context=NotFound)
     # Fallback on "normal" pages in admin mode
     config.add_view(context='aybu.core.resources.ViewInfo',
                     view=fallback_view,
@@ -105,12 +105,30 @@ def add_subscribers(config):
 
 def add_views(config):
     log.info("Adding views")
+
+    # special files
+    config.add_view(context='aybu.core.resources.Root',
+                    name='sitemap.xml',
+                    renderer='aybu.core:templates/base/sitemap.mako',
+                    view='aybu.core.views.page.sitemap')
+    config.add_view(context='aybu.core.resources.Root',
+                    name='robots.txt',
+                    renderer="aybu.core:templates/base/robots.mako",
+                    view='aybu.core.views.page.robots')
+    config.add_view(context='aybu.core.resources.Root',
+                    name='favicon.ico',
+                    view='aybu.core.views.page.favicon')
+    # pages
     config.add_view(context='aybu.core.resources.ViewInfo',
                     view='aybu.core.views.page.dynamic')
     config.add_view(context='aybu.core.resources.ContactsViewInfo',
                     view='aybu.core.views.page.contacts')
 
-    # Configure Captchalib
+    # default redirect
+    config.add_view(context='aybu.core.resources.Root',
+                    view='aybu.core.views.page.default_redirect')
+
+    # Captcha
     CaptchaView.text_length = 6
     CaptchaView.text_color = None
     CaptchaView.background_color = None
@@ -133,7 +151,6 @@ def setup_assets(config):
     config.add_static_view('static', 'aybu.core:static')
 
     log.info("Preparing static search path for %s", theme)
-
     themes_inheritance_chain = []
     themes_paths = [pkg_resources.resource_filename('aybu.core', 'templates')]
     while theme:

@@ -34,7 +34,8 @@ class Root(object):
             if part == 'admin':
                 self.log.debug("Offloading admin to pylons")
                 return Admin()
-            return KeyError(part)
+            self.log.debug('Raising keyerror')
+            raise
 
 
 class Captcha(object):
@@ -42,7 +43,9 @@ class Captcha(object):
 
 
 class Admin(object):
-    pass
+    def __getitem__(self, part):
+        # FIXME: this hack is done to make fallback view match every view name
+        return self
 
 
 class NodeTraverser(object):
