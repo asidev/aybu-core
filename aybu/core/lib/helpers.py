@@ -136,4 +136,7 @@ def urlfy(name):
 
 
 def static_url(resource_url):
+    if resource_url.startswith('/uploads'):
+        return resource_url
+
     return str('/static%s' % resource_url)
