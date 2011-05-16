@@ -1,36 +1,9 @@
-from aybu.core.cache.proxies import SettingsCacheProxy,\
-                                       MenusProxy,\
-                                       LanguagesCacheProxy
-import aybu.core.forms
+import os
 from pyramid.renderers import render_to_response
 from pyramid.exceptions import NotFound
-import os
 from webob import Response
-
-
-def setup_template_context(viewinfo, request, rendering_type='dynamic'):
-
-    c = request.tmpl_context
-    c.languages = LanguagesCacheProxy().enabled
-    c.settings = SettingsCacheProxy()
-    c.menus = MenusProxy()
-    c.user = False
-
-    # TODO: remove as static pages support will go away
-    c.section = None
-    c.page = None
-    c.subsection = None
-    c.rendering_type = rendering_type
-
-    if viewinfo:
-        nodeinfo = viewinfo.nodeinfo
-        c.node = viewinfo.node
-        c.translation = nodeinfo
-        c.lang = viewinfo.lang
-        templ = "aybu.core:templates%s" % (viewinfo.view.fs_view_path)
-        return templ
-
-    return None
+import aybu.core.forms
+from . utils import setup_template_context
 
 
 def dynamic(viewinfo, request):
@@ -42,10 +15,6 @@ def contacts(viewinfo, request):
     templ = setup_template_context(viewinfo, request)
     aybu.core.forms.contact(request)
     return render_to_response(templ, {}, request=request)
-
-
-def default_redirect(context, request):
-    raise NotImplementedError
 
 
 def sitemap(context, request):

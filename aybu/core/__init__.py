@@ -110,23 +110,23 @@ def add_views(config):
     config.add_view(context='aybu.core.resources.Root',
                     name='sitemap.xml',
                     renderer='aybu.core:templates/base/sitemap.mako',
-                    view='aybu.core.views.page.sitemap')
+                    view='aybu.core.views.sitemap')
     config.add_view(context='aybu.core.resources.Root',
                     name='robots.txt',
                     renderer="aybu.core:templates/base/robots.mako",
-                    view='aybu.core.views.page.robots')
+                    view='aybu.core.views.robots')
     config.add_view(context='aybu.core.resources.Root',
                     name='favicon.ico',
-                    view='aybu.core.views.page.favicon')
+                    view='aybu.core.views.favicon')
     # pages
     config.add_view(context='aybu.core.resources.ViewInfo',
-                    view='aybu.core.views.page.dynamic')
+                    view='aybu.core.views.dynamic')
     config.add_view(context='aybu.core.resources.ContactsViewInfo',
-                    view='aybu.core.views.page.contacts')
+                    view='aybu.core.views.contacts')
 
     # default redirect
     config.add_view(context='aybu.core.resources.Root',
-                    view='aybu.core.views.page.default_redirect')
+                    view='aybu.core.views.default_redirect')
 
     # Captcha
     CaptchaView.text_length = 6

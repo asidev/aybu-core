@@ -23,7 +23,7 @@ class Root(object):
             # we need to use first as 'lang' attribute alone can be not unique
             self.log.debug("Searching for lang '%s'", part)
             lang = self.languages[part]
-            self.request.lang = lang
+            self.request.set_language(lang)
             return NodeTraverser(self.request, lang=lang, parents=self.menus)
 
         except (KeyError, TypeError):

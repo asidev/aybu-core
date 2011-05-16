@@ -15,8 +15,12 @@ class AybuRequest(Request):
 
         # i18n support
         # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
-        self.localizer = get_localizer(self)
         self.translation_factory = TranslationStringFactory('aybu-core')
+
+        # parse headers for accepted langs
+        self.languages = self.accept_language.best_matches()
+        # threadlocal
+        #self.set_language(self.registry.settings['default_locale_name'])
 
     def translate(self, string):
         """ This function will be exported to templates as '_' """
@@ -25,3 +29,12 @@ class AybuRequest(Request):
     def finished_callback(self, request):
         # clear the database session
         self.dbsession.remove()
+
+    def set_language(self, lang):
+        if not isinstance(lang, basestring):
+            self.lang = lang
+            lang = lang.lang
+
+        self._LOCALE_ = lang
+        self.localizer = get_localizer(self)
+
