@@ -145,7 +145,7 @@ def setup_assets(config):
     engine = engine_from_config(config.registry.settings, "sqlalchemy.")
     db = SqlSoup(engine)
     tname = db.settings.filter(db.settings.name == u'theme_name').one().value
-    theme = db.theme.filter(db.theme.name == tname).one()
+    theme = db.themes.filter(db.themes.name == tname).one()
 
     log.info("Adding static view for aybu")
     config.add_static_view('static', 'aybu.core:static')
@@ -156,7 +156,7 @@ def setup_assets(config):
     while theme:
         themes_inheritance_chain.insert(0, theme)
         if theme.parent_name:
-            theme = db.theme.filter(db.theme.name == theme.parent_name).one()
+            theme = db.themes.filter(db.themes.name == theme.parent_name).one()
         else:
             theme = None
 
