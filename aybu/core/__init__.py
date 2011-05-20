@@ -2,7 +2,6 @@ import os
 import logging
 import pkg_resources
 from pyramid.config import Configurator
-from pyramid.exceptions import NotFound
 from pyramid.wsgi import wsgiapp
 from pyramid_beaker import session_factory_from_settings
 from pyramid.settings import asbool
@@ -54,9 +53,6 @@ def main(global_config, **settings):
     else:
         log.warn("Disabling cache globally")
 
-    # Fallback on 404
-    #config.add_view(fallback_view, context=NotFound)
-    # Fallback on "normal" pages in admin mode
     config.add_view(context='aybu.core.resources.ViewInfo',
                     view=fallback_view,
                     request_param='admin')
