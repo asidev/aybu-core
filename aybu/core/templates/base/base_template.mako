@@ -15,6 +15,9 @@
 <%def name="css()">\
 	% if c.user and c.rendering_type=='dynamic':
 	${css_link('/css/tynymce.css')}
+
+	${css_link('/js/lib/uploadify/uploadify.css')}
+
 	% endif
 </%def>\
 \
@@ -33,8 +36,11 @@
 	% endif
 </%def>\
 <%def name="js()">\
-	${js_link('/js/lib/jquery/jquery.min.js')}
+	${js_link('/js/lib/jquery/jquery-1.6.1.min.js')}
 	% if c.user and c.rendering_type=='dynamic':
+
+		${js_link('/js/lib/jquery/ui/jquery-ui.min.js')}
+
 		<script type="text/javascript">
 			var editableContentWidth = 600;
 		</script>
@@ -72,24 +78,35 @@
 					},
 					files: {
 						index : '${url("files", action="index", tiny="true")}'
-					}
+					},
+
+					link_list : '${url("structure", action="link_list")}',
+
+					page_banners : '${h.url("page_banners")}'
+
 				}
+
 			};
+
 		</script>
 
 		% if c.settings.debug == True:
+		<%include file="/admin/extjs-debug.mako"/>
 		${js_link('/js/tinymce.js')}
 		${js_link('/js/content.js')}
 		${js_link('/js/image.js')}
 		${js_link('/js/files.js')}
 		${js_link('/js/block_ui.js')}
+		${js_link('/js/banner.js')}
 		${js_link('/js/main.js')}
 		% else:
+		<%include file="/admin/extjs.mako"/>
 		${js_link('/js/tinymce.min.js')}
 		${js_link('/js/content.min.js')}
 		${js_link('/js/image.min.js')}
 		${js_link('/js/files.min.js')}
 		${js_link('/js/block_ui.min.js')}
+		${js_link('/js/banner.min.js')}
 		${js_link('/js/main.min.js')}
 		% endif
 

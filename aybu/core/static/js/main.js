@@ -6,5 +6,5 @@
 $(document).ready(function() {
 	content_main();
 	editableContentWidth = $('#editable_content').innerWidth();
-	// image_main();
+	banner();
 });

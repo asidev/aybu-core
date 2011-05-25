@@ -39,6 +39,7 @@
 				% if level < num_levels:
 				${self.menu(node, level, num_levels)}
 				% endif
+
 			</li>
 		% endfor
 	</ul>
