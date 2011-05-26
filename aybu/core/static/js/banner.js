@@ -2,7 +2,7 @@
  * Copyright © 2010 Asidev s.r.l. - www.asidev.com
  */
 
-var plup_add_btn = new Ext.ux.PluploadButton({
+var uploader = new Ext.ux.PluploadButton({
 	text: 'Cambia Immagine',
     iconCls: 'silk-add',
     window_width: 380,
@@ -12,13 +12,20 @@ var plup_add_btn = new Ext.ux.PluploadButton({
     upload_config: {
 
 		url: c.urls.page_banners,
-		runtimes: 'gears,flash,silverlight,html5,browserplus,html4',
+		//runtimes: 'gears,flash,silverlight,html5,browserplus,html4',
+		runtimes: 'html5, html4, flash',
+
+		multiSelect: false,
 		multipart: true,
-		multipart_params: { param1: 1, param2: 2 },
+
+		multipart_params: {
+			nodeinfo_id : c.translation.id
+		},
+
 		max_file_size: '1mb',
 
-		flash_swf_url : '/static/aybu/js/lib/plupload/plupload.flash.swf',
-		silverlight_xap_url : '/static/aybu/js/lib/plupload/plupload.silverlight.xap',
+		//flash_swf_url : '/static/aybu/js/lib/plupload/plupload.flash.swf',
+		//silverlight_xap_url : '/static/aybu/js/lib/plupload/plupload.silverlight.xap',
 
 		filters: [  {title : "Image files", extensions : "jpg,JPG,gif,GIF,png,PNG"} ],
 
@@ -51,21 +58,40 @@ var plup_add_btn = new Ext.ux.PluploadButton({
 		progressText: '{0}/{1} ({3} falliti) ({5}/s)',
 
 		listeners: {
-			beforestart: function(uploadpanel) {
-			},
-			uploadstarted: function(uploadpanel) {
-
-			},
 			uploadcomplete: function(uploadpanel, success, failures) {
-				if (success.length)
-					imgmanager.image_store.reload();
+				if(success.length) {
+					window.location.reload(true);
+				}
+
 			}
     	}
   }
 });
 
 function banner() {
-	$(banner_selector).html('<div id="upload"></div>');
-	$('#upload').css('margin', '5px');
-	//plup_add_btn.render('upload');
+	try {
+		$(banner_selector).prepend('<div id="upload"></div>');
+	}
+	catch(err) {
+		return;
+	}
+
+	var p = $(banner_selector).position();
+
+	$('#upload').css('position', 'fixed');
+	$('#upload').css('top', p.top);
+	$('#upload').css('left', p.left);
+
+	uploader.render('upload');
+	uploader.hide();
+
+	$(banner_selector).mouseenter(function() {
+		$(banner_selector).css('opacity', '0.5');
+		uploader.show();
+	});
+	$(banner_selector).mouseleave(function() {
+		$(banner_selector).css('opacity', '1');
+		uploader.hide();
+	});
+
 }

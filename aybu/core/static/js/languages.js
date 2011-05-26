@@ -5,6 +5,9 @@
 function changeLanguage(id){
 
 	checked = $("#lang_" + id).attr('checked');
+
+	checked = (checked=='checked') ? true : false;
+
 	action = (checked==true) ? "aggiungere" : "rimuovere";
 	action = action + " la lingua " + $("#lang_" + id + " + img").attr("title");
 
