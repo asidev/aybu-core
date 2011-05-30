@@ -8,7 +8,7 @@ var uploader = new Ext.ux.PluploadButton({
     window_width: 380,
     window_height: 300,
     clearOnClose: true,
-    window_title: 'Aggiungi immagini',
+    window_title: 'Aggiungi immagine',
     upload_config: {
 
 		url: c.urls.page_banners,
@@ -68,9 +68,31 @@ var uploader = new Ext.ux.PluploadButton({
   }
 });
 
+
+var remove_button = new Ext.Button({
+	text: 'Rimuovi Immagine',
+	handler: function() {
+		Ext.Ajax.request({
+			url: c.urls.remove_page_banners,
+			params: {
+				nodeinfo_id : c.translation.id
+			},
+			success: function(response){
+				if(response.responseText.contains('true')){
+					window.location.reload(true);
+				}
+			}
+		});
+	}
+})
+
 function banner() {
 	try {
 		$(banner_selector).prepend('<div id="upload"></div>');
+		$('#upload').prepend('<div style="float:none; clear:both; width: 0px; height:0px;"></div>');
+		$('#upload').prepend('<div id="remove_button" style="float:left;"></div>');
+		$('#upload').prepend('<div id="add_button" style="float:left; margin-right:5px;"></div>');
+
 	}
 	catch(err) {
 		return;
@@ -82,16 +104,22 @@ function banner() {
 	$('#upload').css('top', p.top);
 	$('#upload').css('left', p.left);
 
-	uploader.render('upload');
+	uploader.render('add_button');
 	uploader.hide();
+
+	remove_button.render('remove_button');
+	remove_button.hide();
+
 
 	$(banner_selector).mouseenter(function() {
 		$(banner_selector).css('opacity', '0.5');
 		uploader.show();
+		remove_button.show();
 	});
 	$(banner_selector).mouseleave(function() {
 		$(banner_selector).css('opacity', '1');
 		uploader.hide();
+		remove_button.hide();
 	});
 
 }

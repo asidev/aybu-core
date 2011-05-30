@@ -82,7 +82,8 @@
 
 					link_list : '${url("structure", action="link_list")}',
 
-					page_banners : '${h.url("page_banners")}'
+					page_banners : '${h.url("admin", action="page_banners")}',
+					remove_page_banners : '${h.url("admin", action="remove_page_banners")}'
 
 				}
 

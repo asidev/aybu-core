@@ -5,7 +5,7 @@
 
 <%def name="title()">
 	${parent.title()}
-	${self.title_part((_(u'Login'),h.url('login-render')))}
+	${self.title_part((_(u'Login'),'/admin/login'))}
 </%def>
 
 <%inherit file="/inner_layout.mako"/>
@@ -18,13 +18,7 @@
 </h3>
 %endif
 
-<form id="login_form" method="post"
-	% if hasattr(c,'compiler'):
-		action=${c.area_riservata_post_url}
-	% else :
-		action="${h.url('login-submit')}"
-	% endif
-	>
+<form id="login_form" method="post" action="/admin/login_submit.html">
 	<fieldset>
 		<label for="username">${_('Username:')}</label>
 		<input id="username" name="username" type="text" />
