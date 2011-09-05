@@ -7,13 +7,8 @@ README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = ['pyramid',
-            'WebError',
-            'Babel',
-            'pasteuwsgi',
-            'CaptchaLib>=0.2.1',
-            'pyramid_beaker',
-            'Elixir',
-            'Mako>=0.4.1']
+            'SQLAlchemy',
+            'Mako']
 
 setup(name='aybu-core',
       version='0.2.0a1',
@@ -35,7 +30,7 @@ setup(name='aybu-core',
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,
-      test_suite="aybu.core",
+      test_suite="tests",
       message_extractors = {
             'aybu.core': [
                 ('**.py', 'python', None),
