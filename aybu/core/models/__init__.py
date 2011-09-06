@@ -27,7 +27,9 @@ from aybu.core.models.user import Group
 from aybu.core.models.user import User
 from aybu.core.models.view import View
 from aybu.core.models.view import ViewDescription
+from aybu.core.utils import get_object_from_python_path
 from sqlalchemy import engine_from_config
+from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 
@@ -69,267 +71,63 @@ def create_session(engine):
 
     return session
 
-def add_default_data(session):
+def add_default_data(session, data):
 
-    languages = {}
-    for language in [Language(id=1, lang=u'it', country=u'IT', enabled=True),
-                     Language(id=2, lang=u'en', country=u'GB', enabled=True),
-                     Language(id=3, lang=u'es', country=u'ES', enabled=True),
-                     Language(id=4, lang=u'de', country=u'DE', enabled=False),
-                     Language(id=5, lang=u'fr', country=u'FR', enabled=False),
-                     Language(id=6, lang=u'ru', country=u'RU', enabled=False),
-                     Language(id=7, lang=u'zh', country=u'CN', enabled=False)]:
+    for params in data:
 
-        session.add(language)
-        languages[language.id] = language
+        cls = 'aybu.core.models.%s' % params.pop('cls_')
+        cls = get_object_from_python_path(cls)
+        mapper = class_mapper(cls)
 
-    setting_types = {}
-    for setting_type in [SettingType(name=u'txt', raw_type=u'unicode'),
-                         SettingType(name=u'html', raw_type=u'unicode'),
-                         SettingType(name=u'image', raw_type=u'unicode'),
-                         SettingType(name=u'file', raw_type=u'unicode'),
-                         SettingType(name=u'checkbox', raw_type=u'bool'),
-                         SettingType(name=u'integer', raw_type=u'int'),
-                         SettingType(name=u'email', raw_type=u'unicode'),
-                         SettingType(name=u'string', raw_type=u'str'),
-                        ]:
+        for key, value in params.iteritems():
 
-        session.add(setting_type)
-        setting_types[setting_type.name] = setting_type
+            if value is None:
+                continue
 
-    settings = {}
-    for setting in [Setting(name=u'site_title', value=u'Nome Sito',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'theme_name', value=u'moma',
-                            ui_administrable=False, type_name=u'txt'),
-                    Setting(name=u'footer_info',
-                            value=u'<strong>Nome Azienda</strong> ©',
-                            ui_administrable=True, type_name=u'html'),
-                    Setting(name=u'template_levels', value=u'3',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'main_menu_levels', value=u'2',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'max_menus', value=u'1',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'max_languages', value=u'3',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'image_full_size', value=u'600',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'max_pages', value=u'10',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'contact_dst_email_1',
-                            value=u'mail@dominio.est', ui_administrable=True,
-                            type_name=u'email'),
-                    Setting(name=u'banner', value=u'banner.png',
-                            ui_administrable=False, type_name=u'image'),
-                    Setting(name=u'banner_width', value=u'940',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'banner_height', value=u'320',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'logo', value=u'logo.png',
-                            ui_administrable=False, type_name=u'image'),
-                    Setting(name=u'logo_width', value=u'340',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'logo_height', value=u'120',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'debug', value=u'True',
-                            ui_administrable=False, type_name=u'checkbox'),
-                    Setting(name=u'max_files', value=u'10',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'max_images', value=u'20',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'proxy_enabled', value=u'False',
-                            ui_administrable=False, type_name=u'checkbox'),
-                    Setting(name=u'proxy_address', value=u'127.0.0.1',
-                            ui_administrable=False, type_name=u'string'),
-                    Setting(name=u'proxy_port', value=u'80',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'proxy_purge_timeout', value=u'2',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'page_expire_sec', value=u'300',
-                            ui_administrable=False, type_name=u'integer'),
-                    Setting(name=u'head_info', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'google_analytics_code', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'addthis', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'addthis_url', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'disqus', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'facebook', value=u'',
-                            ui_administrable=True, type_name=u'txt'),
-                    Setting(name=u'twitter', value=u'',
-                            ui_administrable=True, type_name=u'txt')]:
+            property_ = mapper.get_property(key)
 
-        session.add(setting)
-        settings[setting.name] = setting
+            if not hasattr(property_, 'argument'):
+                continue
+            
+            try:
+                class_ = property_.argument.class_
+            except AttributeError as e:
+                class_ = property_.argument()
 
-    views = {}
-    for view in [View(id=1, name=u'GENERIC',
-                      fs_view_path='/pages/generic_content.mako'),
-                 View(id=2, name=u'CONTACTS',
-                      fs_view_path='/pages/contacts.mako')]:
+            query = session.query(class_)
 
-        session.add(view)
-        views[view.id] = view
+            if not property_.uselist and len(mapper.primary_key) == 1:
+                attr = getattr(class_, mapper.primary_key[0].name)
+                params[key] = query.filter(attr == value).one()
+                continue
 
-    views_descriptions = {}
-    for item in [ViewDescription(id=1,
-                                 description=u'Pagina di contenuto generico',
-                                 view=views[1], language=languages[1]),
-                 ViewDescription(id=2, description=u'Generic content page',
-                                 view=views[1], language=languages[2]),
-                 ViewDescription(id=3,
-                                 description=u'Pagina con form di contatto',
-                                 view=views[2], language=languages[1]),
-                 ViewDescription(id=4, description=u'Contact form page',
-                                 view=views[2], language=languages[2])]:
+            if not property_.uselist:
+                for i, col in enumerate(mapper.primary_key):
+                    attr = getattr(class_, col.name)
+                    query = query.filter(attr == value[i])
+                params[key] = quey.one()
+                continue
 
-        session.add(item)
-        views_descriptions[item.id] = item
+            if len(mapper.primary_key) == 1:
+                values = []
+                for elem in value:
+                    attr = getattr(class_, mapper.primary_key[0].name)
+                    values.append(query.filter(attr == elem).one())
+                params[key] = values
+                continue
 
-    menus = {}
-    for menu in [Menu(id=1, parent=None, weight=1),
-                 Menu(id=11, parent=None, weight=2)]:
+            values = []
+            for elem in value:
+                for i, col in enumerate(mapper.primary_key):
+                    attr = getattr(class_, col.name)
+                    values.append(query.filter(attr == elem[i]).one())
+            params[key] = values
 
-        session.add(menu)
-        menus[menu.id] = menu
+        session.add(cls(**params))
 
-    pages = {}
-    for page in [Page(id=2, home=True,
-                      parent=menus[1], weight=1, view=views[1]),
-                 Page(id=3, parent=menus[1], weight=3, view=views[2]),
-                 Page(id=9, parent=menus[1], weight=6, view=views[1])]:
+def fill_db(session):
 
-        session.add(page)
-        pages[page.id] = page
-
-    section = Section(id=4, parent=menus[1], weight=2)
-    session.add(section)
-    sections = {4: section}
-
-    for page in [Page(id=5, parent=sections[4], weight=1, view=views[1]),
-                 Page(id=6, parent=sections[4], weight=2, view=views[1])]:
-
-        session.add(page)
-        pages[page.id] = page
-
-    internal_link = InternalLink(id=7,
-                                 parent=menus[1], weight=4, linked_to=pages[3])
-    session.add(internal_link)
-    internal_links = {internal_link.id: internal_link}
-
-    page = Page(id=10, parent=pages[9], weight=1, view=views[1])
-    session.add(page)
-    pages[page.id] = page
-
-    external_link = ExternalLink(id=8, parent=menus[1], weight=5,
-                                 url=u'http://www.asidev.com')
-    session.add(external_link)
-    external_links = {external_link.id: external_link}
-
-    nodes_info = {}
-    for info in [NodeInfo(id=1, label=u'Home', title=u'Pagina Principale',
-                          url_part=u'index',
-                          content=u'<h2>Pagina Principale</h2>',
-                          lang=languages[1], node=pages[2]),
-                 NodeInfo(id=2, label=u'Home', title=u'Home Page',
-                          url_part=u'index', content=u'<h2>Home Page</h2>',
-                          lang=languages[2], node=pages[2]),
-                 NodeInfo(id=3, label=u'Home', title=u'Primera Pagina',
-                          url_part=u'index',
-                          content=u'<h2>Primera Pagina</h2>',
-                          lang=languages[3], node=pages[2]),
-                 NodeInfo(id=4, label=u'Contatti', title=u'Contatti',
-                          url_part=u'contatti', content=u'<h2>Contatti</h2>',
-                          lang=languages[1], node=pages[3]),
-                 NodeInfo(id=5, label=u'Contacts', title=u'Contacts',
-                          url_part=u'contacts', content=u'<h2>Contacts</h2>',
-                          lang=languages[2], node=pages[3]),
-                 NodeInfo(id=6, label=u'Contacto', title=u'Contacto',
-                          url_part=u'contacto', content=u'<h2>Contacto</h2>',
-                          lang=languages[3], node=pages[3]),
-                 NodeInfo(id=7, label=u'Azienda', title=u'Azienda',
-                          url_part=u'azienda', lang=languages[1],
-                          node=sections[4]),
-                 NodeInfo(id=8, label=u'Company', title=u'Company',
-                          url_part=u'company', lang=languages[2],
-                          node=sections[4]),
-                 NodeInfo(id=9, label=u'Empresa', title=u'Empresa',
-                          url_part=u'empresa', lang=languages[3],
-                          node=sections[4]),
-                 NodeInfo(id=10, label=u'Chi Siamo', title=u'Chi Siamo',
-                          url_part=u'chi_siamo', content=u'<h2>Chi Siamo</h2>',
-                          lang=languages[1], node=pages[5]),
-                 NodeInfo(id=11, label=u'About Us', title=u'About Us',
-                          url_part=u'about_us', content=u'<h2>About Us</h2>',
-                          lang=languages[2], node=pages[5]),
-                 NodeInfo(id=12, label=u'Quiénes somos',
-                          title=u'Quiénes somos', url_part=u'quienes_somos',
-                          content=u'<h2>Quiénes somos</h2>',
-                          lang=languages[3], node=pages[5]),
-                 NodeInfo(id=13, label=u'La nostra storia',
-                          title=u'La nostra storia',
-                          url_part=u'la_nostra_storia',
-                          content=u'<h2>La nostra storia</h2>',
-                          lang=languages[1], node=pages[6]),
-                 NodeInfo(id=14, label=u'Our History', title=u'Our History',
-                          url_part=u'our_history',
-                          content=u'<h2>Our History</h2>',
-                          lang=languages[2], node=pages[6]),
-                 NodeInfo(id=15, label=u'Nuestra Historia',
-                          title=u'Nuestra Historia',
-                          url_part=u'nuestra_historia',
-                          content=u'<h2>Nuestra Historia</h2>',
-                          lang=languages[3], node=pages[6]),
-                 NodeInfo(id=16, label=u'Collegamento Interno',
-                          lang=languages[1], node=internal_links[7]),
-                 NodeInfo(id=17, label=u'Internal Link', lang=languages[2],
-                          node=internal_links[7]),
-                 NodeInfo(id=18, label=u'Conexión Interna', lang=languages[3],
-                          node=internal_links[7]),
-                 NodeInfo(id=19, label=u'Sviluppatore', lang=languages[1],
-                          node=external_links[8]),
-                 NodeInfo(id=20, label=u'Developer', lang=languages[2],
-                          node=external_links[8]),
-                 NodeInfo(id=21, label=u'Desarrollador', lang=languages[3],
-                          node=external_links[8]),
-                 NodeInfo(id=22, label=u'Soluzioni', title=u'Soluzioni',
-                          url_part=u'soluzioni', content=u'<h2>Soluzioni</h2>',
-                          lang=languages[1], node=pages[9]),
-                 NodeInfo(id=23, label=u'Solutions', title=u'Solutions',
-                          url_part=u'solutions', content=u'<h2>Solutions</h2>',
-                          lang=languages[2], node=pages[9]),
-                 NodeInfo(id=24, label=u'Solución', title=u'Solución',
-                          url_part=u'solucion', content=u'<h2>Solución</h2>',
-                          lang=languages[3], node=pages[9]),
-                 NodeInfo(id=25, label=u'PEC', title=u'PEC', url_part=u'pec',
-                          content=u'<h2>P.E.C.</h2>', lang=languages[1],
-                          node=pages[10]),
-                 NodeInfo(id=26, label=u'ECM', title=u'ECM', url_part=u'ecm',
-                          content=u'<h2>Electronic Certified Mail</h2>',
-                          lang=languages[2], node=pages[10]),
-                 NodeInfo(id=27, label=u'CEC', title=u'CEC', url_part=u'cec',
-                          content=u'<h2>Correo Electronico Certifigado</h2>',
-                          lang=languages[3], node=pages[10])]:
-
-        session.add(info)
-        nodes_info[info.id] = info
-
-    themes = {}
-    for theme in [Theme(name=u'base', parent=None),
-                  Theme(name=u'uffizi', parent=None),
-                  Theme(name=u'moma', parent=None)]:
-
-        session.add(theme)
-        themes[theme.name] = theme
-
-    themes['uffizi'].parent = themes['base']
-    themes['moma'].parent = themes['uffizi']
-
-    session.flush()
+    #FIXME: add nodeinfo.url in default_data.json
 
     # Build the NodeInfo.url for each NodeInfo object.
     for info in nodes_info.itervalues():
