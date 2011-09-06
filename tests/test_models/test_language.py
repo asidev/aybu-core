@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from aybu.core.models import Language
-from test_base import BaseTests
+from babel import Locale
 from logging import getLogger
+from test_base import BaseTests
 
 log = getLogger(__name__)
 
@@ -183,4 +184,3 @@ class LanguageTests(BaseTests):
             self.assertIn(lang_locale, all_locales)
             self.assertIn(full_locale, all_strict_locales)
             self.assertNotIn(lang_locale, all_strict_locales)
-
