@@ -86,11 +86,11 @@ class Node(Base):
 
     @validates('parent')
     def validate_email(self, key, parent):
-        print parent
+        raise NotImplementedError(parent)
 
     @validates('parent_id')
     def validate_email(self, key, parent_id):
-        print parent_id
+        raise NotImplementedError(parent_id)
 
 
 class Menu(Node):
