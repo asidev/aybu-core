@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
 from collections import deque
@@ -85,17 +86,21 @@ class Node(Base):
 
     @validates('parent')
     def validate_parent(self, key, value):
-        print "parent Validator."
-        return value
+        log.debug('Validate parent : %s, %s,%s', self, key, value)
+        if isinstance(self, Menu):
+            if value != None:
+                raise ValidationError()
+        else:
+            if not isinstance(value, (Menu, Section, Page)):
+                raise ValidationError()
 
-    @validates('parent_id')
-    def validate_parent_id(self, key, value):
-        print "parent_id validator."
         return value
 
     @validates('children')
     def validate_children(self, key, value):
-        print "Children validator."
+        if isinstance(self, (ExternalLink, InternalLink)):
+            if value != None or value != []:
+                raise ValidationError()
         return value
 
 
