@@ -53,36 +53,35 @@ class Node(Base):
     def type(self):
         return self.__class__.__name__
 
-    def __str__(self):
-        return "<Node (%s) [id: %d, parent: %s, weigth:%d]>" % \
-                (self.__class__.__name__, self.id, self.parent_id, self.weight)
-
     def __repr__(self):
-        return self.__str__()
+        parent_id = None if self.parent is None else self.parent.id
+        return '<%s id="%s" parent="%s" weight="%s" />' % (self.type,
+                                                           self.id,
+                                                           parent_id,
+                                                           self.weight)
+
+    def __str__(self):
+        return self.__repr__()
 
     @classmethod
     def get_by_id(cls, session, id_):
         return session.query(cls).get(id_)
 
     @classmethod
-    def get_by_enabled(cls, session, enabled=None, start=None, limit=None):
+    def get_by_enabled(cls, session, enabled, start=None, limit=None):
 
-        query = session.query(cls)
-
-        if not enabled is None:
-            query = query.filter(cls.enabled == enabled)
-
+        query = session.query(cls).filter(cls.enabled == enabled)
         return get_sliced(query, start, limit)
 
     @classmethod
-    def get_max_weight(cls, session, parent=None):
+    def get_max_weight(cls, session, **params):
 
         q = session.query(func.max(cls.weight))
 
-        if not parent is None:
-            q = q.filter(cls.parent == parent)
+        if 'parent' in params:
+            q = q.filter(cls.parent == params['parent'])
 
-        return  q.group_by(cls.weight).scalar()
+        return  q.scalar()
 
     @validates('parent')
     def validate_parent(self, key, value):
@@ -129,7 +128,7 @@ class Page(Node):
 
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',
-                                         ondelete='restrict'), nullable=False)
+                                         ondelete='restrict'))
     view = relationship('View')
 
     @classmethod

@@ -13,7 +13,7 @@ class LoaderTests(unittest.TestCase):
 
     def test_get_object_from_python_path(self):
 
-        from aybu.controlpanel.libs.utils import get_object_from_python_path
+        from aybu.core.utils import get_object_from_python_path
         from aybu.controlpanel.libs.validators import validate_lineage
         from aybu.controlpanel.libs.validators import validate_node
         from aybu.controlpanel.models import Node
