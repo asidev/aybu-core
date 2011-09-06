@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # (c) 2005 Ian Bicking and contributors;
 # written for Paste (http://pythonpaste.org)
 # Licensed under the MIT license

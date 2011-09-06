@@ -10,7 +10,7 @@ import logging
 import os
 import PIL
 
-from aybu.website.models.base import Base
+from aybu.core.models.base import Base
 
 __all__ = ['File', 'Image', 'Banner']
 

@@ -4,7 +4,7 @@
 """ Copyright © 2010 Asidev s.r.l. - www.asidev.com """
 
 
-from aybu.website.models.base import Base
+from aybu.core.models.base import Base
 from logging import getLogger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey

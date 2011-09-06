@@ -10,6 +10,11 @@ except:
 
 log = getLogger(__name__)
 
+
 class NodeTests(BaseTests):
 
-    def test_me(self): pass
+    def test_get_by_enabled(self):
+        fill_db(self.session)
+
+        for node in self.session.query(Node).all():
+            self.assertIn(node, Node.get_by_enabled(self.session))

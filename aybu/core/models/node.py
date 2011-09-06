@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from aybu.website.models.base import Base
-from aybu.website.models.base import get_sliced
+from aybu.core.models.base import Base
+from aybu.core.models.base import get_sliced
 from collections import deque
 from logging import getLogger
 from sqlalchemy import and_
@@ -19,6 +19,7 @@ from sqlalchemy import Table
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
@@ -82,6 +83,14 @@ class Node(Base):
             q = q.filter(cls.parent == parent)
 
         return  q.group_by(cls.weight).scalar()
+
+    @validates('parent')
+    def validate_email(self, key, parent):
+        print parent
+
+    @validates('parent_id')
+    def validate_email(self, key, parent_id):
+        print parent_id
 
 
 class Menu(Node):

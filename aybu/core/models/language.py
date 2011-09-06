@@ -5,8 +5,8 @@
 Copyright © 2010 Asidev s.r.l. - www.asidev.com
 """
 
-from aybu.website.models.base import Base
-from aybu.website.models.base import get_sliced
+from aybu.core.models.base import Base
+from aybu.core.models.base import get_sliced
 from babel import Locale
 from babel.core import UnknownLocaleError as UnknownLocale
 from logging import getLogger

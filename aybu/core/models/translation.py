@@ -21,9 +21,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
 
-from aybu.website.models.base import Base
-from aybu.website.models.base import get_sliced
-from aybu.website.models.language import Language
+from aybu.core.models.base import Base
+from aybu.core.models.base import get_sliced
+from aybu.core.models.language import Language
 
 
 __all__ = []
