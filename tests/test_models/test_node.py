@@ -3,7 +3,7 @@
 
 from aybu.core.models import Node
 from logging import getLogger
-from base import BaseTests
+from test_base import BaseTests
 try:
     import unittest2 as unittest
 except:
