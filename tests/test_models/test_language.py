@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from aybu.core.models import Language
-from base import BaseTests
+from test_base import BaseTests
 from logging import getLogger
 
 log = getLogger(__name__)

@@ -85,12 +85,19 @@ class Node(Base):
         return  q.group_by(cls.weight).scalar()
 
     @validates('parent')
-    def validate_email(self, key, parent):
-        raise NotImplementedError(parent)
+    def validate_parent(self, key, value):
+        print "parent Validator."
+        return value
 
     @validates('parent_id')
-    def validate_email(self, key, parent_id):
-        raise NotImplementedError(parent_id)
+    def validate_parent_id(self, key, value):
+        print "parent_id validator."
+        return value
+
+    @validates('children')
+    def validate_children(self, key, value):
+        print "Children validator."
+        return value
 
 
 class Menu(Node):

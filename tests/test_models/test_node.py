@@ -20,10 +20,10 @@ class NodeTests(BaseTests):
             self.assertIn(node, Node.get_by_enabled(self.session))
 
     def test_validates(self):
-        print 'puppa'
-        node_1 = Node(id=5, parent=None, weight=1)
-        node_2 = Node(id=69, parent=None, weight=1)
-        node_2.parent = node_1
-        node_2.parent_id = 5
-        self.session.flush()
+        node_1 = Node(id=5, parent=None, weight=1, children=[])
+        node_2 = Node(id=69, parent=None, weight=1, children=[])
+        #node_1.children.append(node_2)
+        #node_2.parent = node_1
+        #node_2.parent_id = 5
+        #self.session.flush()
         raise NotImplementedError()
