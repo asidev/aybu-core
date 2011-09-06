@@ -23,7 +23,7 @@ class BaseError(Exception):
 
         except (TypeError, IndexError) as e:
             log.debug('String formatting fails: %s', e)
-            return super(ValidationError, self).__repr__()
+            return super(BaseError, self).__repr__()
 
     def __str__(self):
         return self.__repr__()

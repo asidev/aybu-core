@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from aybu.core.utils.exceptions import BaseError
 from pyramid import testing
 import logging
 try:
@@ -21,8 +22,6 @@ class ExceptionsTests(unittest.TestCase):
         testing.tearDown()
 
     def test_base_error(self):
-
-        from aybu.controlpanel.libs.exceptions import BaseError
 
         error = BaseError()
         self.assertEqual(str(error), 'BaseError()')
