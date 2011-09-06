@@ -7,6 +7,7 @@ __all__ = ['File', 'Image', 'Banner', 'Language',
            'User', 'Group', 'View', 'ViewDescription']
 
 from logging import getLogger
+from aybu.core.models.base import Base
 from aybu.core.models.file import Banner
 from aybu.core.models.file import File
 from aybu.core.models.file import Image

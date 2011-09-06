@@ -84,7 +84,6 @@ class NodeTests(BaseTests):
         # Node.get_max_weight return None when the query is empty.
         self.assertEqual(Node.get_max_weight(self.session, parent=node3), None)
 
-
     def test_validates(self):
         node_1 = Node(id=5, parent=None, weight=1, children=[])
         node_2 = Node(id=69, parent=None, weight=1, children=[])

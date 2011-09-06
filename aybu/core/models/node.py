@@ -123,7 +123,7 @@ class Page(Node):
     __mapper_args__ = {'polymorphic_identity': 'page'}
 
     home = Column(Boolean, default=False)
-    sitemap_priority = Column(Integer, default=50, nullable=False)
+    sitemap_priority = Column(Integer, default=50)
     banners = relationship('Banner', secondary=node_banners)
 
     view_id = Column(Integer, ForeignKey('views.id',
@@ -132,32 +132,13 @@ class Page(Node):
     view = relationship('View')
 
     @classmethod
-    def set_homepage(cls, session, page):
-        # Get the old home and set the attribute home to False
-
-        # Set the page passed as argument to home setting it's own attribute
-        # home to True
-        pass
+    def get_homepage(cls, session, page):
+        return session.query(cls).filter(cls.home == True).one()
 
     @classmethod
-    def check_page_limit(cls, session):
-        q = session.query(Setting)
-        max_pages_setting = q.filter(Setting.name=='max_pages').one()
-        max_pages = max_pages_setting.value
-
-        if max_pages <= 0:
-            log.debug('No limit to pages can be created')
-            return True
-
-        log.debug('The maximun number of pages can be created is %d' % count)
-
-        num_pages = session.query(Page).count()
-        log.debug('The total number of pages is %d' % num_pages)
-
-        if max_pages <= num_pages:
-            return False
-
-        return True
+    def set_homepage(cls, session, page):
+        session.query(cls).update(dict(home=False))
+        session.query(cls).filter(cls.id == page).update(dict(home=True))
 
 
 class Section(Node):

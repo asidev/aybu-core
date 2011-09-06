@@ -20,21 +20,21 @@ class ExceptionsTests(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def test_validate_error(self):
+    def test_base_error(self):
 
-        from aybu.controlpanel.libs.exceptions import ValidationError
+        from aybu.controlpanel.libs.exceptions import BaseError
 
-        error = ValidationError()
-        self.assertEqual(str(error), 'ValidationError()')
+        error = BaseError()
+        self.assertEqual(str(error), 'BaseError()')
 
         message = 'Message'
-        error = ValidationError(message)
+        error = BaseError(message)
         self.assertEqual(str(error), message)
 
-        error = ValidationError('Message', 'Arg 1', 'Arg 2')
+        error = BaseError('Message', 'Arg 1', 'Arg 2')
         self.assertEqual(str(error),
-                         "ValidationError('Message', 'Arg 1', 'Arg 2')")
+                         "BaseError('Message', 'Arg 1', 'Arg 2')")
 
         args = ('Error: %s, %s', 'arg1', 'arg2')
-        error = ValidationError(*args)
+        error = BaseError(*args)
         self.assertEqual(str(error), args[0] % (args[1], args[2]))
