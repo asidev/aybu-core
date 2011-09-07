@@ -8,7 +8,22 @@ from test_base import BaseTests
 
 log = getLogger(__name__)
 
+
 class LanguageTests(BaseTests):
+
+    def test_str_and_repr(self):
+        language = Language(lang=u'it', country=u'it')
+        self.session.add(language)
+        self.session.flush()
+        self.assertEqual(str(language), '<Language it_IT [enabled]>')
+
+        language.enabled = True
+        self.session.flush()
+        self.assertEqual(str(language), '<Language it_IT [enabled]>')
+
+        language.enabled = False
+        self.session.flush()
+        self.assertEqual(str(language), '<Language it_IT [disabled]>')
 
     def test_set_attr(self):
         languages = []
