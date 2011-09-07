@@ -4,7 +4,7 @@
 """ Copyright © 2010 Asidev s.r.l. - www.asidev.com """
 
 from aybu.core.models.base import Base
-from aybu.core.models.types import SHA1
+from aybu.core.models.types import Crypt
 from logging import getLogger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -38,7 +38,7 @@ class User(Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
     username = Column(Unicode(255), primary_key=True)
-    password = Column(SHA1(), nullable=False)
+    password = Column(Crypt(), nullable=False)
 
     groups = relationship('Group', secondary=users_groups, backref='users')
 
