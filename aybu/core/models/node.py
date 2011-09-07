@@ -147,13 +147,32 @@ class Page(Node):
         session.query(cls).update(dict(home=False))
         session.query(cls).filter(cls.id == page.id).update(dict(home=True))
 
+    @classmethod
+    def set_default_homepage(cls, session):
+        try:
+            cls.get_homepage(session)
+            return
+        except NoResultFound as e:
+            log.debug(e)
+
+        query = session.query(func.min(Page.weight).label('min_weight'))
+        criterion = Page.parent.has(and_(Menu.weight == 1,
+                                         Menu.parent == None))
+        query = query.filter(criterion).group_by(Page.weight)
+
+        criterion = and_(Page.parent.has(and_(Menu.weight == 1,
+                                              Menu.parent == None)),
+                         Page.weight == query.subquery())
+        query = session.query(Page).filter(criterion)
+        query.update(dict(home=True), synchronize_session='fetch')
+
     @validates('view')
     def validate_view(self, key, value):
         if value is None:
             raise ValidationError()
 
-        # The following control should be already checked by sqlalchemy maybe
-        # is redundant
+        # The following control should be already checked by sqlalchemy when
+        # the object is added to the session
         if not isinstance(value, View):
             raise ValidationError()
 

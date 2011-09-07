@@ -3,8 +3,7 @@
 
 from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
-from aybu.core.models import ExternalLink
-from aybu.core.models.view import View
+from aybu.core.models import ExternalLink, View
 from sqlalchemy.orm.exc import MultipleResultsFound
 from logging import getLogger
 from test_base import BaseTests
@@ -189,6 +188,29 @@ class PageTests(BaseTests):
         Page.set_homepage(self.session, page_2)
         self.assertEqual(page_2, Page.get_homepage(self.session))
 
+    def test_set_default_homepage(self):
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+        page_1 = Page(id=2, parent=menu, weight=1)
+        self.session.add(page_1)
+        page_2 = Page(id=3, parent=menu, weight=2)
+        self.session.add(page_2)
+        page_3 = Page(id=4, parent=menu, weight=3)
+        self.session.add(page_3)
+        page_4 = Page(id=5, parent=menu, weight=4, home=True)
+        self.session.add(page_4)
+        self.session.flush()
+
+        Page.set_default_homepage(self.session)
+        self.assertEqual(page_4, Page.get_homepage(self.session))
+
+        page_4.home = False
+        self.session.commit()
+
+        Page.set_default_homepage(self.session)
+        self.assertEqual(page_1, Page.get_homepage(self.session))
+
+
     def tests_validate_view(self):
         view = View(id=1, name='TEST VIEW', fs_view_path='/pages/full.mako')
         self.session.add(view)
@@ -200,7 +222,3 @@ class PageTests(BaseTests):
         for v in (None, {}, [], ''):
             with self.assertRaises(ValidationError):
                 Page(id=3, parent=menu, weight=1, view=v, home=True)
-
-
-
-
