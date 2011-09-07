@@ -32,6 +32,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
+import json
 
 log = getLogger(__name__)
 
@@ -55,7 +56,7 @@ def engine_from_config_parser(config):
     options = {}
 
     for section in config.sections():
-        for option in config.options(section):
+        for option in config.options(section):  
             if option.startswith('sqlalchemy.'):
                 options[option] = config.get(section, option)
 
@@ -125,30 +126,23 @@ def add_default_data(session, data):
 
         session.add(cls(**params))
 
-def fill_db(session):
+def default_data_from_config(config):
 
-    #FIXME: add nodeinfo.url in default_data.json
+    options = {}
 
-    # Build the NodeInfo.url for each NodeInfo object.
-    for info in nodes_info.itervalues():
+    for section in config.sections():
+        for option in config.options(section):
 
-        node_info = info.node
-        if not isinstance(node_info, Page):
-            continue
+            if not option.startswith('default_data'):
+                continue
 
-        url_parts = [info.url_part]
+            file_ = str(config.get(section, option))
 
-        node = node_info
-        while not node.parent is None:
-            node = node.parent
-            for node_translation in node.translations:
-                if node_translation.lang == info.lang:
-                    url_parts.insert(0, node_translation.url_part)
-                    break
+            if not file_:
+                continue
 
-        url_parts.insert(0, info.lang.lang)
-
-        info.url = '/%s.html' % ('/'.join(url_parts))
+            data = open(file_).read()
+            return json.loads(data)
 
 def default_user_from_config(config):
 
