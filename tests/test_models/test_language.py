@@ -44,17 +44,14 @@ class LanguageTests(BaseTests):
             for j in xrange(i, len(languages)):
                 self.assertEqual(languages[i], languages[j])
 
-
     def test_get_by_lang(self):
 
         languages = [
             Language(id=1, lang=u'it', country=u'IT', enabled=True),
-            Language(id=2, lang=u'it', country=u'CH', enabled=False)
-        ]
+            Language(id=2, lang=u'it', country=u'CH', enabled=False)]
 
         for language in languages:
             self.session.add(language)
-
 
         self.session.commit()
 
@@ -62,7 +59,6 @@ class LanguageTests(BaseTests):
         self.assertIn(Language.get_by_lang(self.session, u'IT'), languages)
         self.assertIn(Language.get_by_lang(self.session, u'It'), languages)
         self.assertIn(Language.get_by_lang(self.session, u'iT'), languages)
-
 
         self.session.add(Language(id=3, lang=u'en', country=u'GB',
                                   enabled=True))
@@ -73,7 +69,6 @@ class LanguageTests(BaseTests):
         self.assertNotIn(Language.get_by_lang(self.session, u'En'), languages)
         self.assertNotIn(Language.get_by_lang(self.session, u'eN'), languages)
 
-
     def test_get_by_enabled(self):
 
         languages = [
@@ -83,8 +78,7 @@ class LanguageTests(BaseTests):
             Language(id=4, lang=u'de', country=u'DE', enabled=False),
             Language(id=5, lang=u'fr', country=u'FR', enabled=False),
             Language(id=6, lang=u'ru', country=u'RU', enabled=False),
-            Language(id=7, lang=u'zh', country=u'CN', enabled=False)
-        ]
+            Language(id=7, lang=u'zh', country=u'CN', enabled=False)]
 
         for language in languages:
             self.session.add(language)
@@ -92,15 +86,15 @@ class LanguageTests(BaseTests):
         self.session.commit()
 
         enabled = Language.get_by_enabled(self.session, True)
-        disabled  = Language.get_by_enabled(self.session, False)
+        disabled = Language.get_by_enabled(self.session, False)
         all = Language.get_by_enabled(self.session)
 
-        for i in xrange(0,3):
+        for i in xrange(0, 3):
             self.assertIn(languages[i], enabled)
             self.assertIn(languages[i], all)
             self.assertNotIn(languages[i], disabled)
 
-        for i in xrange(3,7):
+        for i in xrange(3, 7):
             self.assertIn(languages[i], disabled)
             self.assertIn(languages[i], all)
             self.assertNotIn(languages[i], enabled)
@@ -110,7 +104,6 @@ class LanguageTests(BaseTests):
         self.assertEqual(Locale(u'it', u'IT'), l.locale)
 
         l = Language(id=1, lang=u'it', country=u'it', enabled=True)
-
 
     def test_locales(self):
         l = Language(id=1, lang=u'it', country=u'it', enabled=True)
@@ -130,8 +123,7 @@ class LanguageTests(BaseTests):
             Language(id=4, lang=u'de', country=u'DE', enabled=False),
             Language(id=5, lang=u'fr', country=u'FR', enabled=False),
             Language(id=6, lang=u'ru', country=u'RU', enabled=False),
-            Language(id=7, lang=u'zh', country=u'CN', enabled=False)
-        ]
+            Language(id=7, lang=u'zh', country=u'CN', enabled=False)]
 
         for language in languages:
             self.session.add(language)
