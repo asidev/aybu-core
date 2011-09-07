@@ -32,7 +32,7 @@ class SettingType(Base):
     raw_type = Column(String(8), nullable=False)
 
     def __repr__(self):
-        return "<SettingType %s>" % (self.name)
+        return "<SettingType %s (%s)>" % (self.name, self.raw_type)
 
 
 class Setting(Base):
@@ -51,7 +51,7 @@ class Setting(Base):
     type = relationship('SettingType', backref='settings')
 
     def __repr__(self):
-        return "<Setting %s (%s)>" % (self.name, self.raw_type)
+        return "<Setting %s (%s)>" % (self.name, self.value)
 
     @classmethod
     def get_all(cls, session):
@@ -63,10 +63,10 @@ class Setting(Base):
             is greater or equal then 'max_pages' setting.
 
             Query:
-            SELECT count(?) AS count_1 
-            FROM settings WHERE settings.name = ? AND 
-                 settings.value < (SELECT count(nodes.id) AS count_2 
-                                   FROM nodes 
+            SELECT count(?) AS count_1
+            FROM settings WHERE settings.name = ? AND
+                 settings.value < (SELECT count(nodes.id) AS count_2
+                                   FROM nodes
                                    WHERE nodes.row_type IN (?))
 
         """
