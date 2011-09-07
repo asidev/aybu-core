@@ -85,14 +85,12 @@ class Language(Base):
         try:
             locale = Locale(self.lang, self.country)
             yield locale
-
         except UnknownLocale as e:
             log.debug(e)
 
         try:
             locale = Locale(self.lang)
             yield locale
-
         except UnknownLocale as e:
             log.debug(e)
 
