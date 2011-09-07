@@ -24,6 +24,7 @@ from sqlalchemy.sql import func
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
 from aybu.core.models.language import Language
+from aybu.core.models.node import Page
 
 
 __all__ = []
@@ -35,6 +36,8 @@ log = getLogger(__name__)
 class NodeInfo(Base):
 
     __tablename__ = 'node_infos'
+    __table_args__ = (UniqueConstraint('node_id', 'lang_id'),
+                      {'mysql_engine': 'InnoDB'})
 
     id = Column(Integer, primary_key=True)
     label = Column(Unicode(64), nullable=False)
@@ -117,43 +120,16 @@ class NodeInfo(Base):
         return session.query(cls).filter(criterion).one()
 
     @classmethod
-    def get_homepage(cls, session, language=None):
-
-        # Get the NodeInfo which belongs to the 'home' Node.
-        query = session.query(cls).filter(cls.node.has(Page.home == True))
-
-        if not language is None:
-            query = query.filter(cls.lang == language)
+    def get_homepage(cls, session, language):
 
         try:
-            return query.one()
-        except NoResultFound as e:
-            log.debug(e)
+            Page.get_homepage(session)
+        except (MultipleResultsFound, NoResultFound) as e:
+            Page.set_default_homepage(session)
 
-        # There is no node with home == True.
-        # Get the NodeInfo of the Page with min weight in the main Menu.
-        query = session.query(func.min(Page.weight).label('min_weight'))
-        criterion = Page.parent.has(and_(Menu.weight == 1,
-                                         Menu.parent == None))
-        query = query.filter(criterion).group_by(Page.weight)
-        criterion = and_(Page.parent.has(and_(Menu.weight == 1,
-                                              Menu.parent == None)),
-                         Page.weight == query.subquery())
-        query = session.query(Page).filter(criterion)
+        query = session.query(Page).filter(Page.home==True)
         page = aliased(Page, query.subquery())
         query = session.query(cls).filter(cls.lang == language)
         query = query.join(page, cls.node)
+        return query.one()
 
-        home = query.first()
-        if home is None:
-            # The previous query is empty.
-            # Get the NodeInfo of the first inserted Page.
-            query = session.query(cls).filter(cls.lang == language)
-            query = query.join(Page).order_by(asc(Page.id))
-            home = query.first()
-
-        if not home is None:
-            home.node.home = True
-            session.commit()
-
-        return home
