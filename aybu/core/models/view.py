@@ -15,7 +15,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 
 
-__all__ = []
+__all__ = ['View', 'ViewDescription']
 
 log = getLogger(__name__)
 

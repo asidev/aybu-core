@@ -4,6 +4,7 @@
 from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
+from aybu.core.models.view import View
 from collections import deque
 from logging import getLogger
 from sqlalchemy import and_
@@ -86,7 +87,7 @@ class Node(Base):
 
     @validates('parent')
     def validate_parent(self, key, value):
-        log.debug('Validate parent : %s, %s,%s', self, key, value)
+        #log.debug('Validate parent : %s, %s,%s', self, key, value)
         if isinstance(self, Menu):
             if value != None:
                 raise ValidationError()
@@ -98,6 +99,7 @@ class Node(Base):
 
     @validates('children')
     def validate_children(self, key, value):
+        #log.debug('Validate children : %s, %s,%s', self, key, value)
         if isinstance(self, (ExternalLink, InternalLink)):
             if value != None or value != []:
                 raise ValidationError()
@@ -137,14 +139,25 @@ class Page(Node):
     view = relationship('View')
 
     @classmethod
-    def get_homepage(cls, session, page):
+    def get_homepage(cls, session):
         return session.query(cls).filter(cls.home == True).one()
 
     @classmethod
     def set_homepage(cls, session, page):
         session.query(cls).update(dict(home=False))
-        session.query(cls).filter(cls.id == page).update(dict(home=True))
+        session.query(cls).filter(cls.id == page.id).update(dict(home=True))
 
+    @validates('view')
+    def validate_view(self, key, value):
+        if value is None:
+            raise ValidationError()
+
+        # The following control should be already checked by sqlalchemy maybe
+        # is redundant
+        if not isinstance(value, View):
+            raise ValidationError()
+
+        return value
 
 class Section(Node):
 
