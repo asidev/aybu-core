@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import random
+import string
+
 from aybu.core.models import Language
 from babel import Locale
+from babel.core import LOCALE_ALIASES, UnknownLocaleError
 from logging import getLogger
 from test_base import BaseTests
 
@@ -115,10 +119,43 @@ class LanguageTests(BaseTests):
             self.assertNotIn(languages[i], enabled)
 
     def test_locale(self):
-        l = Language(id=1, lang=u'it', country=u'it', enabled=True)
-        self.assertEqual(Locale(u'it', u'IT'), l.locale)
 
-        l = Language(id=1, lang=u'it', country=u'it', enabled=True)
+        counter = 1
+        for lang in LOCALE_ALIASES.keys():
+            country = LOCALE_ALIASES[lang][3:]
+            language = Language(id=counter, lang=lang, country=country,
+                                enabled=True)
+            self.session.add(language)
+            counter = counter + 1
+            try:
+                loc = Locale(lang, country)
+            except UnknownLocaleError as e:
+                try:
+                    loc = Locale(lang)
+                except UnknownLocaleError as e:
+                    loc = None
+            self.assertEqual(loc, language.locale)
+
+        for i in xrange(0, 1000):
+            generated_lang = LOCALE_ALIASES.keys()[0]
+            while generated_lang in LOCALE_ALIASES.keys():
+                generated_lang = "".join(random.sample(string.letters, 2))
+                generated_lang = generated_lang.lower()
+
+            language = Language(id=counter, lang=generated_lang,
+                                country=generated_lang, enabled=True)
+            self.session.add(language)
+            counter = counter + 1
+            loc = None
+            try:
+                loc = Locale(generated_lang, generated_lang.upper())
+            except UnknownLocaleError as e:
+                try:
+                    loc = Locale(generated_lang)
+                except UnknownLocaleError as e:
+                    loc = None
+
+            self.assertEqual(loc, language.locale)
 
     def test_locales(self):
         l = Language(id=1, lang=u'it', country=u'it', enabled=True)
@@ -129,6 +166,64 @@ class LanguageTests(BaseTests):
 
         self.assertIn(Locale(u'it', u'IT'), locales)
         self.assertIn(Locale(u'it'), locales)
+
+
+        counter = 1
+        for lang in LOCALE_ALIASES.keys():
+            country = LOCALE_ALIASES[lang][3:]
+            language = Language(id=counter, lang=lang, country=country,
+                                enabled=True)
+            self.session.add(language)
+            counter = counter + 1
+            locale_list = []
+            try:
+                loc = Locale(lang, country)
+                locale_list.append(loc)
+            except UnknownLocaleError as e:
+                pass
+            try:
+                loc = Locale(lang)
+                locale_list.append(loc)
+            except UnknownLocaleError as e:
+                pass
+
+            locales = []
+            for l in language.locales:
+                locales.append(l)
+
+            for loc in locale_list:
+                self.assertIn(loc, locales)
+
+        for i in xrange(0, 1000):
+            generated_lang = LOCALE_ALIASES.keys()[0]
+            while generated_lang in LOCALE_ALIASES.keys():
+                generated_lang = "".join(random.sample(string.letters, 2))
+                generated_lang = generated_lang.lower()
+
+            language = Language(id=counter, lang=generated_lang,
+                                country=generated_lang, enabled=True)
+            self.session.add(language)
+            counter = counter + 1
+            locale_list = []
+            try:
+                loc = Locale(generated_lang, generated_lang.upper())
+                locale_list.append(loc)
+            except UnknownLocaleError as e:
+                pass
+
+            try:
+                loc = Locale(generated_lang)
+                locale_list.append(loc)
+            except UnknownLocaleError as e:
+                pass
+
+            locales = []
+            for l in language.locales:
+                locales.append(l)
+
+            for loc in locale_list:
+                self.assertIn(loc, locales)
+
 
     def test_get_locales(self):
         languages = [

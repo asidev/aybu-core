@@ -83,14 +83,14 @@ class Language(Base):
     def locales(self):
 
         try:
-            locale = Locale(self.lang, self.country)
-            yield locale
+            l = Locale(self.lang, self.country)
+            yield l
         except UnknownLocale as e:
             log.debug(e)
 
         try:
-            locale = Locale(self.lang)
-            yield locale
+            l = Locale(self.lang)
+            yield l
         except UnknownLocale as e:
             log.debug(e)
 
