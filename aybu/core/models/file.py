@@ -8,7 +8,7 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 import logging
 import os
-import PIL
+#import PIL
 
 from aybu.core.models.base import Base
 
