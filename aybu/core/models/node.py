@@ -108,26 +108,6 @@ class Node(Base):
     @classmethod
     def create(cls, session, **params):
         """ Create a persistent 'cls' object and return it."""
-        """
-           NOTA PER LUCA: questa è la tipologia di funzione che ti dicevo oggi.
-           In pratica dovrebbe fare le validazioni non possibili con @validates
-           e poi eseguire l'azione in questo caso invocare il costruttore.
-
-            Metterle qui come class method permette di sfruttare la derivazione
-            e secondo me è molto più potente rispetto ad averle come funzioni
-            che si chiamano fra loro.
-
-            Le funzioni di default sono: 'create', 'update' e 'delete'.
-            Poi ci sarà una 'index' e una 'search'.
-
-            La 'move' o altre funzioni che ti vengono in mente secondo me,
-            ma con Alkahest ho fatto molta palestra,
-            ricadono tutte nelle precedenti o in una combinazione di esse.
-            Perciò se all'inizio non ti viene in mente come fare passaci
-            più tempo per vedere se ti viene oppure mandami una email.
-            Giovedì (oggi) non ci posso essere in ufficio, ma mi trovi al 
-            telefono.
-        """
         if cls == Node:
             raise ValidationError('cls: Node creation is not allowed!')
 

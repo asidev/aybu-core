@@ -141,6 +141,15 @@ class NodeTests(BaseTests):
             menu.children.append(child_page)
             menu.children.append(child_section)
 
+    def test_create(self):
+
+        with self.assertRaises(ValidationError):
+            Node.create(self.session, id=1, parent=None, weight=1)
+
+        menu = Menu.create(self.session, id=1, parent=None)
+        page = Page.create(self.session, id=2, parent=menu)
+
+
 
 class PageTests(BaseTests):
 
@@ -222,3 +231,4 @@ class PageTests(BaseTests):
         for v in (None, {}, [], ''):
             with self.assertRaises(ValidationError):
                 Page(id=3, parent=menu, weight=1, view=v, home=True)
+
