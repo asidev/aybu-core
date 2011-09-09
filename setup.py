@@ -37,11 +37,6 @@ setup(name='aybu-core',
                 ('**.py', 'python', None),
                 ('templates/**.mako', 'mako', {'input_encoding': 'utf-8'}),
                 ('static/**', 'ignore', None)
-            ],
-            'aybu.themes': [
-                ('*/templates/**.mako', 'mako', {'input_encoding': 'utf-8'}),
-                ('*/static/**', 'ignore', None)
-
             ]
       },
       entry_points = """\
