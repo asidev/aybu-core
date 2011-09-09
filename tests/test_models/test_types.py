@@ -20,7 +20,7 @@ class CryptTests(BaseTests):
 
     def test_crypt(self):
 
-        for i in xrange(0, 1000):
+        for i in xrange(0, 100):
             for j in xrange(3,8):
                 password = "".join(random.sample('%s%s' % (string.letters,
                                                            string.digits), j))
