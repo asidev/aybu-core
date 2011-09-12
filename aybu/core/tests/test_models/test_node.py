@@ -219,8 +219,7 @@ class PageTests(BaseTests):
         Page.set_default_homepage(self.session)
         self.assertEqual(page_1, Page.get_homepage(self.session))
 
-
-    def tests_validate_view(self):
+    def test_validate_view(self):
         view = View(id=1, name='TEST VIEW', fs_view_path='/pages/full.mako')
         self.session.add(view)
         menu = Menu(id=1, parent=None, weight=1)
@@ -232,3 +231,19 @@ class PageTests(BaseTests):
             with self.assertRaises(ValidationError):
                 Page(id=3, parent=menu, weight=1, view=v, home=True)
 
+    def test_is_last_page(self):
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+        page_1 = Page(id=2, parent=menu, weight=1)
+        self.session.add(page_1)
+
+        self.session.commit()
+
+        self.assertEqual(True, Page.is_last_page(self.session))
+
+        page_2 = Page(id=3, parent=menu, weight=2)
+        self.session.add(page_2)
+
+        self.session.commit()
+
+        self.assertEqual(False, Page.is_last_page(self.session))

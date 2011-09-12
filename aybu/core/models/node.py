@@ -188,6 +188,10 @@ class Page(Node):
 
         return value
 
+    @classmethod
+    def is_last_page(cls, session):
+        return True if session.query(cls).count() == 1 else False
+
 class Section(Node):
 
     __mapper_args__ = {'polymorphic_identity': 'section'}
