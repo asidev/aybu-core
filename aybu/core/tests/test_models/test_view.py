@@ -1,14 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import View, ViewDescription, Language
 from logging import getLogger
 from test_base import BaseTests
-try:
-    import unittest2 as unittest
-except:
-    import unittest
 
 log = getLogger(__name__)
 
@@ -33,7 +28,7 @@ class ViewDescriptionTests(BaseTests):
         en = Language(lang=u'en', country=u'gb')
         self.session.add(en)
 
-        view_description_it = ViewDescription(description='Descrizione di test',
+        view_description_it = ViewDescription(description='Descrizione test',
                                               view=view, language=it)
         view_description_en = ViewDescription(description='Test description',
                                               view=view, language=en)
@@ -42,6 +37,6 @@ class ViewDescriptionTests(BaseTests):
         self.session.flush()
 
         self.assertEqual(str(view_description_it),
-                         "<ViewDescription Descrizione di test>")
+                         "<ViewDescription Descrizione test>")
         self.assertEqual(str(view_description_en),
                          "<ViewDescription Test description>")

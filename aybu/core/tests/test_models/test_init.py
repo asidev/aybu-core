@@ -5,19 +5,12 @@ from aybu.core.models import add_default_data
 from aybu.core.models import default_data_from_config
 from aybu.core.models import default_user_from_config
 from aybu.core.models import engine_from_config_parser
-from aybu.core.models import Page
 from aybu.core.models import Setting
-from aybu.core.models import SettingType
-from aybu.core.utils.exceptions import ConstraintError
 from logging import getLogger
 from test_base import BaseTests
 import ConfigParser
 import json
 import StringIO
-try:
-    import unittest2 as unittest
-except:
-    import unittest
 
 log = getLogger(__name__)
 
@@ -72,7 +65,7 @@ default_data = data/default_data.json
 
         self.assertIn(self.session.query(Setting).get('max_pages'),
                       self.session.query(Setting).all())
-        
+
     def test_default_user_from_config(self):
         file_ = StringIO.StringIO(
 """

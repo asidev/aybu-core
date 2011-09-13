@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from aybu.core.utils.exceptions import ValidationError
-from aybu.core.models import Menu, Page, NodeInfo, Language
+from aybu.core.models import Menu, Page, PageInfo, Section, SectionInfo
+from aybu.core.models import Language
 from logging import getLogger
 from test_base import BaseTests
-try:
-    import unittest2 as unittest
-except:
-    import unittest
 
 log = getLogger(__name__)
 
@@ -18,19 +14,18 @@ class NodeInfoTests(BaseTests):
     def test_str_and_repr(self):
         menu = Menu(id=1, parent=None, weight=1)
         self.session.add(menu)
-        page = Page(id=2, parent=menu, weight=1)
-        self.session.add(page)
+        section = Section(id=2, parent=menu, weight=1)
+        self.session.add(section)
         lang = Language(lang=u'it', country=u'it')
         self.session.add(lang)
 
-        node_info = NodeInfo(id=1, label='Home', title='Pagina Principale',
-                             url_part='index', url='/it/index.html', node=page,
-                             lang=lang)
-        self.session.add(node_info)
+        section_info = SectionInfo(id=1, label='Azienda', title='Azienda',
+                             url_part='azienda', node=section, lang=lang)
+        self.session.add(section_info)
         self.session.flush()
 
-        self.assertEqual(str(node_info),
-                         "<NodeInfo [1] 'Home' /it/index.html>")
+        self.assertEqual(str(section_info),
+                         "<SectionInfo [1] 'Azienda'>")
 
     def test_get_by_url(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -42,21 +37,21 @@ class NodeInfoTests(BaseTests):
         en = Language(lang=u'en', country=u'gb')
         self.session.add(en)
 
-        node_info_1 = NodeInfo(id=1, label='Home', title='Pagina Principale',
+        page_info_1 = PageInfo(id=1, label='Home', title='Pagina Principale',
                              url_part='index', url='/it/index.html', node=page,
                              lang=it)
-        self.session.add(node_info_1)
+        self.session.add(page_info_1)
 
-        node_info_2 = NodeInfo(id=2, label='Home', title='Main Page',
+        page_info_2 = PageInfo(id=2, label='Home', title='Main Page',
                              url_part='index', url='/en/index.html', node=page,
                              lang=en)
-        self.session.add(node_info_2)
+        self.session.add(page_info_2)
 
         self.session.flush()
 
-        self.assertEqual(node_info_1, NodeInfo.get_by_url(self.session,
+        self.assertEqual(page_info_1, PageInfo.get_by_url(self.session,
                                                           '/it/index.html'))
-        self.assertEqual(node_info_2, NodeInfo.get_by_url(self.session,
+        self.assertEqual(page_info_2, PageInfo.get_by_url(self.session,
                                                           '/en/index.html'))
 
     def test_get_homepage(self):
@@ -76,32 +71,53 @@ class NodeInfoTests(BaseTests):
         en = Language(lang=u'en', country=u'gb')
         self.session.add(en)
 
-        node_info_1 = NodeInfo(id=1, label='Home', title='Pagina Principale',
-                             url_part='index', url='/it/index.html', node=page_4,
-                             lang=it)
-        self.session.add(node_info_1)
+        page_info_1 = PageInfo(id=1, label='Home', title='Pagina Principale',
+                               url_part='index', url='/it/index.html',
+                               node=page_4, lang=it)
+        self.session.add(page_info_1)
 
-        node_info_2 = NodeInfo(id=2, label='Home', title='Main Page',
-                             url_part='index', url='/en/index.html', node=page_4,
-                             lang=en)
-        self.session.add(node_info_2)
+        page_info_2 = PageInfo(id=2, label='Home', title='Main Page',
+                               url_part='index', url='/en/index.html',
+                               node=page_4, lang=en)
+        self.session.add(page_info_2)
 
-        node_info_3 = NodeInfo(id=3, label='Home 2', title='Pagina Principale 2',
-                             url_part='index', url='/it/index2.html', node=page_1,
-                             lang=it)
-        self.session.add(node_info_1)
+        page_info_3 = PageInfo(id=3, label='Home 2',
+                               title='Pagina Principale 2',
+                               url_part='index', url='/it/index2.html',
+                               node=page_1, lang=it)
+        self.session.add(page_info_1)
 
-        node_info_4 = NodeInfo(id=4, label='Home 2', title='Main Page 2',
-                             url_part='index', url='/en/index2.html', node=page_1,
-                             lang=en)
-        self.session.add(node_info_2)
+        page_info_4 = PageInfo(id=4, label='Home 2', title='Main Page 2',
+                             url_part='index', url='/en/index2.html',
+                             node=page_1, lang=en)
+        self.session.add(page_info_2)
 
         self.session.flush()
 
-        self.assertEqual(NodeInfo.get_homepage(self.session, it), node_info_1)
-        self.assertEqual(NodeInfo.get_homepage(self.session, en), node_info_2)
+        self.assertEqual(PageInfo.get_homepage(self.session, it), page_info_1)
+        self.assertEqual(PageInfo.get_homepage(self.session, en), page_info_2)
 
         page_4.home = False
 
-        self.assertEqual(NodeInfo.get_homepage(self.session, it), node_info_3)
-        self.assertEqual(NodeInfo.get_homepage(self.session, en), node_info_4)
+        self.assertEqual(PageInfo.get_homepage(self.session, it), page_info_3)
+        self.assertEqual(PageInfo.get_homepage(self.session, en), page_info_4)
+
+
+class PageInfoTests(BaseTests):
+
+    def test_str_and_repr(self):
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+        page = Page(id=2, parent=menu, weight=1)
+        self.session.add(page)
+        lang = Language(lang=u'it', country=u'it')
+        self.session.add(lang)
+
+        page_info = PageInfo(id=1, label='Home', title='Pagina Principale',
+                             url_part='index', url='/it/index.html', node=page,
+                             lang=lang)
+        self.session.add(page_info)
+        self.session.flush()
+
+        self.assertEqual(str(page_info),
+                         "<PageInfo [1] 'Home' /it/index.html>")

@@ -7,10 +7,6 @@ from aybu.core.models import ExternalLink, View
 from sqlalchemy.orm.exc import MultipleResultsFound
 from logging import getLogger
 from test_base import BaseTests
-try:
-    import unittest2 as unittest
-except:
-    import unittest
 
 log = getLogger(__name__)
 
@@ -98,8 +94,10 @@ class NodeTests(BaseTests):
 
     def test_validate_invalid_parent(self):
         menu = Menu(id=1, parent=None)
+        """
         page = Page(id=2, parent=menu)
         section = Section(id=3, parent=menu)
+        """
         external_link = ExternalLink(id=4, parent=menu)
         internal_link = InternalLink(id=5, parent=menu)
         # Nodes different from Menu can only have page, section and Menu as
@@ -124,8 +122,10 @@ class NodeTests(BaseTests):
         menu = Menu(id=1, parent=None)
         page = Page(id=2, parent=menu)
         section = Section(id=3, parent=menu)
+        """
         external_link = ExternalLink(id=4, parent=menu)
         internal_link = InternalLink(id=5, parent=menu)
+        """
 
         child_page = Page(id=6, parent=menu)
         child_section = Section(id=7, parent=menu)
@@ -148,8 +148,7 @@ class NodeTests(BaseTests):
 
         menu = Menu.create(self.session, id=1, parent=None)
         page = Page.create(self.session, id=2, parent=menu)
-
-
+        # TODO test create when finished to be implemented
 
 class PageTests(BaseTests):
 
@@ -220,7 +219,7 @@ class PageTests(BaseTests):
         self.assertEqual(page_1, Page.get_homepage(self.session))
 
     def test_validate_view(self):
-        view = View(id=1, name='TEST VIEW', fs_view_path='/pages/full.mako')
+        view = View(id=1, name=u'TEST VIEW', fs_view_path=u'/pages/full.mako')
         self.session.add(view)
         menu = Menu(id=1, parent=None, weight=1)
         self.session.add(menu)

@@ -7,10 +7,6 @@ from aybu.core.models import SettingType
 from aybu.core.utils.exceptions import ConstraintError
 from logging import getLogger
 from test_base import BaseTests
-try:
-    import unittest2 as unittest
-except:
-    import unittest
 
 log = getLogger(__name__)
 
@@ -63,7 +59,6 @@ class SettingTests(BaseTests):
 
         for setting in (max_pages, site_title):
             self.assertIn(setting, settings)
-
 
 
 class SettingTypeTests(BaseTests):
