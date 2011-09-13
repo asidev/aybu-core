@@ -46,8 +46,8 @@ class NodeInfo(Base):
     lang = relationship('Language')
 
     def __repr__(self):
-        return "<NodeInfo [%d] '%s'>" % (self.id,
-                                            self.label.encode('utf8'))
+        return "<%s [%d] '%s'>" % (self.__class__.__name__, self.id,
+                                   self.label.encode('utf8'))
 
     @classmethod
     def create(cls, session, **params):
@@ -59,7 +59,9 @@ class NodeInfo(Base):
         session.add(entity)
         return entity
 
-class CommonInfo(object):
+class CommonInfo(NodeInfo):
+
+    #__mapper_args__ = {'polymorphic_identity': 'common_info'}
 
     title = Column(Unicode(64), default=None)
     url_part = Column(Unicode(64), default=None)
@@ -71,7 +73,7 @@ class CommonInfo(object):
     head_content = Column(UnicodeText(), default=u'')
 
 
-class PageInfo(NodeInfo, CommonInfo):
+class PageInfo(CommonInfo):
 
     __mapper_args__ = {'polymorphic_identity': 'page_info'}
 
@@ -123,8 +125,8 @@ class PageInfo(NodeInfo, CommonInfo):
                                            onupdate="cascade",
                                            ondelete="cascade")))
     links = relationship('PageInfo', secondary=_links_table,
-                         primaryjoin=id==_links_table.c.inverse_id,
-                         secondaryjoin=id==_links_table.c.links_id)
+                         primaryjoin=NodeInfo.id==_links_table.c.inverse_id,
+                         secondaryjoin=NodeInfo.id==_links_table.c.links_id)
 
     def __repr__(self):
         url = '' if self.url is None else self.url
@@ -153,7 +155,7 @@ class PageInfo(NodeInfo, CommonInfo):
         return query.one()
 
 
-class SectionInfo(NodeInfo, CommonInfo):
+class SectionInfo(CommonInfo):
 
     __mapper_args__ = {'polymorphic_identity': 'section_info'}
 
@@ -171,4 +173,4 @@ class InternalLinkInfo(NodeInfo):
 
     __mapper_args__ = {'polymorphic_identity': 'internallink_info'}
 
-    node = relationship('InternallLink', backref='translations')
+    node = relationship('InternalLink', backref='translations')

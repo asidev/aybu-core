@@ -41,11 +41,11 @@ import json
 
 log = getLogger(__name__)
 
-def populate(config):
+def populate(config, data):
 
     engine = engine_from_config_parser(config)
     session = create_session(engine)
-    add_default_data(session)
+    add_default_data(session, data)
 
     user = default_user_from_config(config)
     session.add(user)
