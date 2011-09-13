@@ -168,13 +168,16 @@ class Page(Node):
         query = session.query(func.min(Page.weight).label('min_weight'))
         criterion = Page.parent.has(and_(Menu.weight == 1,
                                          Menu.parent == None))
-        query = query.filter(criterion).group_by(Page.weight)
+
+        query = query.filter(criterion).group_by(Page.parent)
 
         criterion = and_(Page.parent.has(and_(Menu.weight == 1,
                                               Menu.parent == None)),
                          Page.weight == query.subquery())
         query = session.query(Page).filter(criterion)
-        query.update(dict(home=True), synchronize_session='fetch')
+        homepage = query.one()
+
+        homepage.home = True
 
     @validates('view')
     def validate_view(self, key, value):
