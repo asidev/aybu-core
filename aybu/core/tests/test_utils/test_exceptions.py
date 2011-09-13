@@ -4,11 +4,7 @@
 from aybu.core.utils.exceptions import BaseError
 from pyramid import testing
 import logging
-try:
-    import unittest2 as unittest
-except:
-    import unittest
-
+import unittest
 
 log = logging.getLogger(__name__)
 

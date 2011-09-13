@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from logging import getLogger
-try:
-    import unittest2 as unittest
-except:
-    import unittest
+import unittest
 
 log = getLogger(__name__)
+
 
 class LoaderTests(unittest.TestCase):
 
