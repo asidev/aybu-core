@@ -147,8 +147,10 @@ class NodeTests(BaseTests):
             Node.create(self.session, id=1, parent=None, weight=1)
 
         menu = Menu.create(self.session, id=1, parent=None)
-        page = Page.create(self.session, id=2, parent=menu)
+        #page = Page.create(self.session, id=2, parent=menu)
+        Page.create(self.session, id=2, parent=menu)
         # TODO test create when finished to be implemented
+
 
 class PageTests(BaseTests):
 
@@ -163,20 +165,30 @@ class PageTests(BaseTests):
         self.session.add(page_3)
         page_4 = Page(id=5, parent=menu, weight=4)
         self.session.add(page_4)
-        self.session.flush()
 
         self.assertEqual(page_1, Page.get_homepage(self.session))
 
         page_2.home = True
-        self.session.commit()
 
         with self.assertRaises(MultipleResultsFound):
             Page.get_homepage(self.session)
 
         page_1.home = False
-        self.session.commit()
-
         self.assertEqual(page_2, Page.get_homepage(self.session))
+
+        page_2.home = False
+        self.assertEqual(page_1, Page.get_homepage(self.session))
+
+        page_1.home = False
+        section = Section(id=6, parent=menu, weight=5)
+        self.session.add(section)
+        page_1.parent = section
+        page_2.parent = section
+        page_3.parent = section
+        page_4.parent = section
+
+        self.assertIn(Page.get_homepage(self.session), (page_1, page_2, page_3,
+                                                        page_4))
 
     def test_set_homepage(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -189,34 +201,11 @@ class PageTests(BaseTests):
         self.session.add(page_3)
         page_4 = Page(id=5, parent=menu, weight=4)
         self.session.add(page_4)
-        self.session.flush()
 
         self.assertEqual(page_1, Page.get_homepage(self.session))
 
         Page.set_homepage(self.session, page_2)
         self.assertEqual(page_2, Page.get_homepage(self.session))
-
-    def test_set_default_homepage(self):
-        menu = Menu(id=1, parent=None, weight=1)
-        self.session.add(menu)
-        page_1 = Page(id=2, parent=menu, weight=1)
-        self.session.add(page_1)
-        page_2 = Page(id=3, parent=menu, weight=2)
-        self.session.add(page_2)
-        page_3 = Page(id=4, parent=menu, weight=3)
-        self.session.add(page_3)
-        page_4 = Page(id=5, parent=menu, weight=4, home=True)
-        self.session.add(page_4)
-        self.session.flush()
-
-        Page.set_default_homepage(self.session)
-        self.assertEqual(page_4, Page.get_homepage(self.session))
-
-        page_4.home = False
-        self.session.commit()
-
-        Page.set_default_homepage(self.session)
-        self.assertEqual(page_1, Page.get_homepage(self.session))
 
     def test_validate_view(self):
         view = View(id=1, name=u'TEST VIEW', fs_view_path=u'/pages/full.mako')
@@ -236,13 +225,9 @@ class PageTests(BaseTests):
         page_1 = Page(id=2, parent=menu, weight=1)
         self.session.add(page_1)
 
-        self.session.commit()
-
         self.assertEqual(True, Page.is_last_page(self.session))
 
         page_2 = Page(id=3, parent=menu, weight=2)
         self.session.add(page_2)
-
-        self.session.commit()
 
         self.assertEqual(False, Page.is_last_page(self.session))

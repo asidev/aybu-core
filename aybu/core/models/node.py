@@ -5,25 +5,20 @@ from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
 from aybu.core.models.view import View
-from collections import deque
 from logging import getLogger
 from sqlalchemy import and_
-from sqlalchemy import asc
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import Unicode
-from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
-from sqlalchemy.orm import aliased
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
 
 
@@ -149,19 +144,14 @@ class Page(Node):
     view = relationship('View')
 
     @classmethod
-    def get_homepage(cls, session):
-        return session.query(cls).filter(cls.home == True).one()
-
-    @classmethod
     def set_homepage(cls, session, page):
         session.query(cls).update(dict(home=False))
         session.query(cls).filter(cls.id == page.id).update(dict(home=True))
 
     @classmethod
-    def set_default_homepage(cls, session):
+    def get_homepage(cls, session):
         try:
-            cls.get_homepage(session)
-            return
+            return session.query(cls).filter(cls.home == True).one()
         except NoResultFound as e:
             log.debug(e)
 
@@ -177,14 +167,12 @@ class Page(Node):
         query = session.query(Page).filter(criterion)
         try:
             homepage = query.one()
-        except:
+        except NoResultFound:
             homepage = session.query(Page).first()
 
         homepage.home = True
-        session.commit()
 
         return homepage
-
 
     @validates('view')
     def validate_view(self, key, value):
@@ -201,6 +189,7 @@ class Page(Node):
     @classmethod
     def is_last_page(cls, session):
         return True if session.query(cls).count() == 1 else False
+
 
 class Section(Node):
 
@@ -228,4 +217,4 @@ class InternalLink(Node):
 #                          nullable=False)
 
     linked_to = relationship('Page', backref='linked_by', remote_side=Page.id,
-                             primaryjoin='Page.id == InternalLink.linked_to_id')
+                            primaryjoin='Page.id == InternalLink.linked_to_id')
