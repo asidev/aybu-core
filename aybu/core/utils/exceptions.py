@@ -34,6 +34,6 @@ class ValidationError(BaseError):
 
 
 class ConstraintError(BaseError):
-    """ This class must be used by Setting validators 
+    """ This class must be used by Setting validators
         when they fail during checks.
     """

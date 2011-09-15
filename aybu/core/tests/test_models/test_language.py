@@ -129,10 +129,10 @@ class LanguageTests(BaseTests):
             counter = counter + 1
             try:
                 loc = Locale(lang, country)
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 try:
                     loc = Locale(lang)
-                except UnknownLocaleError as e:
+                except UnknownLocaleError:
                     loc = None
             self.assertEqual(loc, language.locale)
 
@@ -149,10 +149,10 @@ class LanguageTests(BaseTests):
             loc = None
             try:
                 loc = Locale(generated_lang, generated_lang.upper())
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 try:
                     loc = Locale(generated_lang)
-                except UnknownLocaleError as e:
+                except UnknownLocaleError:
                     loc = None
 
             self.assertEqual(loc, language.locale)
@@ -167,7 +167,6 @@ class LanguageTests(BaseTests):
         self.assertIn(Locale(u'it', u'IT'), locales)
         self.assertIn(Locale(u'it'), locales)
 
-
         counter = 1
         for lang in LOCALE_ALIASES.keys():
             country = LOCALE_ALIASES[lang][3:]
@@ -179,12 +178,12 @@ class LanguageTests(BaseTests):
             try:
                 loc = Locale(lang, country)
                 locale_list.append(loc)
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 pass
             try:
                 loc = Locale(lang)
                 locale_list.append(loc)
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 pass
 
             locales = []
@@ -208,13 +207,13 @@ class LanguageTests(BaseTests):
             try:
                 loc = Locale(generated_lang, generated_lang.upper())
                 locale_list.append(loc)
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 pass
 
             try:
                 loc = Locale(generated_lang)
                 locale_list.append(loc)
-            except UnknownLocaleError as e:
+            except UnknownLocaleError:
                 pass
 
             locales = []
@@ -223,7 +222,6 @@ class LanguageTests(BaseTests):
 
             for loc in locale_list:
                 self.assertIn(loc, locales)
-
 
     def test_get_locales(self):
         languages = [

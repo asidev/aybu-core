@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from aybu.core.models import populate
 from aybu.core.models import add_default_data
 from aybu.core.models import default_data_from_config
 from aybu.core.models import default_user_from_config
@@ -16,6 +17,18 @@ log = getLogger(__name__)
 
 
 class InitTests(BaseTests):
+
+    def test_populate(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
 
     def test_engine_from_config_parser(self):
         file_ = StringIO.StringIO(
@@ -34,7 +47,7 @@ sqlalchemy.echo = true
 """)
         config = ConfigParser.ConfigParser()
         config.readfp(file_)
-        engine = engine_from_config_parser(config)
+        engine_from_config_parser(config)
 
     def test_default_data_from_config(self):
         file_ = StringIO.StringIO(

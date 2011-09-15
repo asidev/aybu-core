@@ -5,10 +5,7 @@ from paste.deploy.converters import asbool
 from paste.deploy.converters import asint
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authentication import AuthTktCookieHelper
-from pyramid.security import Authenticated
 from pyramid.security import Everyone
-from pyramid.security import forget
-from pyramid.security import remember
 import pyramid.security
 
 
@@ -22,8 +19,7 @@ class AuthenticationPolicy(AuthTktAuthenticationPolicy):
             timeout=asint(settings.get('auth.timeout')),
             reissue_time=asint(settings.get('auth.reissue_time')),
             max_age=asint(settings.get('auth.max_age')),
-            path = settings.get('auth.path'),
-        )
+            path=settings.get('auth.path'))
 
     def authenticated_userid(self, request):
         return request.user.username if request.user else None
@@ -46,4 +42,5 @@ class Authenticated(object):
                 pyramid.security.ALL_PERMISSIONS),
                 pyramid.security.DENY_ALL]
 
-    def __init__(self, request): pass
+    def __init__(self, request):
+        pass

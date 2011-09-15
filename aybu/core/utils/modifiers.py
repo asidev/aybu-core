@@ -5,8 +5,10 @@
 
 import re
 
+
 def boolify(value):
     return True if value.lower() in ('on', 'true', 'yes', 'ok', 'y') else False
+
 
 def urlify(name):
 

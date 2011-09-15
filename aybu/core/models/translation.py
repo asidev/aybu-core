@@ -59,6 +59,7 @@ class NodeInfo(Base):
         session.add(entity)
         return entity
 
+
 class CommonInfo(NodeInfo):
 
     #__mapper_args__ = {'polymorphic_identity': 'common_info'}
@@ -125,8 +126,8 @@ class PageInfo(CommonInfo):
                                            onupdate="cascade",
                                            ondelete="cascade")))
     links = relationship('PageInfo', secondary=_links_table,
-                         primaryjoin=NodeInfo.id==_links_table.c.inverse_id,
-                         secondaryjoin=NodeInfo.id==_links_table.c.links_id)
+                         primaryjoin=NodeInfo.id == _links_table.c.inverse_id,
+                         secondaryjoin=NodeInfo.id == _links_table.c.links_id)
 
     def __repr__(self):
         url = '' if self.url is None else self.url
@@ -148,7 +149,7 @@ class PageInfo(CommonInfo):
         except (MultipleResultsFound, NoResultFound):
             Page.set_default_homepage(session)
 
-        query = session.query(Page).filter(Page.home==True)
+        query = session.query(Page).filter(Page.home == True)
         page = aliased(Page, query.subquery())
         query = session.query(cls).filter(cls.lang == language)
         query = query.join(page, cls.node)

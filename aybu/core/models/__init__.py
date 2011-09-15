@@ -41,8 +41,8 @@ import json
 
 log = getLogger(__name__)
 
-def populate(config, data):
 
+def populate(config, data):
     engine = engine_from_config_parser(config)
     session = create_session(engine)
     add_default_data(session, data)
@@ -56,6 +56,7 @@ def populate(config, data):
 
     session.commit()
 
+
 def engine_from_config_parser(config):
 
     options = {}
@@ -67,6 +68,7 @@ def engine_from_config_parser(config):
 
     return engine_from_config(options)
 
+
 def create_session(engine):
 
     session = scoped_session(sessionmaker())
@@ -76,6 +78,7 @@ def create_session(engine):
     Base.metadata.create_all(engine)
 
     return session
+
 
 def add_default_data(session, data):
 
@@ -97,7 +100,7 @@ def add_default_data(session, data):
 
             try:
                 class_ = property_.argument.class_
-            except AttributeError as e:
+            except AttributeError:
                 class_ = property_.argument()
 
             query = session.query(class_)
@@ -111,7 +114,7 @@ def add_default_data(session, data):
                 for i, col in enumerate(mapper.primary_key):
                     attr = getattr(class_, col.name)
                     query = query.filter(attr == value[i])
-                params[key] = quey.one()
+                params[key] = query.one()
                 continue
 
             if len(mapper.primary_key) == 1:
@@ -131,9 +134,8 @@ def add_default_data(session, data):
 
         session.add(cls(**params))
 
-def default_data_from_config(config):
 
-    options = {}
+def default_data_from_config(config):
 
     for section in config.sections():
         for option in config.options(section):
@@ -148,6 +150,7 @@ def default_data_from_config(config):
 
             data = open(file_).read()
             return json.loads(data)
+
 
 def default_user_from_config(config):
 

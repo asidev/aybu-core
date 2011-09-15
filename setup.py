@@ -14,7 +14,7 @@ requires = ['pyramid<1.2a', 'SQLAlchemy<0.8a', 'Babel']
 setup(name='aybu-core',
       version='0.2.0a1',
       description='aybu-core',
-      long_description=README + '\n\n' +  CHANGES,
+      long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Pylons",
@@ -32,14 +32,12 @@ setup(name='aybu-core',
       install_requires=requires,
       tests_require=requires,
       test_suite="aybu.core.tests",
-      message_extractors = {
+      message_extractors={
             'aybu.core': [
                 ('**.py', 'python', None),
                 ('templates/**.mako', 'mako', {'input_encoding': 'utf-8'}),
-                ('static/**', 'ignore', None)
-            ]
-      },
-      entry_points = """\
+                ('static/**', 'ignore', None)]},
+      entry_points="""\
       [paste.app_factory]
       main = aybu.core:main
 

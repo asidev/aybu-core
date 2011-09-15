@@ -8,6 +8,7 @@ from pyramid.decorator import reify
 from pyramid.request import Request as BaseRequest
 from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.security import unauthenticated_userid
+from sqlalchemy import create_engine
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
@@ -16,6 +17,7 @@ import locale
 __all__ = []
 
 log = getLogger(__name__)
+
 
 class Request(BaseRequest):
 
@@ -69,14 +71,14 @@ class Request(BaseRequest):
         if not self._locale_name is None:
             return self._locale_name
 
-        for locale in self.accepted_locales:
-            return str(locale)
+        for loc in self.accepted_locales:
+            return str(loc)
 
     @locale_name.setter
-    def locale_name(self, locale_name):
+    def locale_name(self, loc_name):
         # i18n support
         # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
-        self._locale_name = locale_name
+        self._locale_name = loc_name
         log.debug('Set request.locale_name: %s', self._locale_name)
         self.localizer = get_localizer(self)
         log.debug('Set request.localizer: %s', self.localizer)
@@ -88,10 +90,10 @@ class Request(BaseRequest):
         return self._language
 
     @language.setter
-    def language(self, language):
-        log.debug('Set language: %s', language)
-        self._language = language
-        self.locale_name = str(language.locale)
+    def language(self, lang):
+        log.debug('Set language: %s', lang)
+        self._language = lang
+        self.locale_name = str(lang.locale)
 
     @property
     def languages(self):

@@ -5,6 +5,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def get_object_from_python_path(path):
     """ Resolve 'path' and return the object identified by it. """
 

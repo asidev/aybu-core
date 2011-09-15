@@ -17,7 +17,7 @@ class CryptTests(BaseTests):
     def test_crypt(self):
 
         for i in xrange(0, 100):
-            for j in xrange(3,8):
+            for j in xrange(3, 8):
                 password = "".join(random.sample('%s%s' % (string.letters,
                                                            string.digits), j))
 
@@ -28,9 +28,7 @@ class CryptTests(BaseTests):
                 salt = user.password[0:2]
                 crypted_password = crypt.crypt(password, salt)
 
-                """
                 self.assertEqual(crypted_password, user.password)
-                """
 
                 self.session.delete(user)
                 self.session.commit()

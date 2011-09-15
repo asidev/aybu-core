@@ -19,9 +19,9 @@ class SetupApp(Command):
     takes_config_file = 1
     summary = "Run the described application setup routine."
     description = """\
-    This command runs the setup routine of an application 
+    This command runs the setup routine of an application
     that uses a paste.deploy configuration file.
-    """   
+    """
 
     parser = Command.standard_parser(verbose=True)
     """
@@ -71,9 +71,7 @@ class SetupApp(Command):
         try:
             option = config.get('commands', 'setup-app')
             # Load a callable using 'setup-app' option as fully qualified name.
-
-        except Exception as e:
-
+        except Exception:
             raise ValueError('Unable to find any command ' + \
                              'to setup the application ')
 

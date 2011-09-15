@@ -10,7 +10,6 @@ from logging import getLogger
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import String
 from sqlalchemy.orm import joinedload
@@ -71,7 +70,7 @@ class Setting(Base):
 
         """
         n_pages = session.query(func.count(Page.id)).subquery()
-        q = session.query(func.count('*')).filter(Setting.name=='max_pages')
+        q = session.query(func.count('*')).filter(Setting.name == 'max_pages')
         q = q.filter(n_pages >= Setting.value)
 
         if q.scalar():

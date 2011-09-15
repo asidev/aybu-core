@@ -8,7 +8,7 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 import logging
 import os
-#import PIL
+import PIL
 
 from aybu.core.models.base import Base
 
@@ -108,7 +108,7 @@ class Image(File):
     @property
     def thumbnails(self):
         self.setup_paths()
-        res = Storage()
+        res = {}
         for tname in self.thumb_sizes:
             res[tname] = Thumbnail(self, tname, self.thumb_sizes[tname])
         return res
