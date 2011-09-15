@@ -175,9 +175,16 @@ class Page(Node):
                                               Menu.parent == None)),
                          Page.weight == query.subquery())
         query = session.query(Page).filter(criterion)
-        homepage = query.one()
+        try:
+            homepage = query.one()
+        except:
+            homepage = session.query(Page).first()
 
         homepage.home = True
+        session.commit()
+
+        return homepage
+
 
     @validates('view')
     def validate_view(self, key, value):
