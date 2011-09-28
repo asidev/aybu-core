@@ -5,6 +5,7 @@
 
 import re
 
+all = ['boolify', 'urlify']
 
 def boolify(value):
     return True if value.lower() in ('on', 'true', 'yes', 'ok', 'y') else False
@@ -52,6 +53,5 @@ def urlify(name):
         m = compiled.search(url)
 
     url = url.lower()
-    url = url.strip('_')
 
     return url

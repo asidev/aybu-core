@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from aybu.core.utils.modifiers import boolify
 from aybu.core.utils.exceptions import ValidationError
-from aybu.core.models.base import Base
-from aybu.core.models.base import get_sliced
+from aybu.core.models.base import Base, get_sliced
 from aybu.core.models.view import View
+from aybu.core.models.setting import Setting
 from logging import getLogger
 from sqlalchemy import and_
 from sqlalchemy import Boolean
@@ -12,7 +13,6 @@ from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import UniqueConstraint
-from sqlalchemy import Unicode
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import backref
@@ -74,9 +74,7 @@ class Node(Base):
     def get_max_weight(cls, session, **params):
 
         q = session.query(func.max(cls.weight))
-
-        if 'parent' in params:
-            q = q.filter(cls.parent == params['parent'])
+        q = q.filter(cls.parent == params['parent'])
 
         return  q.scalar()
 
@@ -186,9 +184,47 @@ class Page(Node):
 
         return value
 
+    @validates('sitemap_priority')
+    def validate_sitemap_priority(self, key, value):
+        if value > 100 or value < 1:
+            # CHECK
+            # We can set the default value or raise the exception
+            raise ValidationError()
+        return value
+
+    @validates('home')
+    def validate_home(self, key, value):
+        if not isinstance(value, bool):
+            value = boolify(value)
+        return value
+
     @classmethod
     def is_last_page(cls, session):
         return True if session.query(cls).count() == 1 else False
+
+    @classmethod
+    def new_page_allowed(cls, session):
+        """
+        num_pages = session.query(cls).count()
+        max_pages = session.query(Setting).get_by(name=u'max_pages')['value']
+        return not (num_pages >= max_pages)
+        """
+
+        """ Raise an exception when the number of pages in the database
+            is greater or equal then 'max_pages' setting.
+
+            Query:
+            SELECT count(?) AS count_1
+            FROM settings WHERE settings.name = ? AND
+                 settings.value <= (SELECT count(nodes.id) AS count_2
+                                   FROM nodes
+                                   WHERE nodes.row_type IN (?))
+        """
+        n_pages = session.query(func.count(cls.id)).subquery()
+        q = session.query(func.count('*')).filter(Setting.name == 'max_pages')
+        q = q.filter(n_pages >= Setting.value)
+
+        return not bool(q.scalar())
 
 
 class Section(Node):
@@ -199,12 +235,7 @@ class Section(Node):
 
 
 class ExternalLink(Node):
-
     __mapper_args__ = {'polymorphic_identity': 'externallink'}
-
-    # Maybe this should be removed from here cause it can change with language
-    # ie: http://www.apple.com or http://www.apple.it
-    url = Column(Unicode(512), default=None)
 
 
 class InternalLink(Node):
@@ -218,3 +249,11 @@ class InternalLink(Node):
 
     linked_to = relationship('Page', backref='linked_by', remote_side=Page.id,
                             primaryjoin='Page.id == InternalLink.linked_to_id')
+
+    @validates('linked_to')
+    def validate_linked_to(self, key, value):
+        #log.debug('Validate linked_to : %s, %s,%s', self, key, value)
+        if not isinstance(value, (Page)):
+            raise ValidationError()
+
+        return value

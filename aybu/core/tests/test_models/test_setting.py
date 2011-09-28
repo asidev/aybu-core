@@ -22,24 +22,6 @@ class SettingTests(BaseTests):
         self.session.add(max_pages)
         self.assertEqual(str(max_pages), '<Setting max_pages (1)>')
 
-    def test_check_max_pages(self):
-
-        max_pages = Setting(name=u'max_pages',
-                            value=u'1',
-                            ui_administrable=False,
-                            type=SettingType(name=u'integer',
-                                             raw_type=u'int'))
-        self.session.add(max_pages)
-
-        self.assertEqual(Setting.check_max_pages(self.session), None)
-
-        page = Page(id=1, weight=0)
-        self.session.add(page)
-
-        self.assertRaises(ConstraintError,
-                          Setting.check_max_pages,
-                          self.session)
-
     def test_get_all(self):
         max_pages = Setting(name=u'max_pages',
                             value=u'1',

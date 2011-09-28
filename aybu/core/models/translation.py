@@ -169,6 +169,13 @@ class ExternalLinkInfo(NodeInfo):
 
     node = relationship('ExternalLink', backref='translations')
 
+    # This is has been moved from ExternalLink to internationalize the
+    # external link too
+    # ie: http://www.apple.com or http://www.apple.it
+    ext_url = Column(Unicode(512), default=None)
+
+
+
 
 class InternalLinkInfo(NodeInfo):
 

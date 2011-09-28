@@ -3,7 +3,7 @@
 
 from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
-from aybu.core.models import ExternalLink, View
+from aybu.core.models import ExternalLink, View, Setting, SettingType
 from sqlalchemy.orm.exc import MultipleResultsFound
 from logging import getLogger
 from test_base import BaseTests
@@ -207,6 +207,18 @@ class PageTests(BaseTests):
         Page.set_homepage(self.session, page_2)
         self.assertEqual(page_2, Page.get_homepage(self.session))
 
+    def test_validate_homepage(self):
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+        i = 2
+        for home in ('on', 'true', 'yes', 'ok', 'y'):
+            page = Page(id=i, parent=menu, weight= i - 1, home=home)
+            i = i + 1
+
+        for home in ('false', 'abc', 'no', 'n', 'False', False):
+            page = Page(id=i, parent=menu, weight= i - 1, home=home)
+            i = i + 1
+
     def test_validate_view(self):
         view = View(id=1, name=u'TEST VIEW', fs_view_path=u'/pages/full.mako')
         self.session.add(view)
@@ -218,6 +230,28 @@ class PageTests(BaseTests):
         for v in (None, {}, [], ''):
             with self.assertRaises(ValidationError):
                 Page(id=3, parent=menu, weight=1, view=v, home=True)
+
+    def test_validate_sitemap_priority(self):
+
+        max_pages = Setting(name=u'max_pages',
+                            value=u'100',
+                            ui_administrable=False,
+                            type=SettingType(name=u'integer',
+                                             raw_type=u'int'))
+        self.session.add(max_pages)
+
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+
+        for i in xrange(1, 101):
+            page = Page(id=i, parent=menu, weight=i, sitemap_priority=i)
+            self.session.add(page)
+
+        with self.assertRaises(ValidationError):
+            page = Page(id=150, parent=menu, weight=101, sitemap_priority=150)
+
+        with self.assertRaises(ValidationError):
+            page = Page(id=151, parent=menu, weight=102, sitemap_priority=-5)
 
     def test_is_last_page(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -231,3 +265,41 @@ class PageTests(BaseTests):
         self.session.add(page_2)
 
         self.assertEqual(False, Page.is_last_page(self.session))
+
+    def test_new_page_allowed(self):
+
+        max_pages = Setting(name=u'max_pages',
+                            value=u'1',
+                            ui_administrable=False,
+                            type=SettingType(name=u'integer',
+                                             raw_type=u'int'))
+        self.session.add(max_pages)
+
+        self.assertTrue(Page.new_page_allowed(self.session))
+
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+        page = Page(id=2, parent=menu, home=True, weight=1)
+        self.session.add(page)
+
+        self.assertFalse(Page.new_page_allowed(self.session))
+
+        page_2 = Page(id=3, parent=menu, weight=2)
+        self.session.add(page_2)
+
+        self.assertFalse(Page.new_page_allowed(self.session))
+
+
+class InternalLinkTests(BaseTests):
+    def test_validate_linked_to(self):
+        menu = Menu(id=1, parent=None, weight=1)
+        self.session.add(menu)
+
+        page = Page(id=2, parent=menu, home=True, weight=1)
+        self.session.add(page)
+
+        internal_link = InternalLink(id=3, parent=menu, weight=2, linked_to=page)
+        self.session.add(internal_link)
+
+        with self.assertRaises(ValidationError):
+            internal_link.linked_to = menu
