@@ -9,7 +9,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
-requires = ['pyramid<1.2a', 'SQLAlchemy<0.8a', 'Babel']
+requires = ['pyramid<1.3a', 'SQLAlchemy<0.8a', 'Babel', 'PufferFish<0.3a1',
+            'Pillow']
 
 setup(name='aybu-core',
       version='0.2.0a1',
