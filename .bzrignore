@@ -9,3 +9,4 @@
 ./instance-data
 *.pyc
 aybu/core/tests/test_models/tests.ini
+./tests.ini
