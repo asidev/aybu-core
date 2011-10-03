@@ -7,6 +7,7 @@ from sqlalchemy import Column
 from sqlalchemy import Unicode
 import logging
 import os
+import shutil
 import PIL
 
 from aybu.core.models.base import Base
@@ -108,11 +109,9 @@ class Image(File):
             thumb.save(handle)
         return handle
 
-    def rename_thumbnail(self, old_name, new_name):
-        # FIXME to implement
-        # we must move all thumbnails to match the new image name.
-        # using Thumbnail.rename function
-        raise NotImplementedError
+    def rename_thumbnail(self, old_image_name, new_image_name):
+        for thumb in self.thumbnails.values():
+            thumb.rename(old_image_name, new_image_name)
 
     def save_file(self, handle):
         """ Called when saving source """
@@ -144,8 +143,14 @@ class Thumbnail(object):
     def url(self):
         return str(self.path.replace(self.image.private_path, ""))
 
-    def rename(self, new_name):
-        raise NotImplementedError
+    def rename(self, old_image_name, new_image_name):
+        old_path = os.path.join(self.image.dir, "%s_%s%s" %
+                                (old_image_name, self.name,
+                                 self.image.extension))
+        new_path = os.path.join(self.image.dir, "%s_%s%s" %
+                                (new_image_name, self.name,
+                                 self.image.extension))
+        shutil.move(old_path, new_path)
 
     def save(self, handle):
         copy = handle.copy()

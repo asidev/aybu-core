@@ -63,18 +63,18 @@ class BannerTests(FileTests):
         Banner.set_sizes(full=None)
         source_size = PIL.Image.open(test_file).size
         b = Banner(source=test_file)
-        self.session.commit()
         banner_size = PIL.Image.open(b.path).size
         self.assertEqual(banner_size, source_size)
+        self.session.rollback()
 
     def test_resize(self):
         size = (300,400)
         test_file = self._get_test_file('sample.png')
         Banner.set_sizes(full=size)
         b = Banner(source=test_file)
-        self.session.commit()
         banner_size = PIL.Image.open(b.path).size
         self.assertEqual(banner_size, size)
+        self.session.rollback()
 
 
 class ImageTests(FileTests):
@@ -99,6 +99,7 @@ class ImageTests(FileTests):
         Image.set_sizes(thumbs=thumbs, full=full_size)
         Image.private_path = self.tempdir
         i = Image(source=big_image)
+        # no need to commit, session is being flushed by pufferfish
 
         self.assertEqual(len(i.thumbnails), len(thumbs))
         self.assertEqual(i.thumbnails.keys(), thumbs.keys())
@@ -112,12 +113,15 @@ class ImageTests(FileTests):
         f_size = PIL.Image.open(i.path).size
         self.assertEqual(f_size, full_size)
 
+        self.session.rollback()
 
+    def test_rename(self):
+        source = self._get_test_file('sample.png')
+        thumbs = dict(small=(100,100))
+        Image.set_sizes(thumbs=thumbs)
+        image = Image(source=source, name="original.png")
+        self.session.commit()
 
-
-
-
-
-
-
-
+        image.name = 'updated.png'
+        self.assertIn('updated.png', image.path)
+        self.assertIn('updated_small.png', image.thumbnails['small'].path)
