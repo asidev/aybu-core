@@ -15,17 +15,17 @@ class BaseTests(unittest.TestCase):
 
     def setUp(self):
         self.config = ConfigParser.ConfigParser()
+        ini = os.path.realpath(
+                os.path.join(os.path.dirname(__file__),
+                    "..", "..",
+                    'tests.ini'))
 
         try:
-            ini = os.path.realpath(
-                    os.path.join(os.path.dirname(__file__),
-                        "..", "..",
-                        'tests.ini'))
             with open(ini) as f:
                 self.config.readfp(f)
-        except IOError:
 
-            raise Exception("Cannot find configuration at '%s'" % ini)
+        except IOError:
+            raise Exception("Cannot find configuration file '%s'" % ini)
 
         self.engine = engine_from_config_parser(self.config)
         self.session = create_session(self.engine)

@@ -40,8 +40,8 @@ class Banner(File):
     full_size = None
 
     @classmethod
-    def set_sizes(cls, full=None, thumbs={}):
-        cls.full_size = full
+    def set_sizes(cls, full):
+        cls.full_size = tuple(full) if full else None
 
     def save_file(self, source):
         """ Called when saving source """
@@ -58,9 +58,10 @@ class Banner(File):
             handle.save(self.path)
 
         else:
-            super(Banner, self).save_file(source)
+            raise ValueError('Unsupported file format: %' %
+                             (self.content_type))
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: nocover
         return "<Banner %d at %s : %s>" % (self.id, self.path, self.url)
 
 
@@ -89,8 +90,8 @@ class Image(File):
 
     @classmethod
     def set_sizes(cls, full=None, thumbs={}):
-        cls.full_size = full
-        cls.thumb_sizes = thumbs
+        cls.full_size = tuple(full) if full else None
+        cls.thumb_sizes = dict(thumbs)
 
     @property
     def thumbnails(self):
@@ -111,7 +112,7 @@ class Image(File):
         # FIXME to implement
         # we must move all thumbnails to match the new image name.
         # using Thumbnail.rename function
-        return
+        raise NotImplementedError
 
     def save_file(self, handle):
         """ Called when saving source """
@@ -120,7 +121,7 @@ class Image(File):
 
         handle.save(self.path)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: nocover
         return "<Image %d at %s : %s>" % (self.id, self.path, self.url)
 
 
@@ -151,7 +152,7 @@ class Thumbnail(object):
         copy.thumbnail((self.width, self.height), PIL.Image.ANTIALIAS)
         copy.save(self.path)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: nocover
         return "<Thumbnail '%s' (image: %d) [%sx%s]>" % (self.name,
                                                          self.image.id,
                                                          self.width,
