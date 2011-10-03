@@ -19,7 +19,7 @@ class BaseTests(unittest.TestCase):
         try:
             ini = os.path.realpath(
                     os.path.join(os.path.dirname(__file__),
-                        "..", "..", "..", "..",
+                        "..", "..",
                         'tests.ini'))
             with open(ini) as f:
                 self.config.readfp(f)
