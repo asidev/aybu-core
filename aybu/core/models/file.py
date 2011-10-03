@@ -39,18 +39,16 @@ class Banner(File):
     __mapper_args__ = {'polymorphic_identity': 'banner'}
     full_size = None
 
-
     @classmethod
     def set_sizes(cls, full=None, thumbs={}):
         cls.full_size = full
 
-    def save_file(self, handle):
+    def save_file(self, source):
         """ Called when saving source """
-        # FIXME: this must support SWF, we have to fix the resizing
-        # otherwise it won't work.
 
         if self.content_type.partition('/')[0] == 'image':
-            handle = PIL.Image.open(handle)
+            # only resize images
+            handle = PIL.Image.open(source)
             log.debug('Banner size %s', self.full_size)
 
             if self.full_size:
@@ -58,6 +56,9 @@ class Banner(File):
                 handle = handle.resize(self.full_size)
 
             handle.save(self.path)
+
+        else:
+            super(Banner, self).save_file(source)
 
     def __repr__(self):
         return "<Banner %d at %s : %s>" % (self.id, self.path, self.url)
@@ -74,12 +75,10 @@ class Image(File):
         >>> from aybu.core.models.file import Image
         >>> Image.initialize(session, base="/tmp/testme", private="/tmp")
 
-
-        Define sizes if you want thumbnails.
-
+        Define sizes if you want thumbnails (width,height)
         >>> Image.thumb_sizes = dict(small=(120,120), medium=(300, 300))
 
-        Set full_size a a tuple to set the original image max size
+        Set full_size to a tuple to set the original image max size (w, h)
         >>> Image.full_size = (600, 600)
     """
 
