@@ -42,8 +42,8 @@ import json
 log = getLogger(__name__)
 
 
-def populate(config, data):
-    engine = engine_from_config_parser(config)
+def populate(config, data, config_section="app:main"):
+    engine = engine_from_config_parser(config, config_section)
     session = create_session(engine)
     add_default_data(session, data)
 
