@@ -39,7 +39,6 @@ class Request(BaseRequest):
         # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
         self.translation_factory = TranslationStringFactory('aybu-website')
 
-        self._languages = self.accept_language.best_matches()
         self._locale_name = None
         self._language = None
         self.localizer = None
@@ -98,11 +97,12 @@ class Request(BaseRequest):
     @property
     def languages(self):
 
-        for language in self._languages:
+        languages_ = self.accept_language.best_matches()
+        for language in languages_:
             yield language
 
             language = language[:2]
-            if language not in self._languages:
+            if language not in languages_:
                 yield language
 
     @property
