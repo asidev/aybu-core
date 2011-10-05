@@ -144,15 +144,9 @@ class PageInfo(CommonInfo):
     @classmethod
     def get_homepage(cls, session, language):
 
-        try:
-            Page.get_homepage(session)
-        except (MultipleResultsFound, NoResultFound):
-            Page.set_default_homepage(session)
-
-        query = session.query(Page).filter(Page.home == True)
-        page = aliased(Page, query.subquery())
-        query = session.query(cls).filter(cls.lang == language)
-        query = query.join(page, cls.node)
+        page = Page.get_homepage(session)
+        query = session.query(cls).filter(cls.node == page)\
+                                  .filter(cls.lang == language)
         return query.one()
 
 
