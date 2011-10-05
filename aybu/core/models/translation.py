@@ -10,10 +10,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
-from sqlalchemy.orm import aliased
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.exc import MultipleResultsFound
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
 from aybu.core.utils.exceptions import ValidationError
@@ -143,7 +140,6 @@ class PageInfo(CommonInfo):
 
     @classmethod
     def get_homepage(cls, session, language):
-
         page = Page.get_homepage(session)
         query = session.query(cls).filter(cls.node == page)\
                                   .filter(cls.lang == language)
@@ -167,8 +163,6 @@ class ExternalLinkInfo(NodeInfo):
     # external link too
     # ie: http://www.apple.com or http://www.apple.it
     ext_url = Column(Unicode(512), default=None)
-
-
 
 
 class InternalLinkInfo(NodeInfo):
