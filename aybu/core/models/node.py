@@ -87,7 +87,6 @@ class Node(Base):
         else:
             if not isinstance(value, (Menu, Section, Page)):
                 raise ValidationError()
-
         return value
 
     @validates('children')
@@ -206,7 +205,8 @@ class Page(Node):
     def new_page_allowed(cls, session):
         """
         num_pages = session.query(cls).count()
-        max_pages = session.query(Setting).get_by(name=u'max_pages')['value']
+        max_pages = session.query(Setting).filter(Setting.name==u'max_pages').\
+                            one()['value']
         return not (num_pages >= max_pages)
         """
 
