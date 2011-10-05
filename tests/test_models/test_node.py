@@ -7,7 +7,9 @@ import StringIO
 from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
-from aybu.core.models import Language, PageInfo
+from aybu.core.models import Language
+from aybu.core.models import PageInfo, SectionInfo, ExternalLinkInfo
+from aybu.core.models import InternalLinkInfo
 from aybu.core.models import default_data_from_config
 from aybu.core.models import populate
 from sqlalchemy.orm.exc import MultipleResultsFound
@@ -159,6 +161,7 @@ class NodeTests(BaseTests):
         # TODO test create when finished to be implemented
 
     def test_get_translation(self):
+
         file_ = StringIO.StringIO(
 """
 [app:aybu-website]
@@ -203,6 +206,59 @@ default_data = data/default_data.json
         self.assertEqual(None, menu.get_translation(self.session, it))
         self.assertEqual(None, menu.get_translation(self.session, en))
         self.assertEqual(None, menu.get_translation(self.session, es))
+
+        section = self.session.query(Section).order_by(func.random()).first()
+        it_section_info = self.session.query(SectionInfo).\
+                               filter(SectionInfo.node == section).\
+                               filter(SectionInfo.lang == it).one()
+        self.assertEqual(it_section_info,
+                         section.get_translation(self.session, it))
+        en_section_info = self.session.query(SectionInfo).\
+                               filter(SectionInfo.node == section).\
+                               filter(SectionInfo.lang == en).one()
+        self.assertEqual(en_section_info,
+                         section.get_translation(self.session, en))
+        es_section_info = self.session.query(SectionInfo).\
+                               filter(SectionInfo.node == section).\
+                               filter(SectionInfo.lang == es).one()
+        self.assertEqual(es_section_info,
+                         section.get_translation(self.session, es))
+
+        external_link = self.session.query(ExternalLink).\
+                             order_by(func.random()).first()
+        it_external_link_info = self.session.query(ExternalLinkInfo).\
+                               filter(ExternalLinkInfo.node == external_link).\
+                               filter(ExternalLinkInfo.lang == it).one()
+        self.assertEqual(it_external_link_info,
+                         external_link.get_translation(self.session, it))
+        en_external_link_info = self.session.query(ExternalLinkInfo).\
+                               filter(ExternalLinkInfo.node == external_link).\
+                               filter(ExternalLinkInfo.lang == en).one()
+        self.assertEqual(en_external_link_info,
+                         external_link.get_translation(self.session, en))
+        es_external_link_info = self.session.query(ExternalLinkInfo).\
+                               filter(ExternalLinkInfo.node == external_link).\
+                               filter(ExternalLinkInfo.lang == es).one()
+        self.assertEqual(es_external_link_info,
+                         external_link.get_translation(self.session, es))
+
+        internal_link = self.session.query(InternalLink).\
+                             order_by(func.random()).first()
+        it_internal_link_info = self.session.query(InternalLinkInfo).\
+                               filter(InternalLinkInfo.node == internal_link).\
+                               filter(InternalLinkInfo.lang == it).one()
+        self.assertEqual(it_internal_link_info,
+                         internal_link.get_translation(self.session, it))
+        en_internal_link_info = self.session.query(InternalLinkInfo).\
+                               filter(InternalLinkInfo.node == internal_link).\
+                               filter(InternalLinkInfo.lang == en).one()
+        self.assertEqual(en_internal_link_info,
+                         internal_link.get_translation(self.session, en))
+        es_internal_link_info = self.session.query(InternalLinkInfo).\
+                               filter(InternalLinkInfo.node == internal_link).\
+                               filter(InternalLinkInfo.lang == es).one()
+        self.assertEqual(es_internal_link_info,
+                         internal_link.get_translation(self.session, es))
 
         self.session.delete(it_page_info)
         self.session.delete(en_page_info)
