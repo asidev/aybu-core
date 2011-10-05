@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import ConfigParser
+import StringIO
+
 from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
+from aybu.core.models import Language, PageInfo
+from aybu.core.models import default_data_from_config
+from aybu.core.models import populate
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.sql import func
 from logging import getLogger
 from test_base import BaseTests
 
@@ -151,6 +158,59 @@ class NodeTests(BaseTests):
         Page.create(self.session, id=2, parent=menu)
         # TODO test create when finished to be implemented
 
+    def test_get_translation(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
+
+        it = self.session.query(Language).filter(Language.lang == 'it').one()
+        en = self.session.query(Language).filter(Language.lang == 'en').one()
+        es = self.session.query(Language).filter(Language.lang == 'es').one()
+
+        home = Page.get_homepage(self.session)
+        it_translation = home.get_translation(self.session, it)
+        self.assertEqual(it_translation,
+                         PageInfo.get_homepage(self.session, it))
+        en_translation = home.get_translation(self.session, en)
+        self.assertEqual(en_translation,
+                         PageInfo.get_homepage(self.session, en))
+        es_translation = home.get_translation(self.session, es)
+        self.assertEqual(es_translation,
+                         PageInfo.get_homepage(self.session, es))
+
+        page = self.session.query(Page).order_by(func.random()).first()
+        it_page_info = self.session.query(PageInfo).\
+                                 filter(PageInfo.node == page).\
+                                 filter(PageInfo.lang == it).one()
+        self.assertEqual(it_page_info, page.get_translation(self.session, it))
+        en_page_info = self.session.query(PageInfo).\
+                                 filter(PageInfo.node == page).\
+                                 filter(PageInfo.lang == en).one()
+        self.assertEqual(en_page_info, page.get_translation(self.session, en))
+        es_page_info = self.session.query(PageInfo).\
+                                 filter(PageInfo.node == page).\
+                                 filter(PageInfo.lang == es).one()
+        self.assertEqual(es_page_info, page.get_translation(self.session, es))
+
+        menu = self.session.query(Menu).first()
+        self.assertEqual(None, menu.get_translation(self.session, it))
+        self.assertEqual(None, menu.get_translation(self.session, en))
+        self.assertEqual(None, menu.get_translation(self.session, es))
+
+        self.session.delete(it_page_info)
+        self.session.delete(en_page_info)
+        self.session.delete(es_page_info)
+        self.assertEqual(None, page.get_translation(self.session, it))
+        self.assertEqual(None, page.get_translation(self.session, en))
+        self.assertEqual(None, page.get_translation(self.session, es))
+
 
 class PageTests(BaseTests):
 
@@ -212,11 +272,11 @@ class PageTests(BaseTests):
         self.session.add(menu)
         i = 2
         for home in ('on', 'true', 'yes', 'ok', 'y'):
-            page = Page(id=i, parent=menu, weight= i - 1, home=home)
+            Page(id=i, parent=menu, weight=i - 1, home=home)
             i = i + 1
 
         for home in ('false', 'abc', 'no', 'n', 'False', False):
-            page = Page(id=i, parent=menu, weight= i - 1, home=home)
+            Page(id=i, parent=menu, weight=i - 1, home=home)
             i = i + 1
 
     def test_validate_view(self):
@@ -291,6 +351,7 @@ class PageTests(BaseTests):
 
 
 class InternalLinkTests(BaseTests):
+
     def test_validate_linked_to(self):
         menu = Menu(id=1, parent=None, weight=1)
         self.session.add(menu)
@@ -298,7 +359,8 @@ class InternalLinkTests(BaseTests):
         page = Page(id=2, parent=menu, home=True, weight=1)
         self.session.add(page)
 
-        internal_link = InternalLink(id=3, parent=menu, weight=2, linked_to=page)
+        internal_link = InternalLink(id=3, parent=menu, weight=2,
+                                     linked_to=page)
         self.session.add(internal_link)
 
         with self.assertRaises(ValidationError):

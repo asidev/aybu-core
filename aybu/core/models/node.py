@@ -66,16 +66,13 @@ class Node(Base):
 
     @classmethod
     def get_by_enabled(cls, session, enabled, start=None, limit=None):
-
         query = session.query(cls).filter(cls.enabled == enabled)
         return get_sliced(query, start, limit)
 
     @classmethod
     def get_max_weight(cls, session, **params):
-
         q = session.query(func.max(cls.weight))
         q = q.filter(cls.parent == params['parent'])
-
         return  q.scalar()
 
     @validates('parent')
@@ -102,10 +99,23 @@ class Node(Base):
         """ Create a persistent 'cls' object and return it."""
         if cls == Node:
             raise ValidationError('cls: Node creation is not allowed!')
-
         entity = cls(**params)
         session.add(entity)
         return entity
+
+    def get_translation(self, session, lang):
+        from aybu.core import models
+        try:
+            info_class = getattr(models, '%sInfo' % self.__class__.__name__)
+        except:
+            return None
+
+        query = session.query(info_class).filter(info_class.node == self)\
+                                         .filter(info_class.lang == lang)
+        try:
+            return query.one()
+        except:
+            return None
 
 
 class Menu(Node):
