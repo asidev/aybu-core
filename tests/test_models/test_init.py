@@ -21,7 +21,7 @@ class InitTests(BaseTests):
     def test_populate(self):
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 default_data = data/default_data.json
 """)
         config = ConfigParser.ConfigParser()
@@ -33,7 +33,7 @@ default_data = data/default_data.json
     def test_engine_from_config_parser(self):
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 """)
         config = ConfigParser.ConfigParser()
         config.readfp(file_)
@@ -41,7 +41,7 @@ default_data = data/default_data.json
 
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 sqlalchemy.url = sqlite:///
 sqlalchemy.echo = true
 """)
@@ -52,7 +52,7 @@ sqlalchemy.echo = true
     def test_default_data_from_config(self):
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 sqlalchemy.url = sqlite:///
 default_data =
 """)
@@ -63,7 +63,7 @@ default_data =
 
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 default_data = data/default_data.json
 """)
         config = ConfigParser.ConfigParser()
@@ -82,7 +82,7 @@ default_data = data/default_data.json
     def test_default_user_from_config(self):
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 sqlalchemy.url = sqlite:///
 """)
         config = ConfigParser.ConfigParser()
@@ -91,7 +91,7 @@ sqlalchemy.url = sqlite:///
 
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 default_user =
 """)
         config = ConfigParser.ConfigParser()
@@ -100,7 +100,7 @@ default_user =
 
         file_ = StringIO.StringIO(
 """
-[app:aybu-website]
+[app:main]
 default_user.username = Pippo
 default_user.password = Pippo
 """)

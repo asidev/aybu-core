@@ -57,14 +57,13 @@ def populate(config, data):
     session.commit()
 
 
-def engine_from_config_parser(config):
+def engine_from_config_parser(config, section="app:main"):
 
     options = {}
 
-    for section in config.sections():
-        for option in config.options(section):
-            if option.startswith('sqlalchemy.'):
-                options[option] = config.get(section, option)
+    for option in config.options(section):
+        if option.startswith('sqlalchemy.'):
+            options[option] = config.get(section, option)
 
     return engine_from_config(options)
 
