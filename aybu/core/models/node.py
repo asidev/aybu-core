@@ -12,6 +12,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
+from sqlalchemy import BigInteger
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import String
 from sqlalchemy import Table
@@ -20,6 +21,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import cast
 
 
 __all__ = []
@@ -229,7 +231,7 @@ class Page(Node):
         """
         n_pages = session.query(func.count(cls.id)).subquery()
         q = session.query(func.count('*')).filter(Setting.name == 'max_pages')
-        q = q.filter(n_pages >= Setting.value)
+        q = q.filter(n_pages >= cast(Setting.value, BigInteger()))
 
         return not bool(q.scalar())
 

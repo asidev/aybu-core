@@ -23,7 +23,7 @@ class Crypt(types.TypeDecorator):
         return crypt.crypt(value, "".join(random.sample(string.letters, 2)))
 
     def process_result_value(self, value, dialect):
-        return value
+        return value.strip()
 
     def copy(self):
         return Crypt(self.impl.length)
