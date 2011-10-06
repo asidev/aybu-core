@@ -94,48 +94,50 @@ def add_default_data(session, data):
 
         for key, value in params.iteritems():
 
-            if value is None:
-                continue
+            if not value is None:
 
-            property_ = mapper.get_property(key)
+                property_ = mapper.get_property(key)
 
-            if not hasattr(property_, 'argument'):
-                continue
+                if not hasattr(property_, 'argument'):
+                    continue
 
-            try:
-                class_ = property_.argument.class_
-            except AttributeError:
-                class_ = property_.argument()
+                try:
+                    class_ = property_.argument.class_
+                except AttributeError:
+                    class_ = property_.argument()
 
-            query = session.query(class_)
+                query = session.query(class_)
 
-            if not property_.uselist and len(mapper.primary_key) == 1:
-                attr = getattr(class_, mapper.primary_key[0].name)
-                params[key] = query.filter(attr == value).one()
-                continue
+                if not property_.uselist and len(mapper.primary_key) == 1:
+                    attr = getattr(class_, mapper.primary_key[0].name)
+                    params[key] = query.filter(attr == value).one()
+                    continue
+        """
+                # The code below is needed when data specifies relationships
+                # as list or scalar of primary keys.
+                # This feature is not needed now.
+                if not property_.uselist:
+                    for i, col in enumerate(mapper.primary_key):
+                        attr = getattr(class_, col.name)
+                        query = query.filter(attr == value[i])
+                    params[key] = query.one()
+                    continue
 
-            if not property_.uselist:
-                for i, col in enumerate(mapper.primary_key):
-                    attr = getattr(class_, col.name)
-                    query = query.filter(attr == value[i])
-                params[key] = query.one()
-                continue
+                if len(mapper.primary_key) == 1:
+                    values = []
+                    for elem in value:
+                        attr = getattr(class_, mapper.primary_key[0].name)
+                        values.append(query.filter(attr == elem).one())
+                    params[key] = values
+                    continue
 
-            if len(mapper.primary_key) == 1:
                 values = []
                 for elem in value:
-                    attr = getattr(class_, mapper.primary_key[0].name)
-                    values.append(query.filter(attr == elem).one())
+                    for i, col in enumerate(mapper.primary_key):
+                        attr = getattr(class_, col.name)
+                        values.append(query.filter(attr == elem[i]).one())
                 params[key] = values
-                continue
-
-            values = []
-            for elem in value:
-                for i, col in enumerate(mapper.primary_key):
-                    attr = getattr(class_, col.name)
-                    values.append(query.filter(attr == elem[i]).one())
-            params[key] = values
-
+        """
         session.add(cls(**params))
 
 
