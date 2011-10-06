@@ -3,7 +3,7 @@
 
 __all__ = ['Base', 'File', 'Image', 'Banner', 'Language',
            'Node', 'Menu', 'Page', 'Section', 'ExternalLink', 'InternalLink',
-           'NodeInfo', 'PageInfo', 'SectionInfo', 'ExternalLinkInfo',
+           'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo', 'ExternalLinkInfo',
            'InternalLinkInfo', 'Setting', 'SettingType', 'Keyword', 'Theme',
            'User', 'Group', 'View', 'ViewDescription']
 
@@ -19,6 +19,7 @@ from aybu.core.models.node import Menu
 from aybu.core.models.node import Node
 from aybu.core.models.node import Page
 from aybu.core.models.node import Section
+from aybu.core.models.translation import MenuInfo
 from aybu.core.models.translation import NodeInfo
 from aybu.core.models.translation import PageInfo
 from aybu.core.models.translation import SectionInfo

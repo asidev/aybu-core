@@ -13,7 +13,7 @@ from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
-from aybu.core.utils.exceptions import ValidationError
+#from aybu.core.utils.exceptions import ValidationError
 
 __all__ = []
 
@@ -42,19 +42,31 @@ class NodeInfo(Base):
                                          ondelete='cascade'), nullable=False)
     lang = relationship('Language')
 
+    @property
+    def type(self):
+        return self.__class__.__name__
+
     def __repr__(self):
         return "<%s [%d] '%s'>" % (self.__class__.__name__, self.id,
                                    self.label.encode('utf8'))
 
+    """
     @classmethod
     def create(cls, session, **params):
-        """ Create a persistent 'cls' object and return it."""
+        " " " Create a persistent 'cls' object and return it." " "
         if cls == NodeInfo:
             raise ValidationError('cls: NodeInfo creation is not allowed!')
 
         entity = cls(**params)
         session.add(entity)
         return entity
+    """
+
+
+class MenuInfo(NodeInfo):
+    __mapper_args__ = {'polymorphic_identity': 'menu_info'}
+
+    node = relationship('Menu', backref='translations')
 
 
 class CommonInfo(NodeInfo):

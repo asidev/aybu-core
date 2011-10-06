@@ -51,7 +51,6 @@
  {"cls_": "ViewDescription", "id": 3, "description": "Pagina con form di contatto", "view": 2, "language": 1},
  {"cls_": "ViewDescription", "id": 4, "description": "Contact form page", "view": 2, "language": 2},
  {"cls_": "Menu", "id": 1, "weight": 1},
- {"cls_": "Menu", "id": 11, "weight": 2},
  {"cls_": "Page", "id": 2, "home": true, "parent": 1, "weight": 1, "view": 1},
  {"cls_": "Page", "id": 3, "parent": 1, "weight": 3, "view": 2},
  {"cls_": "Page", "id": 9, "parent": 1, "weight": 6, "view": 1},
@@ -61,6 +60,9 @@
  {"cls_": "InternalLink", "id": 7, "parent": 1, "weight": 4, "linked_to": 3},
  {"cls_": "Page", "id": 10, "parent": 9, "weight": 1, "view": 1},
  {"cls_": "ExternalLink", "id": 8, "parent": 1, "weight": 5},
+ {"cls_": "MenuInfo", "id": 28, "label": "Menù Principale", "lang": 1, "node": 1},
+ {"cls_": "MenuInfo", "id": 29, "label": "Main Menu", "lang": 2, "node": 1},
+ {"cls_": "MenuInfo", "id": 30, "label": "Menú Principal", "lang": 3, "node": 1},
  {"cls_": "PageInfo", "id": 1, "label": "Home", "title": "Pagina Principale", "url": "/it/index.html", "url_part": "index", "partial_url": "/it/index", "content": "<h2>Pagina Principale</h2>", "lang": 1, "node": 2},
  {"cls_": "PageInfo", "id": 2, "label": "Home", "title": "Home Page", "url": "/en/index.html", "url_part": "index", "partial_url": "/en/index", "content": "<h2>Home Page</h2>", "lang": 2, "node": 2},
  {"cls_": "PageInfo", "id": 3, "label": "Home", "title": "Primera Pagina", "url": "/es/index.html", "url_part": "index", "partial_url": "/es/index", "content": "<h2>Primera Pagina</h2>", "lang": 3, "node": 2},
@@ -88,6 +90,7 @@
  {"cls_": "PageInfo", "id": 25, "label": "PEC", "title": "PEC", "url": "/it/soluzioni/pec.html", "url_part": "pec", "partial_url": "/it/soluzioni/pec", "content": "<h2>P.E.C.</h2>", "lang": 1, "node": 10},
  {"cls_": "PageInfo", "id": 26, "label": "ECM", "title": "ECM", "url": "/en/solutions/ecm.html", "url_part": "ecm", "partial_url": "/en/solutions/ecm", "content": "<h2>Electronic Certified Mail</h2>", "lang": 2, "node": 10},
  {"cls_": "PageInfo", "id": 27, "label": "CEC", "title": "CEC", "url": "/es/solucion/cec.html", "url_part": "cec", "partial_url": "/es/solucion/cec", "content": "<h2>Correo Electronico Certifigado</h2>", "lang": 3, "node": 10},
+
  {"cls_": "Theme", "name": "base"},
  {"cls_": "Theme", "name": "uffizi", "parent": "base"},
  {"cls_": "Theme", "name": "moma", "parent": "uffizi"}]

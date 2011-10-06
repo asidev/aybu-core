@@ -1,15 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from aybu.core.models import Menu, Page, PageInfo, Section, SectionInfo
+import ConfigParser
+import StringIO
+
+from aybu.core.models import Menu, MenuInfo, Page, PageInfo
+from aybu.core.models import Section, SectionInfo
+from aybu.core.models import ExternalLinkInfo
+from aybu.core.models import InternalLinkInfo
 from aybu.core.models import Language
+from aybu.core.models import default_data_from_config
+from aybu.core.models import populate
 from logging import getLogger
 from test_base import BaseTests
+
+from sqlalchemy.sql import func
 
 log = getLogger(__name__)
 
 
 class NodeInfoTests(BaseTests):
+
+    def test_property_type(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
+
+        menu_info = self.session.query(MenuInfo).\
+                         order_by(func.random()).first()
+        self.assertEqual(menu_info.type, 'MenuInfo')
+
+        page_info = self.session.query(PageInfo).\
+                         order_by(func.random()).first()
+        self.assertEqual(page_info.type, 'PageInfo')
+
+        section_info = self.session.query(SectionInfo).\
+                            order_by(func.random()).first()
+        self.assertEqual(section_info.type, 'SectionInfo')
+
+        external_link_info = self.session.query(ExternalLinkInfo).\
+                                  order_by(func.random()).first()
+        self.assertEqual(external_link_info.type, 'ExternalLinkInfo')
+
+        internal_link_info = self.session.query(InternalLinkInfo).\
+                                  order_by(func.random()).first()
+        self.assertEqual(internal_link_info.type, 'InternalLinkInfo')
 
     def test_str_and_repr(self):
         menu = Menu(id=1, parent=None, weight=1)
