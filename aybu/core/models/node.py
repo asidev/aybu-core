@@ -105,11 +105,8 @@ class Node(Base):
 
     def get_translation(self, session, lang):
         from aybu.core import models
-        try:
-            info_class = getattr(models, '%sInfo' % self.__class__.__name__)
-        except:
-            return None
 
+        info_class = getattr(models, '%sInfo' % self.__class__.__name__)
         query = session.query(info_class).filter(info_class.node == self)\
                                          .filter(info_class.lang == lang)
         try:

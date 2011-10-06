@@ -8,7 +8,7 @@ from aybu.core.utils.exceptions import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
 from aybu.core.models import Language
-from aybu.core.models import PageInfo, SectionInfo, ExternalLinkInfo
+from aybu.core.models import MenuInfo, PageInfo, SectionInfo, ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
 from aybu.core.models import default_data_from_config
 from aybu.core.models import populate
@@ -23,8 +23,36 @@ log = getLogger(__name__)
 class NodeTests(BaseTests):
 
     def test_property_type(self):
-        node = Node(id=1)
-        self.assertEqual(node.type, 'Node')
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
+
+        menu = self.session.query(Menu).\
+                    order_by(func.random()).first()
+        self.assertEqual(menu.type, 'Menu')
+
+        page = self.session.query(Page).\
+                    order_by(func.random()).first()
+        self.assertEqual(page.type, 'Page')
+
+        section = self.session.query(Section).\
+                       order_by(func.random()).first()
+        self.assertEqual(section.type, 'Section')
+
+        external_link = self.session.query(ExternalLink).\
+                             order_by(func.random()).first()
+        self.assertEqual(external_link.type, 'ExternalLink')
+
+        internal_link = self.session.query(InternalLink).\
+                             order_by(func.random()).first()
+        self.assertEqual(internal_link.type, 'InternalLink')
 
     def test_str_and_repr(self):
 
@@ -203,9 +231,18 @@ default_data = data/default_data.json
         self.assertEqual(es_page_info, page.get_translation(self.session, es))
 
         menu = self.session.query(Menu).first()
-        self.assertEqual(None, menu.get_translation(self.session, it))
-        self.assertEqual(None, menu.get_translation(self.session, en))
-        self.assertEqual(None, menu.get_translation(self.session, es))
+        it_menu_info = self.session.query(MenuInfo).\
+                               filter(MenuInfo.node == menu).\
+                               filter(MenuInfo.lang == it).one()
+        self.assertEqual(it_menu_info, menu.get_translation(self.session, it))
+        en_menu_info = self.session.query(MenuInfo).\
+                               filter(MenuInfo.node == menu).\
+                               filter(MenuInfo.lang == en).one()
+        self.assertEqual(en_menu_info, menu.get_translation(self.session, en))
+        es_menu_info = self.session.query(MenuInfo).\
+                               filter(MenuInfo.node == menu).\
+                               filter(MenuInfo.lang == es).one()
+        self.assertEqual(es_menu_info, menu.get_translation(self.session, es))
 
         section = self.session.query(Section).order_by(func.random()).first()
         it_section_info = self.session.query(SectionInfo).\
