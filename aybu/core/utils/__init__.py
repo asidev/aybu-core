@@ -26,8 +26,8 @@ def get_object_from_python_path(path):
     while elements:
 
         element = elements.pop(0)
-        log.debug('Element: %s', element)
-        log.debug('Imported: %s', imported)
+        #log.debug('Element: %s', element)
+        #log.debug('Imported: %s', imported)
 
         if imported:
             module = getattr(__import__(imported,
@@ -39,8 +39,8 @@ def get_object_from_python_path(path):
             module = __import__(element)
             imported += element
 
-        log.debug('Module: %s', module.__name__)
-        log.debug('Imported (updated): %s', imported)
+        #log.debug('Module: %s', module.__name__)
+        #log.debug('Imported (updated): %s', imported)
 
     if not hasattr(module, target):
         raise ValueError('Wrong Python path: no %s in %s.' % (target,
