@@ -43,11 +43,15 @@ import json
 log = getLogger(__name__)
 
 
-def populate(config, data, config_section="app:main"):
+def populate(config, data, config_section="app:main", session=None):
     engine = engine_from_config_parser(config, config_section)
-    session = create_session(engine)
-    add_default_data(session, data)
+    if session is None:
+        session = create_session(engine)
+        close_session = True
+    else:
+        close_session = False
 
+    add_default_data(session, data)
     user = default_user_from_config(config)
     session.add(user)
 
@@ -56,15 +60,15 @@ def populate(config, data, config_section="app:main"):
     session.add(group)
 
     session.commit()
+    if close_session:
+        session.close()
 
 
 def engine_from_config_parser(config, section="app:main"):
 
-    options = {}
-
-    for option in config.options(section):
-        if option.startswith('sqlalchemy.'):
-            options[option] = config.get(section, option)
+    options = {opt: config.get(section, opt)
+               for opt in config.options(section)
+               if opt.startswith("sqlalchemy.")}
 
     return engine_from_config(options)
 
