@@ -1,3 +1,3 @@
-include *.txt *.ini *.cfg *.rst
+include *.txt *.ini *.cfg *.rst LICENSE NOTICE
 recursive-include aybu *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml
 recursive-include tests *.py *.png
