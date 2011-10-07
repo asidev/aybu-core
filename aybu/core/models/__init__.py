@@ -18,9 +18,9 @@ limitations under the License.
 
 __all__ = ['Base', 'File', 'Image', 'Banner', 'Language',
            'Node', 'Menu', 'Page', 'Section', 'ExternalLink', 'InternalLink',
-           'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo', 'ExternalLinkInfo',
-           'InternalLinkInfo', 'Setting', 'SettingType', 'Keyword', 'Theme',
-           'User', 'Group', 'View', 'ViewDescription']
+           'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
+           'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
+           'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription']
 
 from logging import getLogger
 from aybu.core.models.base import Base
