@@ -16,17 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from pyramid.util import DottedNameResolver
 from paste.script.command import BadCommand
 from paste.script.command import Command
 import ConfigParser
 import os
 
+from aybu.core.models import populate
+from aybu.core.models import default_data_from_config
+
 
 class SetupApp(Command):
 
     min_args = 0
-    usage = 'CONFIG_FILE'
+    usage = 'CONFIG_FILE SECTION'
     takes_config_file = 1
     summary = "Run the described application setup routine."
     description = """\
@@ -35,43 +37,20 @@ class SetupApp(Command):
     """
 
     parser = Command.standard_parser(verbose=True)
-    """
-    parser.add_option('-n', '--app-name',
-                      dest='app_name',
-                      metavar='NAME',
-                      help="Load the named application (default main)")
-    parser.add_option("-u", "--dburi",
-                      action="store",
-                      dest="dburi",
-                      default=None,
-                      help="URI for database connection")
-    """
 
     def command(self):
 
         if not self.args:
             raise BadCommand('You must give a configuration file.')
 
-        """
-        if not "VIRTUAL_ENV" in os.environ:
-            raise BadCommand('You cannot run this command' +\
-                             'outside a virtual enviroment.')
-
-        if self.verbose:
-            logging.basicConfig(level=logging.DEBUG)
-
-        else:
-            logging.basicConfig(level=logging.WARN)
-
-        self.log = logging.getLogger(__name__)
-
-        self.log.debug("Setting up database")
-        """
+        if len(self.args) < 2:
+            raise BadCommand('You must give a section name')
 
         file_name = self.args[0]
         if not file_name.startswith("/"):
             file_name = os.path.join(os.getcwd(), file_name)
 
+        section_name = self.args[1]
         # Setup logging via the logging module's fileConfig function
         # with the specified 'config_file', if applicable.
         self.logging_file_config(file_name)
@@ -79,12 +58,6 @@ class SetupApp(Command):
         config = ConfigParser.ConfigParser()
         config.read([file_name])
 
-        try:
-            option = config.get('commands', 'setup-app')
-            # Load a callable using 'setup-app' option as fully qualified name.
-        except Exception:
-            raise ValueError('Unable to find any command ' + \
-                             'to setup the application ')
+        data = default_data_from_config(config)
+        populate(config, data, section_name)
 
-        setup_app = DottedNameResolver(None).resolve(option)
-        setup_app(config)
