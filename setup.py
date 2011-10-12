@@ -23,11 +23,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
-requires = ['pyramid<1.3a', 'SQLAlchemy<0.8a', 'Babel', 'PufferFish<0.3a1',
-            'Pillow']
+
 
 setup(name='aybu-core',
-      version='0.2.0a1',
+      version=':versiontools:aybu.core:',
       description='aybu-core',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -44,9 +43,11 @@ setup(name='aybu-core',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires=requires,
-      tests_require=requires,
-      test_suite="aybu.core.tests",
+      install_requires=('pyramid<1.3a', 'SQLAlchemy<0.8a',
+                        'Babel', 'PufferFish<0.3a1', 'Pillow'),
+      tests_require=('nose', 'coverage'),
+      setup_requires=('versiontools >= 1.8',),
+      test_suite="tests",
       message_extractors={
             'aybu.core': [
                 ('**.py', 'python', None),
