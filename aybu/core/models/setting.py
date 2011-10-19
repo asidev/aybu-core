@@ -65,3 +65,7 @@ class Setting(Base):
     @classmethod
     def get_all(cls, session):
         return session.query(cls).options(joinedload('type')).all()
+
+    @classmethod
+    def get(cls, session, name):
+        return session.query(cls).filter(cls.name == name).one()

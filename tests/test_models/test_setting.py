@@ -28,34 +28,37 @@ log = getLogger(__name__)
 
 class SettingTests(BaseTests):
 
+    def add_ex_setting(self):
+        self.max_pages = Setting(name=u'max_pages',
+                                 value=u'1',
+                                 ui_administrable=False,
+                                 type=SettingType(name=u'integer',
+                                                  raw_type=u'int'))
+        self.site_title = Setting(name=u'site_title',
+                                  value=u'Nome Sito',
+                                  ui_administrable=True,
+                                  type=SettingType(name=u'txt',
+                                                   raw_type=u'unicode'))
+        self.session.add(self.site_title)
+        self.session.add(self.max_pages)
+        self.session.flush()
+
     def test_str_and_repr(self):
-        max_pages = Setting(name=u'max_pages',
-                            value=u'1',
-                            ui_administrable=False,
-                            type=SettingType(name=u'integer',
-                                             raw_type=u'int'))
-        self.session.add(max_pages)
-        self.assertEqual(str(max_pages), '<Setting max_pages (1)>')
+        self.add_ex_setting()
+        self.assertEqual(str(self.max_pages), '<Setting max_pages (1)>')
 
     def test_get_all(self):
-        max_pages = Setting(name=u'max_pages',
-                            value=u'1',
-                            ui_administrable=False,
-                            type=SettingType(name=u'integer',
-                                             raw_type=u'int'))
-        self.session.add(max_pages)
-        site_title = Setting(name=u'site_title',
-                            value=u'Nome Sito',
-                            ui_administrable=True,
-                            type=SettingType(name=u'txt',
-                                             raw_type=u'unicode'))
-        self.session.add(site_title)
-        self.session.flush()
+        self.add_ex_setting()
 
         settings = Setting.get_all(self.session)
 
-        for setting in (max_pages, site_title):
+        for setting in (self.max_pages, self.site_title):
             self.assertIn(setting, settings)
+
+    def test_get(self):
+        self.add_ex_setting()
+        max_pages = Setting.get(self.session, 'max_pages')
+        self.assertEqual(max_pages, self.max_pages)
 
 
 class SettingTypeTests(BaseTests):
