@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import User
+from aybu.core.models import (User, Language)
 from babel import Locale
 from logging import getLogger
 from pyramid.decorator import reify
@@ -105,6 +105,11 @@ class Request(BaseRequest):
 
     @language.setter
     def language(self, lang):
+        if not lang:
+            lang = Language.get_by_lang(
+                    self.db_session,
+                    self.registry.settings['default_locale_name'])
+
         log.debug('Set language: %s', lang)
         self._language = lang
         self.locale_name = str(lang.locale)
