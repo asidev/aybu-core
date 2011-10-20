@@ -17,3 +17,11 @@ limitations under the License.
 """
 
 __version__ = (0, 2, 0, 'dev', 0)
+
+def includeme(config):
+    # initialize pufferfish fsentity
+    from aybu.core.models import File, Image, Banner
+    base_path = config.registry.settings['pufferfish.base_path']
+    private_path = config.registry.settings['pufferfish.private_path']
+    for cls in (File, Image, Banner):
+        cls.initialize(base_path, private_path)
