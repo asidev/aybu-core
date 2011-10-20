@@ -49,8 +49,8 @@ class FileTests(BaseTests):
         self.tempdir = tempfile.mkdtemp()
         self.datadir = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                   "data"))
-        Banner.initialize(self.session, base=self.tempdir)
-        Image.initialize(self.session, base=self.tempdir)
+        Banner.initialize(self.tempdir)
+        Image.initialize(base=self.tempdir)
         self.log = getLogger(__name__)
 
     def tearDown(self):
@@ -71,13 +71,13 @@ class BannerTests(FileTests):
         content = self._generate_rand_string()
         tmpfile = self._create_tmp_file(content=content)
         with self.assertRaises(ValueError):
-            Banner(source=tmpfile)
+            Banner(source=tmpfile, session=self.session)
 
     def test_no_resize(self):
         test_file = self._get_test_file('sample.png')
         Banner.set_sizes(full=None)
         source_size = PIL.Image.open(test_file).size
-        b = Banner(source=test_file)
+        b = Banner(source=test_file, session=self.session)
         banner_size = PIL.Image.open(b.path).size
         self.assertEqual(banner_size, source_size)
         self.session.rollback()
@@ -86,7 +86,7 @@ class BannerTests(FileTests):
         size = (300,400)
         test_file = self._get_test_file('sample.png')
         Banner.set_sizes(full=size)
-        b = Banner(source=test_file)
+        b = Banner(source=test_file, session=self.session)
         banner_size = PIL.Image.open(b.path).size
         self.assertEqual(banner_size, size)
         self.session.rollback()
@@ -113,7 +113,7 @@ class ImageTests(FileTests):
         big_handle.save(big_image)
         Image.set_sizes(thumbs=thumbs, full=full_size)
         Image.private_path = self.tempdir
-        i = Image(source=big_image)
+        i = Image(source=big_image, session=self.session)
         # no need to commit, session is being flushed by pufferfish
 
         self.assertEqual(len(i.thumbnails), len(thumbs))
@@ -134,7 +134,7 @@ class ImageTests(FileTests):
         source = self._get_test_file('sample.png')
         thumbs = dict(small=(100,100))
         Image.set_sizes(thumbs=thumbs)
-        image = Image(source=source, name="original.png")
+        image = Image(source=source, name="original.png", session=self.session)
         self.session.commit()
 
         image.name = 'updated.png'
