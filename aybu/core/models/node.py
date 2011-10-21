@@ -246,7 +246,7 @@ class Page(Node):
         """
         n_pages = session.query(func.count(cls.id)).subquery()
         q = session.query(func.count('*')).filter(Setting.name == 'max_pages')
-        q = q.filter(n_pages >= cast(Setting.value, BigInteger()))
+        q = q.filter(n_pages >= cast(Setting.raw_value, BigInteger()))
 
         return not bool(q.scalar())
 

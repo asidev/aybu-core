@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import ast
 from aybu.core.models import Base
 from logging import getLogger
 from sqlalchemy import Boolean
@@ -50,7 +51,7 @@ class Setting(Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
     name = Column(Unicode(128), primary_key=True)
-    value = Column(Unicode(512), nullable=False)
+    raw_value = Column(Unicode(512), name='value', nullable=False)
     ui_administrable = Column(Boolean, default=False)
 
     type_name = Column(Unicode(64), ForeignKey('setting_types.name',
@@ -58,6 +59,44 @@ class Setting(Base):
                                                ondelete='restrict'))
 
     type = relationship('SettingType', backref='settings')
+
+    def __init__(self, **kwargs):
+        if "raw_value" in kwargs:
+            kwargs.pop('value', '')
+        else:
+            try:
+                value = kwargs.pop('value')
+                kwargs['raw_value'] = value
+            except KeyError:
+                raise NameError('__init__ has not arg "value"')
+        super(Setting, self).__init__(**kwargs)
+
+    def _get_cast(self):
+        def noop(value):
+            return value
+
+        if not hasattr(self, '_caster'):
+            if self.type.raw_type == 'unicode':
+                self._caster = noop
+            elif self.type.raw_type == 'bool':
+                self._caster = ast.literal_eval
+            else:
+                self._caster = eval(self.type.raw_type)
+
+        return self._caster
+
+    @property
+    def value(self):
+        return self._get_cast()(self.raw_value)
+
+    @value.setter
+    def value(self, v):
+        # try to convert first
+        try:
+            self._get_cast()(v)
+            self.raw_type = unicode(v)
+        except:
+            raise ValueError("v must be of type %s"  % (self.type.raw_type))
 
     def __repr__(self):
         return "<Setting %s (%s)>" % (self.name, self.value)
@@ -69,3 +108,5 @@ class Setting(Base):
     @classmethod
     def get(cls, session, name):
         return session.query(cls).filter(cls.name == name).one()
+
+
