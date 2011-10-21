@@ -48,7 +48,7 @@ default_data = data/default_data.json
 
         populate(self.config, data)
 
-    def test_translate(self):
+    def test_create_translations(self):
 
         self.populate()
 
@@ -61,12 +61,34 @@ default_data = data/default_data.json
         dst_language = self.session.query(Language).\
                             filter(Language.lang==u'de').one()
 
-        Language.enable(self.session, dst_language.id)
+        dst_language.enabled = True
 
-        translations = NodeInfo.translate(self.session,
-                                          src_language.id, dst_language)
+        translations = NodeInfo.create_translations(self.session,
+                                                    src_language.id,
+                                                    dst_language)
 
-        #self.assertEqual(info.node, new_info.node)
+        original = self.session.query(NodeInfo).\
+                        filter(NodeInfo.lang.has(id=src_language.id)).count()
+        self.assertEqual(len(translations), original)
+
+        original = self.session.query(NodeInfo).\
+                        filter(NodeInfo.lang.has(id=language.id)).count()
+        self.assertEqual(len(translations), original)
+
+    def test_remove_translations(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'it').one()
+        language.enabled = False
+
+        removed = NodeInfo.remove_translations(self.session, language.id)
+        self.assertNotEqual(removed, 0)
+
+        translations = self.session.query(NodeInfo).\
+                            filter(NodeInfo.lang.has(id=language.id)).count()
+        self.assertEqual(translations, 0)
 
     def test_menu_info_create_translation(self):
 

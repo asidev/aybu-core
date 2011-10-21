@@ -18,8 +18,13 @@ limitations under the License.
 
 import random
 import string
+import ConfigParser
+import StringIO
 
+from aybu.core.models import default_data_from_config
 from aybu.core.models import Language
+from aybu.core.models import NodeInfo
+from aybu.core.models import populate
 from babel import Locale
 from babel.core import LOCALE_ALIASES, UnknownLocaleError
 from logging import getLogger
@@ -29,6 +34,58 @@ log = getLogger(__name__)
 
 
 class LanguageTests(BaseTests):
+
+    def populate(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data)
+
+    def test_enable(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'en').one()
+        language.enabled = False
+
+        src_language = self.session.query(Language).\
+                            filter(Language.lang==u'it').one()
+        dst_language = self.session.query(Language).\
+                            filter(Language.lang==u'de').one()
+
+        language = Language.enable(self.session,
+                                   dst_language.id,
+                                   src_language.id)
+
+        self.assertEqual(dst_language, language)
+
+        original = self.session.query(NodeInfo).\
+                        filter(NodeInfo.lang.has(id=src_language.id)).count()
+        translations = self.session.query(NodeInfo).\
+                            filter(NodeInfo.lang.has(id=dst_language.id)).count()
+
+        self.assertEqual(translations, original)
+
+    def test_disable(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'it').one()
+
+        self.assertEqual(language, Language.disable(self.session, language.id))
+
+        criterion = NodeInfo.lang.has(id=language.id)
+        translations = self.session.query(NodeInfo).filter(criterion).count()
+
+        self.assertEqual(translations, 0)
 
     def test_str_and_repr(self):
         language = Language(lang=u'it', country=u'it')

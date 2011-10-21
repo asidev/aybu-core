@@ -19,6 +19,7 @@ limitations under the License.
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
 from aybu.core.models.setting import Setting
+from aybu.core.models.translation import NodeInfo
 from aybu.core.utils.exceptions import ConstraintError
 from babel import Locale
 from babel.core import UnknownLocaleError as UnknownLocale
@@ -121,20 +122,47 @@ class Language(Base):
                 yield locale
 
     @classmethod
-    def enable(cls, session, id_):
+    def enable(cls, session, id_, translation_lang_id):
         """ Enable the language 'id_' 
-            if the number of enabled languages did not reach 'max_languages'.
+            if the number of enabled languages did not reach 'max_languages',
+            then create translations for that language:
+            create translations for each NodeInfo 
+            from 'translation_lang_id' to 'lang_id'.
         """
         max_ = int(session.query(Setting).get('max_languages').value)
-        enabled = session.query(Language).filter(Language.enabled==True).count()
+        enabled = session.query(cls).filter(Language.enabled==True).count()
         if enabled >= max_:
             msg = 'The maximum number of enabled languages was reached.'
             raise ConstraintError(msg)
 
-        language = session.query(Language).get(id_)
+        language = session.query(cls).get(id_)
         if language is None:
             raise NoResultFound('No language found.')
 
         language.enabled = True
+
+        translations = NodeInfo.create_translations(session,
+                                                    translation_lang_id,
+                                                    language)
+
+        return language
+
+    @classmethod
+    def disable(cls, session, id_):
+        """ Disable the language 'id_' 
+            if it is not the only enabled one,
+            then delete all translations for that language.
+        """
+
+        if session.query(cls).filter(cls.enabled == True).count() < 2:
+            raise ConstraintError('Cannot disable last enabled language.')
+
+        language = session.query(cls).get(id_)
+        if language is None:
+            raise NoResultFound('No language found.')
+
+        language.enabled = False
+
+        translations = NodeInfo.remove_translations(session, id_)
 
         return language

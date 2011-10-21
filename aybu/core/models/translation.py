@@ -27,7 +27,6 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
-from aybu.core.models.language import Language
 from aybu.core.models.node import Page
 #from aybu.core.utils.exceptions import ValidationError
 
@@ -66,14 +65,14 @@ class NodeInfo(Base):
                                    self.label.encode('utf8'))
 
     @classmethod
-    def translate(cls, session, src_lang_id, dst_language):
+    def create_translations(cls, session, src_lang_id, dst_language):
         """ Create a translation from Language 'src_lang_id' 
             to Language 'dst_language' for each NodeInfo in the database.
             NOTE: data of new translations will be data of existing ones.
         """
         translations = []
 
-        criterion = cls.lang.has(Language.id == src_lang_id)
+        criterion = cls.lang.has(id=src_lang_id)
         for translation in session.query(cls).filter(criterion).all():
 
             obj = translation.create_translation(dst_language)
@@ -84,6 +83,11 @@ class NodeInfo(Base):
             translations.append(obj)
 
         return translations
+
+    @classmethod
+    def remove_translations(cls, session, language_id):
+        criterion = NodeInfo.lang.has(id=language_id)
+        return session.query(NodeInfo).filter(criterion).delete('fetch')
 
     def create_translation(self, language):
         return self.__class__(id=None, label=self.label, lang=language)
