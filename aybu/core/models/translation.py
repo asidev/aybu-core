@@ -27,6 +27,7 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
+from aybu.core.models.language import Language
 from aybu.core.models.node import Page
 #from aybu.core.utils.exceptions import ValidationError
 
@@ -63,6 +64,26 @@ class NodeInfo(Base):
     def __repr__(self):
         return "<%s [%s] '%s'>" % (self.__class__.__name__, self.id,
                                    self.label.encode('utf8'))
+
+    @classmethod
+    def translate(cls, session, src_lang_id, dst_language):
+        """ Create a translation from Language 'src_lang_id' 
+            to Language 'dst_language' for each NodeInfo in the database.
+            NOTE: data of new translations will be data of existing ones.
+        """
+        translations = []
+
+        criterion = cls.lang.has(Language.id == src_lang_id)
+        for translation in session.query(cls).filter(criterion).all():
+
+            obj = translation.create_translation(dst_language)
+
+            if obj not in session.new:
+                session.add(obj)
+
+            translations.append(obj)
+
+        return translations
 
     def create_translation(self, language):
         return self.__class__(id=None, label=self.label, lang=language)

@@ -19,7 +19,7 @@ limitations under the License.
 import ConfigParser
 import StringIO
 
-from aybu.core.models import Menu, MenuInfo, Page, PageInfo
+from aybu.core.models import Node, NodeInfo, Menu, MenuInfo, Page, PageInfo
 from aybu.core.models import Section, SectionInfo
 from aybu.core.models import ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
@@ -47,6 +47,26 @@ default_data = data/default_data.json
         data = default_data_from_config(config)
 
         populate(self.config, data)
+
+    def test_translate(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'en').one()
+        language.enabled = False
+
+        src_language = self.session.query(Language).\
+                            filter(Language.lang==u'it').one()
+        dst_language = self.session.query(Language).\
+                            filter(Language.lang==u'de').one()
+
+        Language.enable(self.session, dst_language.id)
+
+        translations = NodeInfo.translate(self.session,
+                                          src_language.id, dst_language)
+
+        #self.assertEqual(info.node, new_info.node)
 
     def test_menu_info_create_translation(self):
 
