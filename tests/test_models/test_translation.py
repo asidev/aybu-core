@@ -36,7 +36,7 @@ log = getLogger(__name__)
 
 class NodeInfoTests(BaseTests):
 
-    def test_property_type(self):
+    def populate(self):
         file_ = StringIO.StringIO(
 """
 [app:aybu-website]
@@ -47,6 +47,90 @@ default_data = data/default_data.json
         data = default_data_from_config(config)
 
         populate(self.config, data)
+
+    def test_menu_info_create_translation(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'de').one()
+        menu_info = self.session.query(MenuInfo).first()       
+        new_menu_info = menu_info.create_translation(language)
+        self.assertNotEqual(menu_info, new_menu_info)
+        self.assertNotEqual(menu_info.id, new_menu_info.id)
+        self.assertEqual(menu_info.label, new_menu_info.label)
+        self.assertNotEqual(menu_info.lang, new_menu_info.lang)
+        self.assertEqual(new_menu_info.lang, language)
+        self.assertEqual(menu_info.node, new_menu_info.node)
+
+    def test_page_info_create_translation(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'de').one()
+        page_info = self.session.query(PageInfo).first()
+        new_page_info = page_info.create_translation(language)
+        self.assertNotEqual(page_info, new_page_info)
+        self.assertNotEqual(page_info.id, new_page_info.id)
+        self.assertEqual(page_info.label, new_page_info.label)
+        self.assertNotEqual(page_info.lang, new_page_info.lang)
+        self.assertEqual(new_page_info.lang, language)
+        self.assertEqual(page_info.node, new_page_info.node)
+        self.assertEqual(page_info.url, new_page_info.url)
+        self.assertEqual(page_info.content, new_page_info.content)
+        self.assertEqual(page_info.files, new_page_info.files)
+        self.assertEqual(page_info.images, new_page_info.images)
+        self.assertEqual(page_info.links, new_page_info.links)
+
+    def test_section_info_create_translation(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'de').one()
+        info = self.session.query(SectionInfo).first()       
+        new_info = info.create_translation(language)
+        self.assertNotEqual(info, new_info)
+        self.assertNotEqual(info.id, new_info.id)
+        self.assertEqual(info.label, new_info.label)
+        self.assertNotEqual(info.lang, new_info.lang)
+        self.assertEqual(new_info.lang, language)
+        self.assertEqual(info.node, new_info.node)
+
+    def test_external_link_info_create_translation(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'de').one()
+        info = self.session.query(ExternalLinkInfo).first()       
+        new_info = info.create_translation(language)
+        self.assertNotEqual(info, new_info)
+        self.assertNotEqual(info.id, new_info.id)
+        self.assertEqual(info.label, new_info.label)
+        self.assertNotEqual(info.lang, new_info.lang)
+        self.assertEqual(new_info.lang, language)
+        self.assertEqual(info.node, new_info.node)
+
+    def test_internal_link_info_create_translation(self):
+
+        self.populate()
+
+        language = self.session.query(Language).\
+                        filter(Language.lang==u'de').one()
+        info = self.session.query(InternalLinkInfo).first()       
+        new_info = info.create_translation(language)
+        self.assertNotEqual(info, new_info)
+        self.assertNotEqual(info.id, new_info.id)
+        self.assertEqual(info.label, new_info.label)
+        self.assertNotEqual(info.lang, new_info.lang)
+        self.assertEqual(new_info.lang, language)
+        self.assertEqual(info.node, new_info.node)
+
+    def test_property_type(self):
+
+        self.populate()
 
         menu_info = self.session.query(MenuInfo).\
                          order_by(func.random()).first()

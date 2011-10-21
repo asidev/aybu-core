@@ -50,7 +50,6 @@ class NodeInfo(Base):
     node_id = Column(Integer, ForeignKey('nodes.id',
                                          onupdate='cascade',
                                          ondelete='cascade'), nullable=False)
-    #node = relationship('Node', backref='translations')
 
     lang_id = Column(Integer, ForeignKey('languages.id',
                                          onupdate='cascade',
@@ -62,31 +61,28 @@ class NodeInfo(Base):
         return self.__class__.__name__
 
     def __repr__(self):
-        return "<%s [%d] '%s'>" % (self.__class__.__name__, self.id,
+        return "<%s [%s] '%s'>" % (self.__class__.__name__, self.id,
                                    self.label.encode('utf8'))
 
-    """
-    @classmethod
-    def create(cls, session, **params):
-        " " " Create a persistent 'cls' object and return it." " "
-        if cls == NodeInfo:
-            raise ValidationError('cls: NodeInfo creation is not allowed!')
-
-        entity = cls(**params)
-        session.add(entity)
-        return entity
-    """
+    def create_translation(self, language):
+        return self.__class__(id=None, label=self.label, lang=language)
 
 
 class MenuInfo(NodeInfo):
+
     __mapper_args__ = {'polymorphic_identity': 'menu_info'}
 
     node = relationship('Menu', backref='translations')
 
+    def create_translation(self, language):
+        obj = super(MenuInfo, self).create_translation(language)
+        obj.node = self.node
+        return obj
+
 
 class CommonInfo(NodeInfo):
 
-    #__mapper_args__ = {'polymorphic_identity': 'common_info'}
+    __mapper_args__ = {'polymorphic_identity': 'common_info'}
 
     title = Column(Unicode(64), default=None)
     url_part = Column(Unicode(64), default=None)
@@ -96,6 +92,16 @@ class CommonInfo(NodeInfo):
 
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
+
+    def create_translation(self, language):
+        obj = super(CommonInfo, self).create_translation(language)
+        obj.node = self.node
+        obj.title = self.title
+        obj.url_part = self.url_part
+        obj.partial_url = self.partial_url
+        obj.meta_description = self.meta_description
+        obj.head_content = self.head_content
+        return obj
 
 
 class PageInfo(CommonInfo):
@@ -160,6 +166,16 @@ class PageInfo(CommonInfo):
                                             self.label.encode('utf8'),
                                             url.encode('utf8'))
 
+    def create_translation(self, language):
+        obj = super(PageInfo, self).create_translation(language)
+        obj.url = self.url
+        obj.content = self.content
+        obj.node = self.node
+        obj.files.extend([file_ for file_ in self.files])
+        obj.images.extend([image for image in self.images])
+        obj.links.extend([link for link in self.links])
+        return obj
+
     @classmethod
     def get_by_url(cls, session, url):
         criterion = cls.url.ilike(url)
@@ -179,6 +195,11 @@ class SectionInfo(CommonInfo):
 
     node = relationship('Section', backref='translations')
 
+    def create_translation(self, language):
+        obj = super(SectionInfo, self).create_translation(language)
+        obj.node = self.node
+        return obj
+
 
 class ExternalLinkInfo(NodeInfo):
 
@@ -191,9 +212,20 @@ class ExternalLinkInfo(NodeInfo):
     # ie: http://www.apple.com or http://www.apple.it
     ext_url = Column(Unicode(512), default=None)
 
+    def create_translation(self, language):
+        obj = super(ExternalLinkInfo, self).create_translation(language)
+        obj.ext_url = self.ext_url
+        obj.node = self.node
+        return obj
+
 
 class InternalLinkInfo(NodeInfo):
 
     __mapper_args__ = {'polymorphic_identity': 'internallink_info'}
 
     node = relationship('InternalLink', backref='translations')
+
+    def create_translation(self, language):
+        obj = super(InternalLinkInfo, self).create_translation(language)
+        obj.node = self.node
+        return obj
