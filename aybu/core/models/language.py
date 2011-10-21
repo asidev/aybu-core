@@ -18,6 +18,8 @@ limitations under the License.
 
 from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
+from aybu.core.models.setting import Setting
+from aybu.core.utils.exceptions import ConstraintError
 from babel import Locale
 from babel.core import UnknownLocaleError as UnknownLocale
 from logging import getLogger
@@ -26,6 +28,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import Unicode
+from sqlalchemy.orm.exc import NoResultFound
 
 
 __all__ = ['Language']
@@ -116,3 +119,22 @@ class Language(Base):
 
             for locale in language.locales:
                 yield locale
+
+    @classmethod
+    def enable(cls, session, id_):
+        """ Enable the language 'id_' 
+            if the number of enabled languages did not reach 'max_languages'.
+        """
+        max_ = int(session.query(Setting).get('max_languages').value)
+        enabled = session.query(Language).filter(Language.enabled==True).count()
+        if enabled >= max_:
+            msg = 'The maximum number of enabled languages was reached.'
+            raise ConstraintError(msg)
+
+        language = session.query(Language).get(id_)
+        if language is None:
+            raise NoResultFound('No language found.')
+
+        language.enabled = True
+
+        return language
