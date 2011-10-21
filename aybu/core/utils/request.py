@@ -24,9 +24,9 @@ from pyramid.request import Request as BaseRequest
 from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.security import unauthenticated_userid
 from sqlalchemy import create_engine
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import (scoped_session,
+                            sessionmaker,
+                            joinedload)
 import locale
 
 __all__ = []
@@ -37,15 +37,14 @@ log = getLogger(__name__)
 class Request(BaseRequest):
 
     db_engine = None
-    db_session = None
+    Session = None
 
     def __init__(self, *args, **kwargs):
 
         super(Request, self).__init__(*args, **kwargs)
 
-        self.db_session = scoped_session(sessionmaker())
-
         if not self.db_engine is None:
+            self.db_session = self.Session()
             self.db_session.configure(bind=self.db_engine)
 
         self.add_finished_callback(self.finished_callback)
@@ -76,6 +75,7 @@ class Request(BaseRequest):
             engine = create_engine(engine)
 
         cls.db_engine = engine
+        cls.Session = scoped_session(sessionmaker(bind=engine))
 
     @property
     def locale_name(self):
@@ -141,5 +141,5 @@ class Request(BaseRequest):
 
     def finished_callback(self, request):
         """ It clears the database session. """
-        self.db_session.remove()
         self.db_session.close()
+        self.Session.remove()
