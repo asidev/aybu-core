@@ -43,6 +43,36 @@ class SettingTests(BaseTests):
         self.session.add(self.max_pages)
         self.session.flush()
 
+    def test_init(self):
+        with self.assertRaises(NameError):
+            Setting(name=u'testtest',
+                    type=SettingType(name=u'integer',
+                                     raw_type=u'int'))
+        with self.assertRaises(NameError):
+            Setting(name=u'testtest',
+                    value=u'testtest')
+
+    def test_type(self):
+        with self.assertRaises(ValueError):
+            Setting(name=u'testtest',
+                    value=u'abcdefg',
+                    type=SettingType(name=u'boolean',
+                                     raw_type=u'bool'))
+
+        s = Setting(name=u'testok',
+                    raw_value=1,
+                    type=SettingType(name=u'integer',
+                                     raw_type=u'int'))
+        self.assertEqual(s.value, 1)
+        self.assertEqual(s.raw_value, "1")
+
+        with self.assertRaises(ValueError):
+            s.value = 'abcdef'
+
+        s.value = 4
+        self.assertEqual(s.value, 4)
+        self.assertEqual(s.raw_value, "4")
+
     def test_str_and_repr(self):
         self.add_ex_setting()
         self.assertEqual(str(self.max_pages), '<Setting max_pages (1)>')
@@ -59,6 +89,7 @@ class SettingTests(BaseTests):
         self.add_ex_setting()
         max_pages = Setting.get(self.session, 'max_pages')
         self.assertEqual(max_pages, self.max_pages)
+
 
 
 class SettingTypeTests(BaseTests):
