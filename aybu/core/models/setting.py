@@ -63,25 +63,43 @@ class Setting(Base):
     def __init__(self, **kwargs):
         if "raw_value" in kwargs:
             kwargs.pop('value', '')
+            kwargs['raw_value'] = unicode(kwargs['raw_value'])
         else:
             try:
                 value = kwargs.pop('value')
                 kwargs['raw_value'] = value
+
             except KeyError:
+                # FIXME is NameError correct?
                 raise NameError('__init__ has not arg "value"')
+
+        try:
+            self._get_cast(type_=kwargs['type'])(kwargs['raw_value'])
+
+        except KeyError:
+            raise NameError('__init__ has no arg "type"')
+
+        except:
+            raise ValueError('Invalid value %s for type %s' %
+                             (kwargs['raw_value'], kwargs['type'].raw_type))
+
         super(Setting, self).__init__(**kwargs)
 
-    def _get_cast(self):
+
+    def _get_cast(self, type_=None):
         def noop(value):
             return value
 
+        if type_ is None:
+            type_ = self.type
+
         if not hasattr(self, '_caster'):
-            if self.type.raw_type == 'unicode':
+            if type_.raw_type == 'unicode':
                 self._caster = noop
-            elif self.type.raw_type == 'bool':
+            elif type_.raw_type == 'bool':
                 self._caster = ast.literal_eval
             else:
-                self._caster = eval(self.type.raw_type)
+                self._caster = eval(type_.raw_type)
 
         return self._caster
 
@@ -94,7 +112,7 @@ class Setting(Base):
         # try to convert first
         try:
             self._get_cast()(v)
-            self.raw_type = unicode(v)
+            self.raw_value = unicode(v)
         except:
             raise ValueError("v must be of type %s"  % (self.type.raw_type))
 
