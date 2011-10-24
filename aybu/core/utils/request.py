@@ -55,7 +55,7 @@ class Request(BaseRequest):
 
         self._locale_name = None
         self._language = None
-        self.localizer = None
+        self._localizer = None
 
     @reify
     def user(self):
@@ -67,6 +67,10 @@ class Request(BaseRequest):
             return None
         query = self.db_session.query(User).options(joinedload('groups'))
         return query.get(userid)
+
+    @reify
+    def _settings(self):
+        return self.registry.settings
 
     @classmethod
     def set_db_engine(cls, engine):
@@ -94,22 +98,21 @@ class Request(BaseRequest):
         # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
         self._locale_name = loc_name
         log.debug('Set request.locale_name: %s', self._locale_name)
-        self.localizer = get_localizer(self)
-        log.debug('Set request.localizer: %s', self.localizer)
+        self._localizer = get_localizer(self)
+        log.debug('Set request.localizer: %s', self._localizer)
         log.debug('Set locale: %s.UTF8', self._locale_name)
         locale.setlocale(locale.LC_ALL, '%s.UTF8' % self._locale_name)
 
     @property
     def language(self):
+
+        if self._language is None:
+            self.set_language_to_default()
+
         return self._language
 
     @language.setter
-    def language(self, lang):
-        if not lang:
-            lang = Language.get_by_lang(
-                    self.db_session,
-                    self.registry.settings['default_locale_name'])
-
+    def language(self, lang): 
         log.debug('Set language: %s', lang)
         self._language = lang
         self.locale_name = str(lang.locale)
@@ -142,6 +145,18 @@ class Request(BaseRequest):
             except Exception as e:
                 log.debug(e)
 
+    @property
+    def localizer(self):
+
+        if self._localizer is None and self._language is None:
+            self.set_language_to_default()
+
+        return self._localizer
+
+    @localizer.setter
+    def localizer(self, localizer):
+        self._localizer = localizer
+
     def translate(self, string):
         """ This function will be exported to templates as '_' """
         return self.localizer.translate(self.translation_factory(string))
@@ -150,3 +165,9 @@ class Request(BaseRequest):
         """ It clears the database session. """
         self.db_session.close()
         self.Session.remove()
+
+    def set_language_to_default(self):
+        # USE language.setter!
+        self.language = Language.\
+                        get_by_lang(self.db_session,
+                                    self._settings['default_locale_name'])
