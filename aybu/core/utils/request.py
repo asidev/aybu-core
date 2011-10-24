@@ -117,7 +117,14 @@ class Request(BaseRequest):
     @property
     def languages(self):
 
-        languages_ = self.accept_language.best_matches()
+        try:
+            languages_ = self.accept_language.best_matches()
+        except AttributeError as e:
+            log.debug(e)
+            # self.accept_language is a webob.acceptparse.NilAccept
+            # Default language will be the default locale.
+            languages_ = [self.registry.settings['default_locale_name']]
+
         for language in languages_:
             yield language
 
