@@ -28,14 +28,21 @@ __all__ = ['Base']
 class AybuBase(object):
 
     @classmethod
-    def count(cls, session):
-        return session.query(cls).count()
+    def count(cls, session, filters=[]):
+        query = session.query(cls)
+        try:
+            for filter_ in filters:
+                query = query.filter(filter_)
+        except TypeError:
+                query = query.filter(filters)
+
+        return query.count()
 
     @classmethod
     def get(cls, session, pkey):
         obj = session.query(cls).get(pkey)
         if obj is None:
-            raise NoResultFound()
+            raise NoResultFound("No {} in {}".format(pkey, cls.__name__))
         return obj
 
     @classmethod
