@@ -68,21 +68,22 @@ __all__ = ['populate', 'engine_from_config_parser', 'create_session',
            'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription']
 
 
-def populate(config, data, config_section="app:main", session=None):
+def populate(config, data, config_section="app:main", session=None,
+             drop_all=True):
     engine = engine_from_config_parser(config, config_section)
     if session is None:
-        session = create_session(engine)
+        session = create_session(engine, drop_all)
         close_session = True
     else:
         close_session = False
 
     add_default_data(session, data)
     user = default_user_from_config(config)
-    session.add(user)
+    session.merge(user)
 
     group = Group(name=u'admin')
     group.users.append(user)
-    session.add(group)
+    session.merge(group)
 
     session.commit()
     if close_session:
@@ -98,13 +99,14 @@ def engine_from_config_parser(config, section="app:main"):
     return engine_from_config(options)
 
 
-def create_session(engine):
+def create_session(engine, drop_all=True):
 
     session = scoped_session(sessionmaker())
     session.configure(bind=engine)
 
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+    if drop_all:
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
 
     return session
 
@@ -163,7 +165,9 @@ def add_default_data(session, data):
                         values.append(query.filter(attr == elem[i]).one())
                 params[key] = values
         """
-        session.add(cls(**params))
+
+        obj = cls(**params)
+        session.merge(obj)
 
 
 def default_data_from_config(config):
