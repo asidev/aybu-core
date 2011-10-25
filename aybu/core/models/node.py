@@ -37,6 +37,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import cast
+import warnings
 
 
 __all__ = []
@@ -79,7 +80,7 @@ class Node(Base):
 
     @classmethod
     def get_by_id(cls, session, id_):
-        return session.query(cls).get(id_)
+        return cls.get(session, id_)
 
     @classmethod
     def get_by_enabled(cls, session, enabled, start=None, limit=None):
@@ -94,7 +95,6 @@ class Node(Base):
 
     @validates('parent')
     def validate_parent(self, key, value):
-        #log.debug('Validate parent : %s, %s,%s', self, key, value)
         if isinstance(self, Menu):
             if value != None:
                 raise ValidationError()
@@ -105,7 +105,6 @@ class Node(Base):
 
     @validates('children')
     def validate_children(self, key, value):
-        #log.debug('Validate children : %s, %s,%s', self, key, value)
         if isinstance(self, (ExternalLink, InternalLink)):
             if value != None or value != []:
                 raise ValidationError()
@@ -114,6 +113,8 @@ class Node(Base):
     @classmethod
     def create(cls, session, **params):
         """ Create a persistent 'cls' object and return it."""
+        warnings.warn("Node.create is in pending removal", DeprecationWarning)
+
         if cls == Node:
             raise ValidationError('cls: Node creation is not allowed!')
         entity = cls(**params)

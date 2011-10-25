@@ -29,11 +29,9 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import Unicode
-from sqlalchemy.orm.exc import NoResultFound
 
 
 __all__ = ['Language']
-
 log = getLogger(__name__)
 
 
@@ -123,46 +121,40 @@ class Language(Base):
 
     @classmethod
     def enable(cls, session, id_, translation_lang_id):
-        """ Enable the language 'id_' 
+        """ Enable the language 'id_'
             if the number of enabled languages did not reach 'max_languages',
             then create translations for that language:
-            create translations for each NodeInfo 
+            create translations for each NodeInfo
             from 'translation_lang_id' to 'lang_id'.
         """
-        max_ = int(session.query(Setting).get('max_languages').value)
-        enabled = session.query(cls).filter(Language.enabled==True).count()
+        max_ = Setting.get(session, 'max_languages').value
+        enabled = cls.count(session, filters=Language.enabled == True)
         if enabled >= max_:
             msg = 'The maximum number of enabled languages was reached.'
             raise ConstraintError(msg)
 
-        language = session.query(cls).get(id_)
-        if language is None:
-            raise NoResultFound('No language found.')
-
+        language = cls.get(session, id_)
         language.enabled = True
 
-        translations = NodeInfo.create_translations(session,
-                                                    translation_lang_id,
-                                                    language)
+        NodeInfo.create_translations(session,
+                                     translation_lang_id,
+                                     language)
 
         return language
 
     @classmethod
     def disable(cls, session, id_):
-        """ Disable the language 'id_' 
+        """ Disable the language 'id_'
             if it is not the only enabled one,
             then delete all translations for that language.
         """
 
-        if session.query(cls).filter(cls.enabled == True).count() < 2:
+        if Language.count(session, filters=cls.enabled == True) < 2:
             raise ConstraintError('Cannot disable last enabled language.')
 
-        language = session.query(cls).get(id_)
-        if language is None:
-            raise NoResultFound('No language found.')
-
+        language = Language.get(session, id_)
         language.enabled = False
 
-        translations = NodeInfo.remove_translations(session, id_)
+        NodeInfo.remove_translations(session, id_)
 
         return language
