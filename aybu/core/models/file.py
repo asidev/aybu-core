@@ -18,12 +18,14 @@ limitations under the License.
 
 from sqlalchemy import Column
 from sqlalchemy import Unicode
+from sqlalchemy.orm.session import object_session
 import logging
 import os
 import shutil
 import PIL
 
 from aybu.core.models.base import Base
+from aybu.core.models.translation import PageInfo
 from pufferfish import FileSystemEntity
 
 __all__ = ['File', 'Image', 'Banner']
@@ -46,6 +48,15 @@ class File(FileSystemEntity, Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', Unicode(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
+
+    def get_ref_pages(self, session=None):
+        """ Return all translations that have this file in its relation """
+        if session is None:
+            session = object_session(self)
+        attr = getattr(PageInfo, "{}s".format(self.__class__.__name__.lower()))
+        return session.query(PageInfo).filter(
+                attr.any(self.__class__.id == self.id)
+        ).all()
 
 
 class Banner(File):
@@ -74,6 +85,10 @@ class Banner(File):
         else:
             raise ValueError('Unsupported file format: %' %
                              (self.content_type))
+
+    def get_ref_pages(self, session):
+        # Banners are in relationship with Pages, not translations
+        raise NotImplementedError
 
     def __repr__(self):  # pragma: nocover
         return "<Banner %d at %s : %s>" % (self.id, self.path, self.url)
@@ -135,6 +150,20 @@ class Image(File):
 
     def __repr__(self):  # pragma: nocover
         return "<Image %d at %s : %s>" % (self.id, self.path, self.url)
+
+    def to_dict(self, ref_pages=False):
+        res = super(Image, self).to_dict()
+        if ref_pages:
+            # FIXME: change key in dict
+            res['used_by'] = [ page.id for page in self.get_ref_pages()]
+
+        for k, t in self.thumbnails.iteritems():
+            res['{}_url'.format(k)] = t.url
+            res['{}_path'.format(k)] = t.path
+            res['{}_width'.format(k)] = t.width
+            res['{}_height'.format(k)] = t.height
+
+        return res
 
 
 class Thumbnail(object):
