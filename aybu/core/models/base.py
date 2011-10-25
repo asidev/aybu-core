@@ -17,13 +17,36 @@ limitations under the License.
 """
 
 
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.declarative import declarative_base
 
 
 __all__ = ['Base']
 
 
-Base = declarative_base()
+class AybuBase(object):
+
+    @classmethod
+    def count(cls, session):
+        return session.query(cls).count()
+
+    @classmethod
+    def get(cls, session, pkey):
+        obj = session.query(cls).get(pkey)
+        if obj is None:
+            raise NoResultFound()
+        return obj
+
+    @classmethod
+    def all(cls, session):
+        return session.query(cls).all()
+
+    def delete(self):
+        object_session(self).delete(self)
+
+
+Base = declarative_base(cls=AybuBase)
 
 
 def get_sliced(query, start=None, limit=None):
