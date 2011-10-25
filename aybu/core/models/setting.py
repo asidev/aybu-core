@@ -120,11 +120,5 @@ class Setting(Base):
         return "<Setting %s (%s)>" % (self.name, self.value)
 
     @classmethod
-    def get_all(cls, session):
+    def all(cls, session):
         return session.query(cls).options(joinedload('type')).all()
-
-    @classmethod
-    def get(cls, session, name):
-        return session.query(cls).filter(cls.name == name).one()
-
-

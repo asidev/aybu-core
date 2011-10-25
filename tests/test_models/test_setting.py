@@ -80,7 +80,7 @@ class SettingTests(BaseTests):
     def test_get_all(self):
         self.add_ex_setting()
 
-        settings = Setting.get_all(self.session)
+        settings = Setting.all(self.session)
 
         for setting in (self.max_pages, self.site_title):
             self.assertIn(setting, settings)
