@@ -48,7 +48,11 @@ class ValidationError(BaseError):
     """This class must be used by validators when they fail during checks."""
 
 
-class ConstraintError(BaseError):
+class QuotaError(BaseError):
     """ This class must be used by Setting validators
         when they fail during checks.
     """
+
+
+class ConstraintError(BaseError):
+    """ Raise when an app-level constraint has been detected """

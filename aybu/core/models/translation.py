@@ -28,7 +28,6 @@ from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
-#from aybu.core.utils.exceptions import ValidationError
 
 __all__ = []
 
@@ -66,7 +65,7 @@ class NodeInfo(Base):
 
     @classmethod
     def create_translations(cls, session, src_lang_id, dst_language):
-        """ Create a translation from Language 'src_lang_id' 
+        """ Create a translation from Language 'src_lang_id'
             to Language 'dst_language' for each NodeInfo in the database.
             NOTE: data of new translations will be data of existing ones.
         """

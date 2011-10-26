@@ -20,7 +20,7 @@ from aybu.core.models.base import Base
 from aybu.core.models.base import get_sliced
 from aybu.core.models.setting import Setting
 from aybu.core.models.translation import NodeInfo
-from aybu.core.utils.exceptions import ConstraintError
+from aybu.core.exc import QuotaError
 from babel import Locale
 from babel.core import UnknownLocaleError as UnknownLocale
 from logging import getLogger
@@ -131,7 +131,7 @@ class Language(Base):
         enabled = cls.count(session, filters=Language.enabled == True)
         if enabled >= max_:
             msg = 'The maximum number of enabled languages was reached.'
-            raise ConstraintError(msg)
+            raise QuotaError(msg)
 
         language = cls.get(session, id_)
         language.enabled = True
@@ -150,7 +150,7 @@ class Language(Base):
         """
 
         if Language.count(session, filters=cls.enabled == True) < 2:
-            raise ConstraintError('Cannot disable last enabled language.')
+            raise QuotaError('Cannot disable last enabled language.')
 
         language = Language.get(session, id_)
         language.enabled = False

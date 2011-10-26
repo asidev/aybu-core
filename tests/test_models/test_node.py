@@ -19,7 +19,7 @@ limitations under the License.
 import ConfigParser
 import StringIO
 
-from aybu.core.utils.exceptions import ValidationError
+from aybu.core.exc import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
 from aybu.core.models import Language

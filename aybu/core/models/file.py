@@ -26,11 +26,11 @@ import PIL.Image
 
 from aybu.core.models.base import Base
 from aybu.core.models.translation import PageInfo
-from aybu.core.models.exc import ModelConstraintError
+from aybu.core.exc import ConstraintError
 from pufferfish import FileSystemEntity
 
-__all__ = ['File', 'Image', 'Banner']
 
+__all__ = ['File', 'Image', 'Banner']
 log = logging.getLogger(__name__)
 
 
@@ -55,7 +55,7 @@ class File(FileSystemEntity, Base):
 
     def delete(self, session=None):
         if len(self.get_ref_pages(session)) > 0:
-            raise ModelConstraintError('%s in in use', self)
+            raise ConstraintError('%s in in use', self)
         super(File, self).delete(session)
 
 

@@ -17,7 +17,7 @@ limitations under the License.
 """
 
 from aybu.core.utils.modifiers import boolify
-from aybu.core.utils.exceptions import ValidationError
+from aybu.core.exc import ValidationError
 from aybu.core.models.base import Base, get_sliced
 from aybu.core.models.view import View
 from aybu.core.models.setting import Setting
