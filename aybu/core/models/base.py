@@ -42,7 +42,8 @@ class AybuBase(object):
     def get(cls, session, pkey):
         obj = session.query(cls).get(pkey)
         if obj is None:
-            raise NoResultFound("No {} in {}".format(pkey, cls.__name__))
+            raise NoResultFound("No obj with key {} in class {}"\
+                                .format(pkey, cls.__name__))
         return obj
 
     @classmethod
@@ -53,8 +54,9 @@ class AybuBase(object):
     def first(cls, session):
         return session.query(cls).first()
 
-    def delete(self):
-        object_session(self).delete(self)
+    def delete(self, session=None):
+        session = session if not session is None else object_session(self)
+        session.delete(self)
 
 
 Base = declarative_base(cls=AybuBase)
