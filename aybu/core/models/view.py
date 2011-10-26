@@ -47,11 +47,11 @@ class View(Base):
         return "<View %s (%s)>" % (self.name, self.fs_view_path)
 
     @classmethod
-    def all(cls, session):
-
-        query = session.query(cls).options(joinedload('descriptions'),
-                                           joinedload('descriptions.language'))
-        return query.all()
+    def all(cls, session, start=None, limit=None):
+        query_options = (joinedload('descriptions'),
+                         joinedload('descriptions.language'))
+        return super(View, cls).all(session, start=start, limit=limit,
+                                    query_options=query_options)
 
 
 

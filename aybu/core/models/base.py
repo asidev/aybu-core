@@ -71,6 +71,7 @@ class AybuBase(object):
             query = query.filter(filters)
 
         if sort_by:
+            sort_by = getattr(cls, sort_by)
             sort_order = getattr(sqlalchemy.sql.expression, sort_order)
             query = query.order_by(sort_order(sort_by))
 
