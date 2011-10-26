@@ -20,6 +20,7 @@ limitations under the License.
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy.sql.expression
 
 
 __all__ = ['Base']
@@ -28,13 +29,12 @@ __all__ = ['Base']
 class AybuBase(object):
 
     @classmethod
-    def count(cls, session, filters=[]):
+    def count(cls, session, *filters):
+
         query = session.query(cls)
-        try:
-            for filter_ in filters:
-                query = query.filter(filter_)
-        except TypeError:
-                query = query.filter(filters)
+
+        for filter_ in filters:
+            query = query.filter(filter_)
 
         return query.count()
 
@@ -47,12 +47,37 @@ class AybuBase(object):
         return obj
 
     @classmethod
-    def all(cls, session):
-        return session.query(cls).all()
+    def all(cls, session, start=None, limit=None, query_options=()):
+        query = session.query(cls).options(*query_options)
+        return get_sliced(query, start, limit)
 
     @classmethod
     def first(cls, session):
         return session.query(cls).first()
+
+    @classmethod
+    def search(cls, session, filters=(), sort_by=None, sort_order='asc',
+               start=None, limit=None, query_options=(), return_query=False):
+        """ Perform or return a query which filters dataset using criterions
+            specified by 'filters'.
+        """
+        query = session.query(cls).options(*query_options)
+
+        try:
+            for filter_ in filters:
+                query = query.filter(filter_)
+        except TypeError as e:
+            # 'filters' is not an iterable.
+            query = query.filter(filters)
+
+        if sort_by:
+            sort_order = getattr(sqlalchemy.sql.expression, sort_order)
+            query = query.order_by(sort_order(sort_by))
+
+        if return_query:
+            return query
+
+        return get_sliced(query, start, limit)
 
     def delete(self, session=None):
         session = session if not session is None else object_session(self)
