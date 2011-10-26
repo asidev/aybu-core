@@ -26,6 +26,7 @@ import PIL.Image
 
 from aybu.core.models.base import Base
 from aybu.core.models.translation import PageInfo
+from aybu.core.models.exc import ModelConstraintError
 from pufferfish import FileSystemEntity
 
 __all__ = ['File', 'Image', 'Banner']
@@ -35,13 +36,7 @@ log = logging.getLogger(__name__)
 
 class File(FileSystemEntity, Base):
     """
-        Simple class that can be used as an elixir Entity
-        that keeps the file on disk.
-        This class must be configured prior to use
-
-        >>> from aybu.core.model.file import File
-        >>> File.initialize(session, base="/tmp/testme", private="/tmp")
-        ...
+        Simple class that keeps the file on disk.
     """
 
     __tablename__ = 'files'
@@ -57,6 +52,11 @@ class File(FileSystemEntity, Base):
         return session.query(PageInfo).filter(
                 attr.any(self.__class__.id == self.id)
         ).all()
+
+    def delete(self, session=None):
+        if len(self.get_ref_pages(session)) > 0:
+            raise ModelConstraintError('%s in in use', self)
+        super(File, self).delete(session)
 
 
 class Banner(File):
