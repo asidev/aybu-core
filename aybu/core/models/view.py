@@ -25,6 +25,7 @@ from sqlalchemy import String
 from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import relationship
 
 
@@ -44,6 +45,14 @@ class View(Base):
 
     def __repr__(self):
         return "<View %s (%s)>" % (self.name, self.fs_view_path)
+
+    @classmethod
+    def all(cls, session):
+
+        query = session.query(cls).options(joinedload('descriptions'),
+                                           joinedload('descriptions.language'))
+        return query.all()
+
 
 
 class ViewDescription(Base):

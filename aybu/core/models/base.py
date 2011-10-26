@@ -49,6 +49,10 @@ class AybuBase(object):
     def all(cls, session):
         return session.query(cls).all()
 
+    @classmethod
+    def first(cls, session):
+        return session.query(cls).first()
+
     def delete(self):
         object_session(self).delete(self)
 

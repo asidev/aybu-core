@@ -22,7 +22,7 @@ from sqlalchemy.orm.session import object_session
 import logging
 import os
 import shutil
-import PIL
+import PIL.Image
 
 from aybu.core.models.base import Base
 from aybu.core.models.translation import PageInfo
