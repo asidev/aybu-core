@@ -58,6 +58,14 @@ class File(FileSystemEntity, Base):
             raise ConstraintError('%s in in use', self)
         super(File, self).delete(session)
 
+    def to_dict(self, ref_pages=False):
+        res = super(File, self).to_dict()
+        if ref_pages:
+            # FIXME: change key in dict
+            res['used_by'] = [ page.id for page in self.get_ref_pages()]
+
+        return res
+
 
 class Banner(File):
     """ Class that represent a banner """
@@ -152,10 +160,7 @@ class Image(File):
         return "<Image %d at %s : %s>" % (self.id, self.path, self.url)
 
     def to_dict(self, ref_pages=False):
-        res = super(Image, self).to_dict()
-        if ref_pages:
-            # FIXME: change key in dict
-            res['used_by'] = [ page.id for page in self.get_ref_pages()]
+        res = super(Image, self).to_dict(ref_pages)
 
         for k, t in self.thumbnails.iteritems():
             res['{}_url'.format(k)] = t.url
