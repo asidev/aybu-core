@@ -128,7 +128,7 @@ class Language(Base):
             from 'translation_lang_id' to 'lang_id'.
         """
         max_ = Setting.get(session, 'max_languages').value
-        enabled = cls.count(session, filters=Language.enabled == True)
+        enabled = cls.count(session, Language.enabled == True)
         if enabled >= max_:
             msg = 'The maximum number of enabled languages was reached.'
             raise QuotaError(msg)
@@ -149,7 +149,7 @@ class Language(Base):
             then delete all translations for that language.
         """
 
-        if Language.count(session, filters=cls.enabled == True) < 2:
+        if Language.count(session, cls.enabled == True) < 2:
             raise QuotaError('Cannot disable last enabled language.')
 
         language = Language.get(session, id_)
