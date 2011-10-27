@@ -16,8 +16,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import Column
-from sqlalchemy import Unicode
+from sqlalchemy import (Column,
+                        Unicode,
+                        Boolean)
 from sqlalchemy.orm.session import object_session
 import logging
 import os
@@ -62,14 +63,16 @@ class File(FileSystemEntity, Base):
         res = super(File, self).to_dict()
         if ref_pages:
             # FIXME: change key in dict
-            res['used_by'] = [ page.id for page in self.get_ref_pages()]
+            res['used_by'] = [page.id for page in self.get_ref_pages()]
 
         return res
 
+    def __repr__(self):  # pragma: nocover
+        return "<%s %s at %s : %s>" % (self.__class__.__name,
+                                       self.id, self.path, self.url)
 
-class Banner(File):
-    """ Class that represent a banner """
-    __mapper_args__ = {'polymorphic_identity': 'banner'}
+
+class SimpleImageMixin(object):
     full_size = None
 
     @classmethod
@@ -79,13 +82,16 @@ class Banner(File):
     def save_file(self, source):
         """ Called when saving source """
 
+        log.debug("Calling save_file in %s. self.full_size=",
+                  self.__class__.__name__, self.full_size)
         if self.content_type.partition('/')[0] == 'image':
             # only resize images
             handle = PIL.Image.open(source)
-            log.debug('Banner size %s', self.full_size)
+            log.debug('%s size %s', self.__class__.__name__, self.full_size)
 
             if self.full_size:
-                log.debug('Resizing Banner to %s', self.full_size)
+                log.debug('Resizing %s to %s', self.__class__.__name__,
+                          self.full_size)
                 handle = handle.resize(self.full_size)
 
             handle.save(self.path)
@@ -96,10 +102,17 @@ class Banner(File):
 
     def get_ref_pages(self, session):
         # Banners are in relationship with Pages, not translations
-        raise NotImplementedError
+        # the constraint is not enforced
+        return []
 
-    def __repr__(self):  # pragma: nocover
-        return "<Banner %d at %s : %s>" % (self.id, self.path, self.url)
+
+class Banner(SimpleImageMixin, File):
+    default = Column(Boolean, default=False)
+    __mapper_args__ = {'polymorphic_identity': 'banner'}
+
+
+class Logo(SimpleImageMixin, File):
+    __mapper_args__ = {'polymorphic_identity': 'logo'}
 
 
 class Image(File):
@@ -155,9 +168,6 @@ class Image(File):
             handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
 
         handle.save(self.path)
-
-    def __repr__(self):  # pragma: nocover
-        return "<Image %d at %s : %s>" % (self.id, self.path, self.url)
 
     def to_dict(self, ref_pages=False):
         res = super(Image, self).to_dict(ref_pages)
