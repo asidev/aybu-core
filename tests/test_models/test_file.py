@@ -24,11 +24,28 @@ import string
 import tempfile
 from logging import getLogger
 
-from aybu.core.models.file import Banner, Image
+from aybu.core.exc import ConstraintError
+from aybu.core.models import (Banner,
+                              Image,
+                              File,
+                              Language,
+                              Page,
+                              PageInfo)
+
 from test_base import BaseTests
 
 
-class FileTests(BaseTests):
+def create_page(session):
+    lang = Language(lang='it', country='IT')
+    session.add(lang)
+    page = Page(weight=1)
+    session.add(page)
+    pageinfo = PageInfo(node=page, lang=lang, label=u'test')
+    session.add(pageinfo)
+    return pageinfo
+
+
+class FileTestsBase(BaseTests):
 
     def _create_tmp_file(self, content=None, **kwargs):
         """ Create a temporary file and return its name """
@@ -45,22 +62,55 @@ class FileTests(BaseTests):
         return os.path.join(self.datadir, name)
 
     def setUp(self):
-        super(FileTests, self).setUp()
+        super(FileTestsBase, self).setUp()
         self.tempdir = tempfile.mkdtemp()
         self.datadir = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                   "data"))
         Banner.initialize(self.tempdir)
         Image.initialize(base=self.tempdir)
+        File.initialize(base=self.tempdir)
         self.log = getLogger(__name__)
 
     def tearDown(self):
-        super(FileTests, self).tearDown()
+        super(FileTestsBase, self).tearDown()
         shutil.rmtree(self.tempdir)
         Banner.tmp_objects = dict(added=[], removed=[], updated={}, failed=[])
         Image.tmp_objects = dict(added=[], removed=[], updated={}, failed=[])
 
 
-class BannerTests(FileTests):
+class FileTests(FileTestsBase):
+
+    def test_referred(self):
+        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
+                                        suffix='txt')
+        newfile = File(name='pippo.txt', source=tmpfile, session=self.session)
+        self.session.commit()
+        source = self._get_test_file('sample.png')
+        newimage = Image(source=source, name="original.png",
+                         session=self.session)
+        self.session.commit()
+
+        page = create_page(self.session)
+        page.files.append(newfile)
+        page.images.append(newimage)
+        self.session.commit()
+
+        with self.assertRaises(ConstraintError):
+            newfile.delete()
+
+        with self.assertRaises(ConstraintError):
+            newimage.delete()
+
+        self.assertIn(page, newfile.get_ref_pages(self.session))
+        self.assertIn(page, newimage.get_ref_pages(self.session))
+
+        d = newfile.to_dict()
+        self.assertNotIn('used_by', d)
+        d = newfile.to_dict(ref_pages=True)
+        self.assertIn('used_by', d)
+
+
+class BannerTests(FileTestsBase):
 
     def test_set_size(self):
         size = (600, 300)
@@ -83,7 +133,7 @@ class BannerTests(FileTests):
         self.session.rollback()
 
     def test_resize(self):
-        size = (300,400)
+        size = (300, 400)
         test_file = self._get_test_file('sample.png')
         Banner.set_sizes(full=size)
         b = Banner(source=test_file, session=self.session)
@@ -92,7 +142,7 @@ class BannerTests(FileTests):
         self.session.rollback()
 
 
-class ImageTests(FileTests):
+class ImageTests(FileTestsBase):
 
     def test_set_full_size(self):
         size = (600, 300)
