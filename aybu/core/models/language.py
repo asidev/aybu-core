@@ -17,7 +17,6 @@ limitations under the License.
 """
 
 from aybu.core.models.base import Base
-from aybu.core.models.base import get_sliced
 from aybu.core.models.setting import Setting
 from aybu.core.models.translation import NodeInfo
 from aybu.core.exc import QuotaError
@@ -75,7 +74,7 @@ class Language(Base):
         if not enabled is None:
             query = query.filter(cls.enabled == enabled)
 
-        return get_sliced(query, start, limit)
+        return cls.slice_query(query, start, limit)
 
     @property
     def locale(self):

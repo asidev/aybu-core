@@ -21,9 +21,12 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy.sql.expression
+import logging
 
 
 __all__ = ['Base']
+
+log = logging.getLogger(__name__)
 
 
 class AybuBase(object):
@@ -49,7 +52,7 @@ class AybuBase(object):
     @classmethod
     def all(cls, session, start=None, limit=None, query_options=()):
         query = session.query(cls).options(*query_options)
-        return get_sliced(query, start, limit)
+        return cls.slice_query(query, start, limit)
 
     @classmethod
     def first(cls, session):
@@ -62,6 +65,12 @@ class AybuBase(object):
             specified by 'filters'.
         """
         query = session.query(cls).options(*query_options)
+
+        log.debug('Filters: %s', filters)
+        log.debug('Start: %s.', start)
+        log.debug('Limit: %s.', limit)
+        log.debug('Sort by: %s.', sort_by)
+        log.debug('Sort order: %s.', sort_order)
 
         try:
             for filter_ in filters:
@@ -78,7 +87,29 @@ class AybuBase(object):
         if return_query:
             return query
 
-        return get_sliced(query, start, limit)
+        return cls.slice_query(query, start, limit)
+
+    @classmethod
+    def slice_query(cls, query, start=None, limit=None):
+
+        if not start is None and not limit is None:
+            end = start + limit
+            log.debug('query[%s:%s]. Start: %s. End: %s.', start, end)
+            slice_ = query[start:end]
+
+        elif not start is None and limit is None:
+            log.debug('query[%s:]. Start: %s.', start)
+            slice_ = query[start:]
+
+        elif start is None and not limit is None:
+            log.debug('query[:%s]. Limit: %s.', limit)
+            slice_ = query[:limit]
+
+        else:
+            log.debug('query.all(). Start: %s, Limit: %s', start, limit)
+            slice_ = query.all()
+
+        return slice_
 
     def delete(self, session=None):
         session = session if not session is None else object_session(self)
@@ -86,14 +117,3 @@ class AybuBase(object):
 
 
 Base = declarative_base(cls=AybuBase)
-
-
-def get_sliced(query, start=None, limit=None):
-
-    if not start is None and not limit is None:
-        return query[start:start + limit]
-
-    if not start is None:
-        return query[start:]
-
-    return query.all()

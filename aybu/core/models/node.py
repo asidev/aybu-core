@@ -18,7 +18,7 @@ limitations under the License.
 
 from aybu.core.utils.modifiers import boolify
 from aybu.core.exc import ValidationError
-from aybu.core.models.base import Base, get_sliced
+from aybu.core.models.base import Base
 from aybu.core.models.view import View
 from aybu.core.models.setting import Setting
 from logging import getLogger
@@ -84,8 +84,8 @@ class Node(Base):
 
     @classmethod
     def get_by_enabled(cls, session, enabled, start=None, limit=None):
-        query = session.query(cls).filter(cls.enabled == enabled)
-        return get_sliced(query, start, limit)
+        return cls.search(session, filters=(cls.enabled == enabled,), 
+                          start=start, limit=limit)
 
     @classmethod
     def get_max_weight(cls, session, **params):
