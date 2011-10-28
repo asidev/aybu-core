@@ -124,7 +124,7 @@ class Setting(Base):
         # query_options must not be in the method signature:
         # the user should not use SQLA internals.
         return super(Setting, cls).all(session, start=start, limit=limit,
-                                       query_options=(joinedload('type')))
+                                       query_options=(joinedload('type'),))
 
     @classmethod
     def count(cls, session, ui_administrable=False):
