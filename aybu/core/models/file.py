@@ -27,8 +27,10 @@ import PIL.Image
 
 from aybu.core.models.base import Base
 from aybu.core.models.translation import PageInfo
-from aybu.core.exc import ConstraintError
+from aybu.core.models.setting import Setting
+from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
+from sqlalchemy.orm.exc import NoResultFound
 
 
 __all__ = ['File', 'Image', 'Banner']
@@ -44,6 +46,34 @@ class File(FileSystemEntity, Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', Unicode(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
+
+    @classmethod
+    def create_new(cls, newobj, args, kwargs):
+        """ This method is called upon user-called constructor invocation
+            as it is set by pufferfish as the 'init' instance event callback
+            http://www.sqlalchemy.org/docs/orm/events.html#sqlalchemy.orm.events.InstanceEvents.init
+        """
+        try:
+            session = kwargs['session']
+        except KeyError:
+            return
+
+        try:
+            setting = 'max_{}s'.format(cls.__name__.lower())
+            max_files = Setting.get(session, setting).value
+            num_files = cls.count(session=session)
+            log.debug("Current %s objects: %d, max: %d",
+                      cls.__name__, num_files, max_files)
+            if max_files > 0 and num_files >= max_files:
+                raise QuotaError('Maximum number of {} reached'\
+                                 .format(cls.__name__))
+
+            # TODO Check if disk space is reach
+            super(File, cls).create_new(newobj, args, kwargs)
+
+        except NoResultFound:
+            # there is no limit for this filetype
+            super(File, cls).create_new(newobj, args, kwargs)
 
     def get_ref_pages(self, session=None):
         """ Return all translations that have this file in its relation """
@@ -68,7 +98,7 @@ class File(FileSystemEntity, Base):
         return res
 
     def __repr__(self):  # pragma: nocover
-        return "<%s %s at %s : %s>" % (self.__class__.__name,
+        return "<%s %s at %s : %s>" % (self.__class__.__name__,
                                        self.id, self.path, self.url)
 
 
