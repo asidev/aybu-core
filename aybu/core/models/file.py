@@ -30,6 +30,7 @@ from aybu.core.models.translation import PageInfo
 from aybu.core.models.setting import Setting
 from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
+import sqlalchemy.event
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -74,6 +75,13 @@ class File(FileSystemEntity, Base):
         except NoResultFound:
             # there is no limit for this filetype
             super(File, cls).create_new(newobj, args, kwargs)
+
+    @classmethod
+    def initialize(cls, base, private=""):
+        """ Override initialize, to add our custom events """
+        if hasattr(cls, "on_name_change"):
+            sqlalchemy.event.listen(cls.name, 'set', cls.on_name_change)
+        super(File, cls).initialize(base, private)
 
     def get_ref_pages(self, session=None):
         """ Return all translations that have this file in its relation """
@@ -130,7 +138,7 @@ class SimpleImageMixin(object):
             raise ValueError('Unsupported file format: %' %
                              (self.content_type))
 
-    def get_ref_pages(self, session):
+    def get_ref_pages(self, session=None):
         # Banners are in relationship with Pages, not translations
         # the constraint is not enforced
         return []
@@ -201,14 +209,35 @@ class Image(File):
 
     def to_dict(self, ref_pages=False):
         res = super(Image, self).to_dict(ref_pages)
-
         for k, t in self.thumbnails.iteritems():
             res['{}_url'.format(k)] = t.url
             res['{}_path'.format(k)] = t.path
             res['{}_width'.format(k)] = t.width
             res['{}_height'.format(k)] = t.height
-
         return res
+
+    @classmethod
+    def on_name_change(cls, obj, value, oldvalue, initiator):
+        try:
+            if oldvalue.name == "NO_VALUE":
+                # When constructing object, sqlalchemy calls this event
+                # using NO VALUE symbol as oldvalue
+                return
+
+        except AttributeError:
+            pass
+
+        if oldvalue == cls.temporary_name or value == oldvalue:
+            # No need to update links when name was temporary
+            # or when it does not change
+            return
+
+        obj.old_name = oldvalue
+
+        for page in obj.get_ref_pages():
+            page.update_img_src(obj)
+
+        del obj.old_name
 
 
 class Thumbnail(object):

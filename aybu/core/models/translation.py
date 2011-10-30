@@ -28,6 +28,8 @@ from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
+from aybu.core.htmlmodifier import update_img_src
+from BeautifulSoup import BeautifulSoup
 
 __all__ = []
 
@@ -211,6 +213,16 @@ class PageInfo(CommonInfo):
         query = session.query(cls).filter(cls.node == page)\
                                   .filter(cls.lang == language)
         return query.one()
+
+    @property
+    def soup(self):
+        return BeautifulSoup(self.content, smartQuotesTo=None)
+
+    def update_image_src(self, image):
+        self.content = unicode(
+            update_img_src(self.soup, image)
+        )
+        return self.soup
 
 
 class SectionInfo(CommonInfo):
