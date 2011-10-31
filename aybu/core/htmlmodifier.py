@@ -28,6 +28,7 @@ __all__ = ['associate_images', 'associate_files',
 
 
 def associate_files(obj, soup):
+    raise NotImplementedError
     from aybu.core.models import File
     """ Parse html and associate found anchor with file link
         associations are wipe-out and the reconstructed with files found
@@ -83,6 +84,7 @@ def associate_images(obj, soup):
         associations are wipe-out and the reconstructed with images found
         in the html
     """
+    raise NotImplementedError
     from aybu.core.models import Image
     log.debug("Updating obj %s association with images" % (type(obj)))
     # copy old_images list if debugging
@@ -127,6 +129,7 @@ def associate_pages(obj, soup):
         associations are wipe-out and the reconstructed with images found
         in the html
     """
+    raise NotImplementedError
     log.debug("Updating %s links" % (obj))
     old_pages = list(obj.links)
     log.debug("%s had links to %s", obj, [page for page in old_pages])
@@ -191,8 +194,7 @@ def update_img_src(soup, image):
             log.debug("Image %s is not local to this webserver, skipping", src)
             continue
 
-        regex = "/%s/%s/%s" % (image.baseurl, image.id, image.old_name)
-        match = re.search(regex, src)
+        match = re.search(image.url, src)
         if match is None:
             log.debug("Image %s is local but is th one to modify", src)
             continue
@@ -204,6 +206,9 @@ def update_img_src(soup, image):
 
 
 def change_href(nodeinfo, old_urls):
+
+    raise NotImplementedError
+
     soup = BeautifulSoup(nodeinfo.content, smartQuotesTo=None)
     anchors = soup.findAll('a')
 
