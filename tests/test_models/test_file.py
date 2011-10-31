@@ -28,9 +28,12 @@ from aybu.core.exc import ConstraintError
 from aybu.core.models import (Banner,
                               Image,
                               File,
+                              Setting,
+                              SettingType,
                               Language,
                               Page,
                               PageInfo)
+from aybu.core.exc import QuotaError
 
 from test_base import BaseTests
 
@@ -83,7 +86,7 @@ class FileTests(FileTestsBase):
     def test_referred(self):
         tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
                                         suffix='txt')
-        newfile = File(name='pippo.txt', source=tmpfile, session=self.session)
+        newfile = File(name='testfile.txt', source=tmpfile, session=self.session)
         self.session.commit()
         source = self._get_test_file('sample.png')
         newimage = Image(source=source, name="original.png",
@@ -101,13 +104,36 @@ class FileTests(FileTestsBase):
         with self.assertRaises(ConstraintError):
             newimage.delete()
 
-        self.assertIn(page, newfile.get_ref_pages(self.session))
-        self.assertIn(page, newimage.get_ref_pages(self.session))
+        self.assertIn(page, newfile.pages)
+        self.assertIn(page, newimage.pages)
 
         d = newfile.to_dict()
         self.assertNotIn('used_by', d)
         d = newfile.to_dict(ref_pages=True)
         self.assertIn('used_by', d)
+
+
+    def test_delete(self):
+        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
+                                        suffix='txt')
+
+        f = File(name='testfile.txt', source=tmpfile, session=self.session)
+        self.session.commit()
+        f.delete()
+        self.session.commit()
+        self.assertEqual(len(File.all(self.session)), 0)
+
+    def test_max_files(self):
+        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
+                                        suffix='txt')
+        s = Setting(name='max_files', value=1,
+                    type=SettingType(name='integer', raw_type='int'))
+        self.session.add(s)
+
+        with self.assertRaises(QuotaError):
+            File(name='testfile.txt', source=tmpfile, session=self.session)
+            File(name="testfile2.txt", source=tmpfile, session=self.session)
+        self.session.rollback()
 
 
 class BannerTests(FileTestsBase):
@@ -190,3 +216,16 @@ class ImageTests(FileTestsBase):
         image.name = 'updated.png'
         self.assertIn('updated.png', image.path)
         self.assertIn('updated_small.png', image.thumbnails['small'].path)
+
+    def test_to_dict(self):
+        source = self._get_test_file('sample.png')
+        thumbs = dict(small=(100,100))
+        Image.set_sizes(thumbs=thumbs)
+        image = Image(source=source, name="original.png", session=self.session)
+        self.session.commit()
+
+        d = image.to_dict()
+        self.assertIn('small_url', d)
+        self.assertIn('small_path', d)
+        self.assertIn('small_width', d)
+        self.assertIn('small_height', d)

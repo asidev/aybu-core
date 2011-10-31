@@ -61,6 +61,7 @@ class File(FileSystemEntity, Base):
 
         try:
             setting = 'max_{}s'.format(cls.__name__.lower())
+            log.debug("setting: %s", setting)
             max_files = Setting.get(session, setting).value
             num_files = cls.count(session=session)
             log.debug("Current %s objects: %d, max: %d",
@@ -74,6 +75,7 @@ class File(FileSystemEntity, Base):
 
         except NoResultFound:
             # there is no limit for this filetype
+            log.error("%s", Setting.all(session))
             super(File, cls).create_new(newobj, args, kwargs)
 
     @classmethod
@@ -83,25 +85,25 @@ class File(FileSystemEntity, Base):
             sqlalchemy.event.listen(cls.name, 'set', cls.on_name_change)
         super(File, cls).initialize(base, private)
 
-    def get_ref_pages(self, session=None):
+    @property
+    def pages(self):
         """ Return all translations that have this file in its relation """
-        if session is None:
-            session = object_session(self)
+        session = object_session(self)
         attr = getattr(PageInfo, "{}s".format(self.__class__.__name__.lower()))
         return session.query(PageInfo).filter(
                 attr.any(self.__class__.id == self.id)
         ).all()
 
-    def delete(self, session=None):
-        if len(self.get_ref_pages(session)) > 0:
+    def delete(self):
+        if len(self.pages) > 0:
             raise ConstraintError('%s in in use', self)
-        super(File, self).delete(session)
+        super(File, self).delete()
 
     def to_dict(self, ref_pages=False):
         res = super(File, self).to_dict()
         if ref_pages:
             # FIXME: change key in dict
-            res['used_by'] = [page.id for page in self.get_ref_pages()]
+            res['used_by'] = [page.id for page in self.pages]
 
         return res
 
@@ -138,7 +140,8 @@ class SimpleImageMixin(object):
             raise ValueError('Unsupported file format: %' %
                              (self.content_type))
 
-    def get_ref_pages(self, session=None):
+    @property
+    def pages(self):
         # Banners are in relationship with Pages, not translations
         # the constraint is not enforced
         return []
@@ -234,7 +237,7 @@ class Image(File):
 
         obj.old_name = oldvalue
 
-        for page in obj.get_ref_pages():
+        for page in obj.pages:
             page.update_img_src(obj)
 
         del obj.old_name
