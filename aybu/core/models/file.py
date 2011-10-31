@@ -31,6 +31,7 @@ from aybu.core.models.setting import Setting
 from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
 import sqlalchemy.event
+import sqlalchemy.orm
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -111,9 +112,25 @@ class File(FileSystemEntity, Base):
         return "<%s %s at %s : %s>" % (self.__class__.__name__,
                                        self.id, self.path, self.url)
 
-
 class SimpleImageMixin(object):
+    default = Column(Boolean, default=False)
     full_size = None
+
+    @classmethod
+    def get_default(cls, session):
+        try:
+            return cls.search(session,
+                              filters=(Banner.default == True,),
+                              start=0, limit=1)[0]
+        except IndexError:
+            return None
+
+
+    @classmethod
+    def set_default(cls, obj, value, oldvalue, initiator):
+        if value:
+            cls.search(filters=(cls.id != obj.id), return_query=True)\
+                            .update({'default': False})
 
     @classmethod
     def set_sizes(cls, full):
@@ -124,6 +141,7 @@ class SimpleImageMixin(object):
 
         log.debug("Calling save_file in %s. self.full_size=",
                   self.__class__.__name__, self.full_size)
+        # FIXME support SWF / Videos!
         if self.content_type.partition('/')[0] == 'image':
             # only resize images
             handle = PIL.Image.open(source)
@@ -142,18 +160,30 @@ class SimpleImageMixin(object):
 
     @property
     def pages(self):
-        # Banners are in relationship with Pages, not translations
-        # the constraint is not enforced
+        # Banners/Logos are in relationship with Pages,
+        # not translations and the constraint is not enforced
         return []
 
 
 class Banner(SimpleImageMixin, File):
-    default = Column(Boolean, default=False)
     __mapper_args__ = {'polymorphic_identity': 'banner'}
 
 
 class Logo(SimpleImageMixin, File):
     __mapper_args__ = {'polymorphic_identity': 'logo'}
+
+
+@sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, "after_configured")
+def _listens_for():
+    """
+    Since SimpleImageMixin is not a mapped class, SimpleImageMixin.default
+    is a normal Column object, not an InstrumentedAttribute which accepts the
+    set event. We then set the "mapper_configured"  event, and, for the
+    subclasses of the mixin we set the event
+    """
+
+    sqlalchemy.event.listen(Banner.default, 'set', Banner.set_default)
+#    sqlalchemy.event.listen(Logo.default, 'set', Logo.set_default)
 
 
 class Image(File):
