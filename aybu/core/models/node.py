@@ -132,20 +132,7 @@ class Node(Base):
         session.add(entity)
         return entity
 
-    """
-    def get_translation(self, session, lang):
-        from aybu.core import models
-
-        info_class = getattr(models, '%sInfo' % self.__class__.__name__)
-        query = session.query(info_class).filter(info_class.node == self)\
-                                         .filter(info_class.lang == lang)
-        try:
-            return query.one()
-        except:
-            return None
-    """
-
-    def to_dict(self, language=None):
+    def to_dict(self, language=None, recursive=True):
         return dict(id=self.id,
                     type=self.type,
                     iconCls=self.type,
@@ -156,16 +143,17 @@ class Node(Base):
                     allowChildren=True,
                     leaf=False if self.children else True,
                     expanded=True if self.children else False,
-                    children=[child.to_dict(language)
-                              for child in self.children])
+                    children=[child.to_dict(language, recursive)
+                              for child in self.children
+                              if recursive])
 
 
 class Menu(Node):
 
     __mapper_args__ = {'polymorphic_identity': 'menu'}
 
-    def to_dict(self, language=None):
-        dict_ = super(Menu, self).to_dict(language)
+    def to_dict(self, language=None, recursive=True):
+        dict_ = super(Menu, self).to_dict(language, recursive)
         dict_['iconCls'] = 'folder'
         #dict_['url'] = language.lang
 
@@ -297,9 +285,9 @@ class Page(Node):
 
         raise NoResultFound('No translation for %s' % language.lang)
 
-    def to_dict(self, language=None):
+    def to_dict(self, language=None, recursive=True):
 
-        dict_ = super(Page, self).to_dict(language)
+        dict_ = super(Page, self).to_dict(language, recursive)
 
         for translation in self.translations:
             if translation.lang == language:
@@ -314,9 +302,9 @@ class Section(Node):
     __mapper_args__ = {'polymorphic_identity': 'section'}
     banners = relationship('Banner', secondary=node_banners)
 
-    def to_dict(self, language=None):
+    def to_dict(self, language=None, recursive=True):
 
-        dict_ = super(Section, self).to_dict(language)
+        dict_ = super(Section, self).to_dict(language, recursive)
 
         for translation in self.translations:
             if translation.lang == language:
@@ -329,9 +317,9 @@ class Section(Node):
 class ExternalLink(Node):
     __mapper_args__ = {'polymorphic_identity': 'externallink'}
 
-    def to_dict(self, language=None):
+    def to_dict(self, language=None, recursive=True):
 
-        dict_ = super(ExternalLink, self).to_dict(language)
+        dict_ = super(ExternalLink, self).to_dict(language, recursive)
         dict_['allowChildren'] = False
 
         for translation in self.translations:
@@ -359,9 +347,9 @@ class InternalLink(Node):
 
         return value
 
-    def to_dict(self, language=None):
+    def to_dict(self, language=None, recursive=True):
 
-        dict_ = super(InternalLink, self).to_dict(language)
+        dict_ = super(InternalLink, self).to_dict(language, recursive)
         dict_['allowChildren'] = False
 
         for translation in self.translations:

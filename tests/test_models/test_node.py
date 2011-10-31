@@ -221,103 +221,15 @@ default_data = data/default_data.json
         es = self.session.query(Language).filter(Language.lang == 'es').one()
 
         home = Page.get_homepage(self.session)
-        it_translation = home.get_translation(self.session, it)
+        it_translation = home.get_translation(it)
         self.assertEqual(it_translation,
                          PageInfo.get_homepage(self.session, it))
-        en_translation = home.get_translation(self.session, en)
+        en_translation = home.get_translation(en)
         self.assertEqual(en_translation,
                          PageInfo.get_homepage(self.session, en))
-        es_translation = home.get_translation(self.session, es)
+        es_translation = home.get_translation(es)
         self.assertEqual(es_translation,
                          PageInfo.get_homepage(self.session, es))
-
-        page = self.session.query(Page).order_by(func.random()).first()
-        it_page_info = self.session.query(PageInfo).\
-                                 filter(PageInfo.node == page).\
-                                 filter(PageInfo.lang == it).one()
-        self.assertEqual(it_page_info, page.get_translation(self.session, it))
-        en_page_info = self.session.query(PageInfo).\
-                                 filter(PageInfo.node == page).\
-                                 filter(PageInfo.lang == en).one()
-        self.assertEqual(en_page_info, page.get_translation(self.session, en))
-        es_page_info = self.session.query(PageInfo).\
-                                 filter(PageInfo.node == page).\
-                                 filter(PageInfo.lang == es).one()
-        self.assertEqual(es_page_info, page.get_translation(self.session, es))
-
-        menu = self.session.query(Menu).first()
-        it_menu_info = self.session.query(MenuInfo).\
-                               filter(MenuInfo.node == menu).\
-                               filter(MenuInfo.lang == it).one()
-        self.assertEqual(it_menu_info, menu.get_translation(self.session, it))
-        en_menu_info = self.session.query(MenuInfo).\
-                               filter(MenuInfo.node == menu).\
-                               filter(MenuInfo.lang == en).one()
-        self.assertEqual(en_menu_info, menu.get_translation(self.session, en))
-        es_menu_info = self.session.query(MenuInfo).\
-                               filter(MenuInfo.node == menu).\
-                               filter(MenuInfo.lang == es).one()
-        self.assertEqual(es_menu_info, menu.get_translation(self.session, es))
-
-        section = self.session.query(Section).order_by(func.random()).first()
-        it_section_info = self.session.query(SectionInfo).\
-                               filter(SectionInfo.node == section).\
-                               filter(SectionInfo.lang == it).one()
-        self.assertEqual(it_section_info,
-                         section.get_translation(self.session, it))
-        en_section_info = self.session.query(SectionInfo).\
-                               filter(SectionInfo.node == section).\
-                               filter(SectionInfo.lang == en).one()
-        self.assertEqual(en_section_info,
-                         section.get_translation(self.session, en))
-        es_section_info = self.session.query(SectionInfo).\
-                               filter(SectionInfo.node == section).\
-                               filter(SectionInfo.lang == es).one()
-        self.assertEqual(es_section_info,
-                         section.get_translation(self.session, es))
-
-        external_link = self.session.query(ExternalLink).\
-                             order_by(func.random()).first()
-        it_external_link_info = self.session.query(ExternalLinkInfo).\
-                               filter(ExternalLinkInfo.node == external_link).\
-                               filter(ExternalLinkInfo.lang == it).one()
-        self.assertEqual(it_external_link_info,
-                         external_link.get_translation(self.session, it))
-        en_external_link_info = self.session.query(ExternalLinkInfo).\
-                               filter(ExternalLinkInfo.node == external_link).\
-                               filter(ExternalLinkInfo.lang == en).one()
-        self.assertEqual(en_external_link_info,
-                         external_link.get_translation(self.session, en))
-        es_external_link_info = self.session.query(ExternalLinkInfo).\
-                               filter(ExternalLinkInfo.node == external_link).\
-                               filter(ExternalLinkInfo.lang == es).one()
-        self.assertEqual(es_external_link_info,
-                         external_link.get_translation(self.session, es))
-
-        internal_link = self.session.query(InternalLink).\
-                             order_by(func.random()).first()
-        it_internal_link_info = self.session.query(InternalLinkInfo).\
-                               filter(InternalLinkInfo.node == internal_link).\
-                               filter(InternalLinkInfo.lang == it).one()
-        self.assertEqual(it_internal_link_info,
-                         internal_link.get_translation(self.session, it))
-        en_internal_link_info = self.session.query(InternalLinkInfo).\
-                               filter(InternalLinkInfo.node == internal_link).\
-                               filter(InternalLinkInfo.lang == en).one()
-        self.assertEqual(en_internal_link_info,
-                         internal_link.get_translation(self.session, en))
-        es_internal_link_info = self.session.query(InternalLinkInfo).\
-                               filter(InternalLinkInfo.node == internal_link).\
-                               filter(InternalLinkInfo.lang == es).one()
-        self.assertEqual(es_internal_link_info,
-                         internal_link.get_translation(self.session, es))
-
-        self.session.delete(it_page_info)
-        self.session.delete(en_page_info)
-        self.session.delete(es_page_info)
-        self.assertEqual(None, page.get_translation(self.session, it))
-        self.assertEqual(None, page.get_translation(self.session, en))
-        self.assertEqual(None, page.get_translation(self.session, es))
 
 
 class PageTests(BaseTests):
