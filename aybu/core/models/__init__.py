@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__all__ = ['Base', 'File', 'Image', 'Banner', 'Language',
+__all__ = ['Base', 'File', 'Image', 'Banner', 'Logo', 'Language',
            'Node', 'Menu', 'Page', 'Section', 'ExternalLink', 'InternalLink',
            'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
@@ -26,7 +26,8 @@ from logging import getLogger
 from aybu.core.models.base import Base
 from aybu.core.models.file import (Banner,
                                    File,
-                                   Image)
+                                   Image,
+                                   Logo)
 from aybu.core.models.language import Language
 from aybu.core.models.node import (ExternalLink,
                                    InternalLink,
