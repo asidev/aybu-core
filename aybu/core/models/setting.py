@@ -44,6 +44,9 @@ class SettingType(Base):
     def __repr__(self):
         return "<SettingType %s (%s)>" % (self.name, self.raw_type)
 
+    def to_dict(self):
+        return {'name': self.name, 'raw_type': self.raw_type}
+
 
 class Setting(Base):
 
