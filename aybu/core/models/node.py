@@ -32,6 +32,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import backref
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
@@ -79,6 +80,16 @@ class Node(Base):
         return self.__repr__()
 
     @classmethod
+    def all(cls, session, start=None, limit=None):
+        # query_options must not be in the method signature:
+        # the user should not use SQLA internals.
+        query_options = [joinedload('parent'), joinedload('children'),]
+        if hasattr(cls, 'translations'):
+            query_options.append(joinedload('translations'))
+        return super(Node, cls).all(session, start=start, limit=limit,
+                                    query_options=query_options)
+
+    @classmethod
     def get_by_id(cls, session, id_):
         return cls.get(session, id_)
 
@@ -121,6 +132,7 @@ class Node(Base):
         session.add(entity)
         return entity
 
+    """
     def get_translation(self, session, lang):
         from aybu.core import models
 
@@ -131,11 +143,37 @@ class Node(Base):
             return query.one()
         except:
             return None
+    """
+
+    def to_dict(self, language=None):
+        return dict(id=self.id,
+                    type=self.type,
+                    iconCls=self.type,
+                    enabled=self.enabled,
+                    hidden=self.hidden,
+                    weight=self.weight,
+                    checked=False,
+                    allowChildren=True,
+                    leaf=False if self.children else True,
+                    expanded=True if self.children else False,
+                    children=[child.to_dict(language)
+                              for child in self.children])
 
 
 class Menu(Node):
 
     __mapper_args__ = {'polymorphic_identity': 'menu'}
+
+    def to_dict(self, language=None):
+        dict_ = super(Menu, self).to_dict(language)
+        dict_['iconCls'] = 'folder'
+        #dict_['url'] = language.lang
+
+        for translation in self.translations:
+            if translation.lang == language:
+                dict_['button_label'] = translation.label
+
+        return dict_
 
 
 node_banners = Table('nodes_banners__files',
@@ -251,27 +289,65 @@ class Page(Node):
 
         return not bool(q.scalar())
 
+    def get_translation(self, language):
+
+        for translation in self.translations:
+            if translation.lang == language:
+                return translation
+
+        raise NoResultFound('No translation for %s' % language.lang)
+
+    def to_dict(self, language=None):
+
+        dict_ = super(Page, self).to_dict(language)
+
+        for translation in self.translations:
+            if translation.lang == language:
+                dict_['button_label'] = translation.label
+                dict_['url'] = translation.url
+                dict_['title'] = translation.title
+
+        return dict_
+
 
 class Section(Node):
-
     __mapper_args__ = {'polymorphic_identity': 'section'}
-
     banners = relationship('Banner', secondary=node_banners)
+
+    def to_dict(self, language=None):
+
+        dict_ = super(Section, self).to_dict(language)
+
+        for translation in self.translations:
+            if translation.lang == language:
+                dict_['button_label'] = translation.label
+                dict_['title'] = translation.title
+
+        return dict_
 
 
 class ExternalLink(Node):
     __mapper_args__ = {'polymorphic_identity': 'externallink'}
 
+    def to_dict(self, language=None):
+
+        dict_ = super(ExternalLink, self).to_dict(language)
+        dict_['allowChildren'] = False
+
+        for translation in self.translations:
+            if translation.lang == language:
+                dict_['button_label'] = translation.label
+                dict_['url'] = translation.ext_url
+
+        return dict_
+
 
 class InternalLink(Node):
-
     __mapper_args__ = {'polymorphic_identity': 'internallink'}
-
     linked_to_id = Column(Integer, ForeignKey('nodes.id',
                                               onupdate='cascade',
                                               ondelete='cascade'),)
 #                          nullable=False)
-
     linked_to = relationship('Page', backref='linked_by', remote_side=Page.id,
                             primaryjoin='Page.id == InternalLink.linked_to_id')
 
@@ -282,3 +358,18 @@ class InternalLink(Node):
             raise ValidationError()
 
         return value
+
+    def to_dict(self, language=None):
+
+        dict_ = super(InternalLink, self).to_dict(language)
+        dict_['allowChildren'] = False
+
+        for translation in self.translations:
+            if translation.lang == language:
+                dict_['button_label'] = translation.label
+
+        for translation in self.linked_to.translations:
+            if translation.lang == language:
+                dict_['url'] = translation.url
+
+        return dict_
