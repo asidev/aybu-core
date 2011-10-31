@@ -129,8 +129,11 @@ class SimpleImageMixin(object):
     @classmethod
     def set_default(cls, obj, value, oldvalue, initiator):
         if value:
-            cls.search(filters=(cls.id != obj.id), return_query=True)\
-                            .update({'default': False})
+            cls.search(sqlalchemy.orm.Session.object_session(obj),
+                       filters=(cls.id != obj.id), return_query=True)\
+                            .update({'default': False},
+                                    synchronize_session='fetch')
+
 
     @classmethod
     def set_sizes(cls, full):
@@ -139,7 +142,7 @@ class SimpleImageMixin(object):
     def save_file(self, source):
         """ Called when saving source """
 
-        log.debug("Calling save_file in %s. self.full_size=",
+        log.debug("Calling save_file in %s. self.full_size=%s",
                   self.__class__.__name__, self.full_size)
         # FIXME support SWF / Videos!
         if self.content_type.partition('/')[0] == 'image':

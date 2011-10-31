@@ -167,6 +167,27 @@ class BannerTests(FileTestsBase):
         self.assertEqual(banner_size, size)
         self.session.rollback()
 
+    def test_default(self):
+        self.assertEqual(None, Banner.get_default(self.session))
+        b1 = Banner(source=self._get_test_file('sample.png'),
+               name='banner.png', session=self.session)
+        self.assertEqual(None, Banner.get_default(self.session))
+        b2 = Banner(source=self._get_test_file('sample.png'),
+               name='banner.png', session=self.session,
+               default=True
+        )
+        self.assertTrue(b2.default)
+        self.assertIs(b2, Banner.get_default(self.session))
+
+        b1.default = True
+        self.assertIs(b1, Banner.get_default(self.session))
+        self.assertFalse(b2.default)
+
+        self.session.rollback()
+
+
+
+
 
 class ImageTests(FileTestsBase):
 
