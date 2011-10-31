@@ -66,11 +66,11 @@ class AybuBase(object):
         """
         query = session.query(cls).options(*query_options)
 
-        log.debug('Filters: %s', filters)
-        log.debug('Start: %s.', start)
-        log.debug('Limit: %s.', limit)
-        log.debug('Sort by: %s.', sort_by)
-        log.debug('Sort order: %s.', sort_order)
+        #log.debug('Filters: %s', filters)
+        #log.debug('Start: %s.', start)
+        #log.debug('Limit: %s.', limit)
+        #log.debug('Sort by: %s.', sort_by)
+        #log.debug('Sort order: %s.', sort_order)
 
         try:
             for filter_ in filters:
@@ -94,19 +94,19 @@ class AybuBase(object):
 
         if not start is None and not limit is None:
             end = start + limit
-            log.debug('query[%s:%s]. Start: %s. End: %s.', start, end)
+            #log.debug('query[%s:%s]. Start: %s. End: %s.', start, end)
             slice_ = query[start:end]
 
         elif not start is None and limit is None:
-            log.debug('query[%s:]. Start: %s.', start)
+            #log.debug('query[%s:]. Start: %s.', start)
             slice_ = query[start:]
 
         elif start is None and not limit is None:
-            log.debug('query[:%s]. Limit: %s.', limit)
+            #log.debug('query[:%s]. Limit: %s.', limit)
             slice_ = query[:limit]
 
         else:
-            log.debug('query.all(). Start: %s, Limit: %s', start, limit)
+            #log.debug('query.all(). Start: %s, Limit: %s', start, limit)
             slice_ = query.all()
 
         return slice_
