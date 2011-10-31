@@ -121,6 +121,14 @@ class Node(Base):
                 raise ValidationError()
         return value
 
+    def get_translation(self, language):
+
+        for translation in self.translations:
+            if translation.lang == language:
+                return translation
+
+        raise NoResultFound('No translation for %s' % language.lang)
+
     @classmethod
     def create(cls, session, **params):
         """ Create a persistent 'cls' object and return it."""
@@ -276,14 +284,6 @@ class Page(Node):
         q = q.filter(n_pages >= cast(Setting.raw_value, BigInteger()))
 
         return not bool(q.scalar())
-
-    def get_translation(self, language):
-
-        for translation in self.translations:
-            if translation.lang == language:
-                return translation
-
-        raise NoResultFound('No translation for %s' % language.lang)
 
     def to_dict(self, language=None, recursive=True):
 

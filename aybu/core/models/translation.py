@@ -38,20 +38,16 @@ log = getLogger(__name__)
 
 
 class NodeInfo(Base):
-
     __tablename__ = 'node_infos'
     __table_args__ = (UniqueConstraint('node_id', 'lang_id'),
                       {'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', String(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
-
     id = Column(Integer, primary_key=True)
     label = Column(Unicode(64), nullable=False)
-
     node_id = Column(Integer, ForeignKey('nodes.id',
                                          onupdate='cascade',
                                          ondelete='cascade'), nullable=False)
-
     lang_id = Column(Integer, ForeignKey('languages.id',
                                          onupdate='cascade',
                                          ondelete='cascade'), nullable=False)
@@ -93,11 +89,14 @@ class NodeInfo(Base):
     def create_translation(self, language):
         return self.__class__(id=None, label=self.label, lang=language)
 
+    def to_dict(self):
+        return dict(id=self.node.id,
+                    button_label=self.label,
+                    enabled=self.node.enabled)
+
 
 class MenuInfo(NodeInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'menu_info'}
-
     node = relationship('Menu', backref='translations')
 
     def create_translation(self, language):
@@ -107,15 +106,12 @@ class MenuInfo(NodeInfo):
 
 
 class CommonInfo(NodeInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'common_info'}
-
     title = Column(Unicode(64), default=None)
     url_part = Column(Unicode(64), default=None)
-
     # This field is very useful but denormalize the DB
+    #FIXME:
     partial_url = Column(Unicode(512), default=None)
-
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
 
@@ -129,16 +125,20 @@ class CommonInfo(NodeInfo):
         obj.head_content = self.head_content
         return obj
 
+    def to_dict(self):
+        dict_ = super(CommonInfo, self).to_dict()
+        dict_.update(dict(title=self.title,
+                          url_part=self.url_part,
+                          meta_description=self.meta_description,
+                          head_content=self.head_content))
+        return dict_
+
 
 class PageInfo(CommonInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'page_info'}
-
     # This field is very useful but denormalize the DB
     url = Column(Unicode(512), default=None)
-
     node = relationship('Page', backref='translations')
-
     content = Column(UnicodeText(), default=u'')
 
     _files_table = Table('node_infos_files__files',
@@ -224,11 +224,14 @@ class PageInfo(CommonInfo):
         )
         return self.soup
 
+    def to_dict(self):
+        dict_ = super(PageInfo, self).to_dict()
+        dict_.update(dict(page_type_id=self.node.view.id))
+        return dict_
+
 
 class SectionInfo(CommonInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'section_info'}
-
     node = relationship('Section', backref='translations')
 
     def create_translation(self, language):
@@ -238,11 +241,8 @@ class SectionInfo(CommonInfo):
 
 
 class ExternalLinkInfo(NodeInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'externallink_info'}
-
     node = relationship('ExternalLink', backref='translations')
-
     # This is has been moved from ExternalLink to internationalize the
     # external link too
     # ie: http://www.apple.com or http://www.apple.it
@@ -254,14 +254,22 @@ class ExternalLinkInfo(NodeInfo):
         obj.node = self.node
         return obj
 
+    def to_dict(self):
+        dict_ = super(ExternalLinkInfo, self).to_dict()
+        dict_.update(dict(external_url=self.node.url))
+        return dict_
+
 
 class InternalLinkInfo(NodeInfo):
-
     __mapper_args__ = {'polymorphic_identity': 'internallink_info'}
-
     node = relationship('InternalLink', backref='translations')
 
     def create_translation(self, language):
         obj = super(InternalLinkInfo, self).create_translation(language)
         obj.node = self.node
         return obj
+
+    def to_dict(self):
+        dict_ = super(ExternalLinkInfo, self).to_dict()
+        dict_.update(dict(linked_to=self.node.linked_to.id))
+        return dict_
