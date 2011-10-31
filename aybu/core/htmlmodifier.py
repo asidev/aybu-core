@@ -273,20 +273,20 @@ def change_href(nodeinfo, old_urls):
     dbsession.flush()
 
 
-def target_to_rel(soup):
-    anchors = soup.findAll('a')
-    for a in anchors:
-        try:
-            target = a['target']
-        except:
+def remove_target(soup, blank_to_rel=True):
+
+    for a in soup.findAll('a'):
+
+        target = a.pop('target', None)
+
+        if not target:
             log.debug("No target attribute found in %s" % (a))
             continue
 
-        if target == '_blank':
+        log.debug("Removed target attribute from %s" % (a))
+
+        if blank_to_rel and target == '_blank':
             a['rel'] = "external"
             log.debug("Added rel='external' in %s" % (a))
-
-        del(a['target'])
-        log.debug("Removed target attribute from %s" % (a))
 
     return soup

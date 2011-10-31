@@ -112,9 +112,14 @@ class Setting(Base):
         # try to convert first
         try:
             self._get_cast()(v)
-            self.raw_value = unicode(v)
+
         except:
-            raise ValueError("v must be of type %s"  % (self.type.raw_type))
+            log.exception('Cast failed.')
+            raise ValueError("v must be of type %s: '%s'"  % (self.type.raw_type,
+                                                              v))
+
+        else:
+            self.raw_value = unicode(v)
 
     def __repr__(self):
         return "<Setting %s (%s)>" % (self.name, self.value)
