@@ -132,7 +132,7 @@ class SimpleImageMixin(object):
             if self.full_size:
                 log.debug('Resizing %s to %s', self.__class__.__name__,
                           self.full_size)
-                handle = handle.resize(self.full_size)
+                handle = handle.resize(self.full_size, PIL.Image.ANTIALIAS)
 
             handle.save(self.path)
 
