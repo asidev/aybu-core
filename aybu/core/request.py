@@ -25,8 +25,7 @@ from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.security import unauthenticated_userid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (scoped_session,
-                            sessionmaker,
-                            joinedload)
+                            sessionmaker)
 import locale
 
 __all__ = []
@@ -37,15 +36,14 @@ log = getLogger(__name__)
 class Request(BaseRequest):
 
     db_engine = None
-    Session = None
+    DBScopedSession = None
 
     def __init__(self, *args, **kwargs):
 
         super(Request, self).__init__(*args, **kwargs)
 
-        if not self.db_engine is None:
-            self.db_session = self.Session()
-            self.db_session.configure(bind=self.db_engine)
+        self.db_session = self.DBScopedSession()
+#        self.db_session.configure(bind=self.db_engine)
 
         self.add_finished_callback(self.finished_callback)
 
@@ -58,15 +56,15 @@ class Request(BaseRequest):
         self._localizer = None
 
     @reify
+    def session(self):
+        session = super(Request, self).session
+        session.path = '/admin/'
+        return session
+
+    @reify
     def user(self):
-        # Query.get or session.merge are the same.
-        # Using Query.get you can set earger loading options!
-        # FIXME: move query inside model!
         userid = unauthenticated_userid(self)
-        if userid is None:
-            return None
-        query = self.db_session.query(User).options(joinedload('groups'))
-        return query.get(userid)
+        return None if userid is None else User.get(self.db_session, userid)
 
     @reify
     def _settings(self):
@@ -79,7 +77,9 @@ class Request(BaseRequest):
             engine = create_engine(engine)
 
         cls.db_engine = engine
-        cls.Session = scoped_session(sessionmaker(bind=engine))
+        # FIXME: add a uwsgi post-fork hook to recreate this session
+        # per-process
+        cls.DBScopedSession = scoped_session(sessionmaker(engine))
 
     @property
     def locale_name(self):
@@ -112,7 +112,7 @@ class Request(BaseRequest):
         return self._language
 
     @language.setter
-    def language(self, lang): 
+    def language(self, lang):
         log.debug('Set language: %s', lang)
         self._language = lang
         self.locale_name = str(lang.locale)
@@ -160,7 +160,7 @@ class Request(BaseRequest):
     def finished_callback(self, request):
         """ It clears the database session. """
         self.db_session.close()
-        self.Session.remove()
+        self.DBScopedSession.remove()
 
     def set_language_to_default(self):
         # USE language.setter!

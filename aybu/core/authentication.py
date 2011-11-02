@@ -15,38 +15,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from paste.deploy.converters import asbool
-from paste.deploy.converters import asint
-from pyramid.authentication import AuthTktAuthenticationPolicy
-from pyramid.authentication import AuthTktCookieHelper
-from pyramid.security import Everyone
+from pyramid.authentication import SessionAuthenticationPolicy
 import pyramid.security
 
 
-class AuthenticationPolicy(AuthTktAuthenticationPolicy):
+class AuthenticationPolicy(SessionAuthenticationPolicy):
+    prefix = 'auth.'
 
-    def __init__(self, settings):
-        self.cookie = AuthTktCookieHelper(
-            settings.get('auth.secret'),
-            cookie_name=settings.get('auth.token'),
-            secure=asbool(settings.get('auth.secure')),
-            timeout=asint(settings.get('auth.timeout')),
-            reissue_time=asint(settings.get('auth.reissue_time')),
-            max_age=asint(settings.get('auth.max_age')),
-            path=settings.get('auth.path'))
+    def __init__(self):
+        super(AuthenticationPolicy, self).__init__(prefix=self.prefix,
+                                                   callback=self.get_groups)
 
-    def authenticated_userid(self, request):
-        return request.user.username if request.user else None
+    @classmethod
+    def get_groups(cls, userid, request):
+        return [group.name for group in request.user.groups]
 
-    def effective_principals(self, request):
+    def remember(self, request, principal, **kw):
+        super(AuthenticationPolicy, self).remember(request, principal, **kw)
+        request.session.save()
 
-        principals = [Everyone]
 
-        if request.user:
-            principals += [Authenticated, 'user:%s' % request.user.username]
-            principals += ['group:%s' % g.name for g in request.user.groups]
-
-        return principals
+    def forget(self, request):
+        super(AuthenticationPolicy, self).forget(request)
+        import logging
+        logging.getLogger(self.__class__.__name__).error("CALLED FORGET")
+        request.session.delete()
 
 
 class Authenticated(object):
@@ -54,7 +47,7 @@ class Authenticated(object):
     __acl__ = [(pyramid.security.Allow,
                 pyramid.security.Authenticated,
                 pyramid.security.ALL_PERMISSIONS),
-                pyramid.security.DENY_ALL]
+               pyramid.security.DENY_ALL]
 
     def __init__(self, request):
         pass

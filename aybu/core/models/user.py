@@ -18,12 +18,14 @@ limitations under the License.
 
 from aybu.core.models.base import Base
 from aybu.core.models.types import Crypt
+import crypt
 from logging import getLogger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Unicode
 from sqlalchemy import Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import (relationship,
+                            joinedload)
 
 
 __all__ = []
@@ -54,6 +56,28 @@ class User(Base):
     password = Column(Crypt(), nullable=False)
 
     groups = relationship('Group', secondary=users_groups, backref='users')
+
+    @classmethod
+    def get(cls, session, pkey):
+        return session.query(cls).options(joinedload('groups')).get(pkey)
+
+    @classmethod
+    def check(cls, session, username, password):
+        log.debug('Checking login for username="%s", password="%s"',
+                  username, password)
+        try:
+            user = cls.get(session, username)
+            enc_password = crypt.crypt(password, user.password[0:2])
+            log.debug("password: %s, user_password: %s", enc_password,
+                      user.password)
+            assert user.password == enc_password
+
+        except:
+            log.error('Invalid login: %s != %s', password, enc_password)
+            raise ValueError('invalid username or password')
+
+        else:
+            return True
 
 
 class Group(Base):
