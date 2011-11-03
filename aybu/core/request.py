@@ -108,7 +108,7 @@ class Request(BaseRequest):
     def language(self):
 
         if self._language is None:
-            self.set_language_to_default()
+            self.set_language_from_session_or_default()
 
         return self._language
 
@@ -117,6 +117,9 @@ class Request(BaseRequest):
         log.debug('Set language: %s', lang)
         self._language = lang
         self.locale_name = str(lang.locale)
+        if self.user:
+            log.debug("Saving language %s in session", lang)
+            self.session['lang'] = lang
 
     @property
     def languages(self):
@@ -146,7 +149,7 @@ class Request(BaseRequest):
     def localizer(self):
 
         if self._localizer is None and self._language is None:
-            self.set_language_to_default()
+            self.set_language_from_session_or_default()
 
         return self._localizer
 
@@ -163,8 +166,14 @@ class Request(BaseRequest):
         self.db_session.close()
         self.DBScopedSession.remove()
 
-    def set_language_to_default(self):
+    def set_language_from_session_or_default(self):
         # USE language.setter!
-        self.language = Language.\
+        if self.user and 'lang' in self.session:
+            log.debug("Getting language from session")
+            lang = self.db_session.merge(self.session['lang'])
+            log.debug("Got language %s", lang)
+        else:
+            lang = Language.\
                         get_by_lang(self.db_session,
                                     self._settings['default_locale_name'])
+        self.language = lang
