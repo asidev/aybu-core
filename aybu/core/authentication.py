@@ -37,8 +37,6 @@ class AuthenticationPolicy(SessionAuthenticationPolicy):
 
     def forget(self, request):
         super(AuthenticationPolicy, self).forget(request)
-        import logging
-        logging.getLogger(self.__class__.__name__).error("CALLED FORGET")
         request.session.delete()
 
 
