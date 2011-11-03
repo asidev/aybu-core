@@ -63,13 +63,9 @@ class User(Base):
 
     @classmethod
     def check(cls, session, username, password):
-        log.debug('Checking login for username="%s", password="%s"',
-                  username, password)
         try:
             user = cls.get(session, username)
             enc_password = crypt.crypt(password, user.password[0:2])
-            log.debug("password: %s, user_password: %s", enc_password,
-                      user.password)
             assert user.password == enc_password
 
         except:

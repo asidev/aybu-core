@@ -54,14 +54,15 @@ class Request(BaseRequest):
         self._locale_name = None
         self._language = None
         self._localizer = None
+        self._session = None
 
-    @reify
-    def session(self):
-        session = super(Request, self).session
-        session.path = '/admin/'
-        return session
+    def __geattribute__(self, attr):
+        value = super(Request, self).__geattribute__(attr)
+        if attr == 'session' and not value is None:
+            value.path = '/admin/'
+        return value
 
-    @reify
+    @property
     def user(self):
         userid = unauthenticated_userid(self)
         return None if userid is None else User.get(self.db_session, userid)
