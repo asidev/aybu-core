@@ -24,7 +24,7 @@ from BeautifulSoup import BeautifulSoup
 log = logging.getLogger(__name__)
 __all__ = ['associate_images', 'associate_files',
            'associate_pages', 'update_img_src',
-           'change_href', 'target_to_rel']
+           'change_href']
 
 
 def associate_files(obj, soup):
@@ -273,7 +273,7 @@ def change_href(nodeinfo, old_urls):
     dbsession.flush()
 
 
-def remove_target(soup, blank_to_rel=True):
+def remove_target_attributes(soup, blank_to_rel=True):
 
     for a in soup.findAll('a'):
 
