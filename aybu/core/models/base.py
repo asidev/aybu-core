@@ -161,7 +161,7 @@ class AybuBase(object):
                 continue
 
             values = []
-            for value in params[property_.key]:                 
+            for value in params[property_.key]:
                 if not isinstance(value, class_):
                     value = class_.create(session, value)
                 values.append(value)
