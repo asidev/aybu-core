@@ -16,8 +16,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
+from sqlalchemy.orm import class_mapper
+from sqlalchemy.orm import object_mapper
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.properties import ColumnProperty
+from sqlalchemy.orm.properties import RelationshipProperty
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy.sql.expression
@@ -111,9 +114,84 @@ class AybuBase(object):
 
         return slice_
 
+    @classmethod
+    def create(cls, session, params):
+        """ Create a 'cls' object using 'params' as constructor arguments.
+        """
+
+        if '__class__' not in params:
+            ValueError("Key '__class__' is not in 'params' dictionary.")
+
+        class_name = params.pop('__class__')
+
+        subclass = None
+        for class_ in cls.__subclasses__():
+            if class_.__name__ == class_name:
+                subclass = class_
+
+        if cls.__name__ == class_name:
+            cls_ = cls
+
+        elif not subclass is None:
+            cls_ = subclasses[0]
+
+        else:
+            msg = '%s is not an instance of %s.' % (class_name, cls.__name__)
+            raise ValueError(msg)
+
+        for property_ in class_mapper(cls).iterate_properties:
+
+            if property_.key not in params or \
+               isinstance(property_, ColumnProperty):
+                # FIXME: force cast of values?
+                continue
+
+            try:
+                class_ = property_.argument()
+            except:
+                class_ = property_.argument.class_
+
+            if not property_.uselist and \
+               isinstance(params[property_.key], class_):
+                continue
+
+            if not property_.uselist:
+                params[property_.key] = class_.create(session,
+                                                      params[property_.key])
+                continue
+
+            values = []
+            for value in params[property_.key]:                 
+                if not isinstance(value, class_):
+                    value = class_.create(session, value)
+                values.append(value)
+            params[property_.key] = values
+
+        return session.merge(cls_(**params))
+
     def delete(self, session=None):
         session = session if not session is None else object_session(self)
         session.delete(self)
 
+    def to_dict(self, includes=(), excludes=()):
+        """ Dictify entity.
+        """
+        dict_ = {'__class__': self.__class__.__name__}
+
+        for property_ in object_mapper(self).iterate_properties:
+
+            if property_.key in excludes:
+                continue
+
+            if isinstance(property_, ColumnProperty):
+
+                dict_[property_.key] = getattr(self, property_.key)
+
+            elif isinstance(property_, RelationshipProperty) and \
+                 property_.key in includes:
+
+                dict_[property_.key] = getattr(self, property_.key).to_dict()
+
+        return dict_
 
 Base = declarative_base(cls=AybuBase)
