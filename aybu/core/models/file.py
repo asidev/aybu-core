@@ -272,7 +272,10 @@ class Thumbnail(object):
 
     @property
     def url(self):
-        return str(self.path.replace(self.image.private_path, ""))
+        return "{0}/{1}_{2}{3}".format(self.image.url_dir,
+                                       self.image.plain_name,
+                                       self.name,
+                                       self.image.extension)
 
     def rename(self, old_image_name, new_image_name):
         old_path = os.path.join(self.image.dir, "%s_%s%s" %
@@ -286,6 +289,7 @@ class Thumbnail(object):
     def save(self, handle):
         copy = handle.copy()
         copy.thumbnail((self.width, self.height), PIL.Image.ANTIALIAS)
+        log.debug('Saving thumbnail to %s', self.path)
         copy.save(self.path)
 
     def __repr__(self):  # pragma: nocover
