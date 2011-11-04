@@ -100,6 +100,17 @@ class File(FileSystemEntity, Base):
 
         return res
 
+    @classmethod
+    def all(cls, session, start=None, limit=None, query_options=()):
+        try:
+            discriminator = cls.__mapper_args__['polymorphic_identity']
+        except KeyError:
+            discriminator = None
+        filters = (cls.discriminator == discriminator, )
+        return cls.search(session, start=start, limit=limit,
+                          query_options=query_options, filters=filters)
+
+
     def __repr__(self):  # pragma: nocover
         return "<%s %s at %s : %s>" % (self.__class__.__name__,
                                        self.id, self.path, self.url)
