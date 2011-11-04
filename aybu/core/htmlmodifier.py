@@ -16,8 +16,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import re
+import collections
 import logging
+import re
+from sqlalchemy.orm.session import object_session
+from sqlalchemy.orm.exc import NoResultFound
 from BeautifulSoup import BeautifulSoup
 
 
@@ -27,151 +30,111 @@ __all__ = ['associate_images', 'associate_files',
            'change_href']
 
 
-def associate_files(obj, soup):
-    raise NotImplementedError
-    from aybu.core.models import File
-    """ Parse html and associate found anchor with file link
-        associations are wipe-out and the reconstructed with files found
-        in the html
-    """
-    log.debug("Updating obj %s association with files" % (type(obj)))
-    # copy old_images list if debugging
-    old_files = list(obj.files)
-    log.debug("Obj %d has files = %s", obj.id, [file.id for file in old_files])
-    # first, empty the list of the obj-associated images
-    obj.files = []
+Tag = collections.namedtuple('Tag', 'name attribute')
 
-    anchors = soup.findAll('a')
-    for a in anchors:
-        log.debug("Found anchor %s", a)
+def match_pufferfish_urls(value, type_, session):
+    match = re.search(r"%s/(\d+)/" % (type_.url_base), value)
+    if not match:
+        log.debug("Tag %s is local to the webserver, "
+                    "but did not match %s/\d+/", value, type_.url_base)
+        return None
+    id_ = match.groups()[0].replace("/", "")
+    log.debug("%s matches as pufferfish url with id %s", value, id_)
+    return int(id_)
+
+
+def match_pageinfo_urls(value, type_, session):
+    try:
+        rel = type_.get_by_url(session, value)
+        key = rel.id
+        log.debug('Found %s which matches %s', rel, value)
+        return key
+
+    except:
+        log.debug('No %s with url %s', type_.__name__, value)
+        return None
+
+
+def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
+                          attr_name=None):
+    pginfo_cls = pginfo.__class__
+    if attr_name:
+        pginfo_attr = attr_name
+    else:
+        pginfo_attr = "{}s".format(type_.__name__.lower())
+    log.debug("Updating %s.%s associations for %s",
+              pginfo_cls.__name__, pginfo_attr, pginfo)
+    old_associations = list(getattr(pginfo, pginfo_attr))
+    session = object_session(pginfo)
+
+    # empty the relation first
+    setattr(pginfo, pginfo_attr, [])
+
+    tags = soup.findAll(tag.name)
+    for t in tags:
+        log.debug('Found tag %s', t)
         try:
-            src = a['href']
+            attribute = t[tag.attribute]
         except:
-            log.debug("The anchor %s has not href, "
-                      "skipping url investigation", a)
+            log.debug('Tag %s has not attribute %s', t, tag.attribute)
             continue
 
-        # now: we need only "local" link.
-        if src.startswith("http://"):
-            log.debug("Image %s is not local to this webserver, skipping", src)
+        if attribute.startswith('http://'):
+            log.debug('Tag %s has %s attribute non-local (%s). Skipping', t,
+                      tag.attribute, attribute)
             continue
-        match = re.search("/\d+/", src)
-        if match is None:
-            log.debug("File %s is local but id was not found in the url", src)
-            continue
+
+        try:
+            pkey = match_callback(attribute, type_, session)
+            if not pkey:
+                continue
+            log.debug("Found %s in tag %s", type_.__name__, t)
+            static_obj = type_.get(session, pkey)
+
+        except NoResultFound as e:
+            log.debug("%s", e)
+
+        except Exception:
+            log.exception('Error while adding %s to %s', t, pginfo)
+
         else:
-            log.debug("File %s is local and id was not found in the url", src)
+            log.debug("Adding %s to %s.%s relation",
+                      static_obj, pginfo, pginfo_attr)
+            getattr(pginfo, pginfo_attr).append(static_obj)
 
-        try:
-            log.debug("Match %s", match.group().replace("/", ""))
-            id = int(match.group().replace("/", ""))
-            file = File.get_by(id=id)
-            log.debug("Adding file %d to obj %d", file.id, obj.id)
-            obj.files.append(file)
-        except Exception as e:
-            log.debug("Error associating file to translation %s", e)
+    log.debug("%s %s has obj.%s = %s",
+              pginfo_cls.__name__, pginfo.id, pginfo_attr,
+              [s.id for s in getattr(pginfo, pginfo_attr)])
 
-    log.debug("%s %d has obj.files = %s", type(obj), obj.id,
-              [file.id for file in obj.files])
-    log.debug("Files %s are no more associated with obj %d",
-              [file.id for file in old_files if file not in obj.files],
-              obj.id)
+    log.debug("%ss %s are no more associated with obj %s",
+              type_.__name__,
+              [s.id for s in old_associations if s not in getattr(pginfo, pginfo_attr)],
+              pginfo.id)
     return soup
 
 
-def associate_images(obj, soup):
-    """ Parse html and associate found images with obj.
-        associations are wipe-out and the reconstructed with images found
-        in the html
-    """
-    raise NotImplementedError
+def associate_files(soup, pageinfo):
+    from aybu.core.models import File
+    return associate_to_pageinfo(soup, pageinfo,
+                                 Tag(name='a', attribute='href'),
+                                 File, match_pufferfish_urls)
+
+
+def associate_images(soup, pageinfo):
     from aybu.core.models import Image
-    log.debug("Updating obj %s association with images" % (type(obj)))
-    # copy old_images list if debugging
-    old_images = list(obj.images)
-    log.debug("Obj %d has images = %s", obj.id, [img.id for img in old_images])
-    # first, empty the list of the obj-associated images
-    obj.images = []
-
-    imgs = soup.findAll('img')
-    for img in imgs:
-        log.debug("Found image %s", img)
-        # now: we need only "local" images.
-        try:
-            src = img['src']
-        except:
-            log.debug("The img %s has not src, skipping src investigation",
-                      img)
-            continue
-
-        if src.startswith("http://"):
-            log.debug("Image %s is not local to this webserver, skipping", src)
-            continue
-        match = re.search("\d+", src)
-        if match is None:
-            log.debug("Image %s is local but id was not found in the url", src)
-            continue
-        id = int(match.group())
-        image = Image.get_by(id=id)
-        log.debug("Adding image %s to obj %d", image.id, obj.id)
-        obj.images.append(image)
-
-    log.debug("%s %d has obj.images = %s", type(obj), obj.id,
-              [img.id for img in obj.images])
-    log.debug("Images %s are no more associated with obj %d",
-              [img.id for img in old_images if img not in obj.images],
-              obj.id)
-    return soup
+    return associate_to_pageinfo(soup, pageinfo,
+                                 Tag(name='img', attribute='src'),
+                                 Image,
+                                 match_pufferfish_urls)
 
 
-def associate_pages(obj, soup):
-    """ Parse html and associate found images with obj.
-        associations are wipe-out and the reconstructed with images found
-        in the html
-    """
-    raise NotImplementedError
-    log.debug("Updating %s links" % (obj))
-    old_pages = list(obj.links)
-    log.debug("%s had links to %s", obj, [page for page in old_pages])
-    # first, empty the list of the obj-associated pages
-    obj.links = []
-
-    mapper = config['routes.map']
-
-    anchors = soup.findAll('a')
-    for a in anchors:
-        log.debug("Found anchor %s", a)
-        # now: we need only "local" pages.
-
-        try:
-            href = a['href']
-        except:
-            log.debug("The anchor %s has not href, skipping url investigation",
-                      a)
-            continue
-
-        if href.startswith("http://"):
-            log.debug("Page %s is not local to this webserver, skipping", href)
-            continue
-
-        match = mapper.match(href)
-
-        try:
-            id = match['nodeinfo_id']
-            ni = NodeInfo.get_by(id=id)
-
-            log.debug("Adding %s to %s", ni, obj)
-            obj.links.append(ni)
-        except:
-            log.debug("Link is local (%s) but is not referenced to a "\
-                      "dynamic page", href)
-            continue
-
-    log.debug("%s has links to %s", obj, [p for p in obj.links])
-    log.debug("%s are no more associated to %s",
-              [p for p in old_pages if p not in obj.links], obj)
-
-    return soup
+def associate_pages(soup, pageinfo):
+    from aybu.core.models import PageInfo
+    return associate_to_pageinfo(soup, pageinfo,
+                                 Tag(name='a', attribute='href'),
+                                 PageInfo,
+                                 match_pageinfo_urls,
+                                 "links")
 
 
 def update_img_src(soup, image):
@@ -194,9 +157,8 @@ def update_img_src(soup, image):
             log.debug("Image %s is not local to this webserver, skipping", src)
             continue
 
-        match = re.search(image.url, src)
+        match = re.search(image.url_dir, src)
         if match is None:
-            log.debug("Image %s is local but is th one to modify", src)
             continue
         else:
             img['src'] = src.replace(image.old_name, image.name)
@@ -276,8 +238,11 @@ def change_href(nodeinfo, old_urls):
 def remove_target_attributes(soup, blank_to_rel=True):
 
     for a in soup.findAll('a'):
-
-        target = a.pop('target', None)
+        try:
+            target = a['target']
+            del a['target']
+        except:
+            target = None
 
         if not target:
             log.debug("No target attribute found in %s" % (a))

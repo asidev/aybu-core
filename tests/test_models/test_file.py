@@ -38,22 +38,32 @@ from aybu.core.exc import QuotaError
 from test_base import BaseTests
 
 
-def create_page(session):
-    lang = Language(lang='it', country='IT')
-    session.add(lang)
-    page = Page(weight=1)
-    session.add(page)
-    pageinfo = PageInfo(node=page, lang=lang, label=u'test')
+def create_page(session, copy_from=None):
+    if not copy_from:
+        lang = Language(lang='it', country='IT')
+        session.add(lang)
+        page = Page(weight=1)
+        session.add(page)
+    else:
+        lang = copy_from.lang
+        page = Page(weight=copy_from.node.weight +1)
+        session.add(page)
+
+    pageinfo = PageInfo(node=page, lang=lang, label=unicode(page.weight))
+    pageinfo.url = '/%s/%s.html' % (lang.lang, pageinfo.label)
     session.add(pageinfo)
     return pageinfo
 
 
 class FileTestsBase(BaseTests):
 
-    def _create_tmp_file(self, content=None, **kwargs):
+    def _create_tmp_file(self, content='__random__', **kwargs):
         """ Create a temporary file and return its name """
         filename = tempfile.mkstemp(dir=self.tempdir, **kwargs)[1]
-        if not content is None:
+        if content is '__random__':
+            content = self._generate_rand_string()
+            kwargs['suffix'] = 'txt'
+        if content:
             with open(filename, "w") as f:
                 f.write(content)
         return filename
@@ -67,11 +77,17 @@ class FileTestsBase(BaseTests):
     def setUp(self):
         super(FileTestsBase, self).setUp()
         self.tempdir = tempfile.mkdtemp()
+        self.static = os.path.join(self.tempdir, 'static')
+        os.mkdir(self.static)
         self.datadir = os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                   "data"))
-        Banner.initialize(self.tempdir)
-        Image.initialize(base=self.tempdir)
-        File.initialize(base=self.tempdir)
+        Banner.initialize(base=os.path.join(self.static, 'banners'),
+                          private=self.tempdir)
+        File.initialize(base=os.path.join(self.static, 'files'),
+                          private=self.tempdir)
+        Image.initialize(base=os.path.join(self.static, 'images'),
+                          private=self.tempdir)
+
         self.log = getLogger(__name__)
 
     def tearDown(self):
@@ -84,8 +100,7 @@ class FileTestsBase(BaseTests):
 class FileTests(FileTestsBase):
 
     def test_referred(self):
-        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
-                                        suffix='txt')
+        tmpfile = self._create_tmp_file()
         newfile = File(name='testfile.txt', source=tmpfile, session=self.session)
         self.session.commit()
         source = self._get_test_file('sample.png')
@@ -114,8 +129,7 @@ class FileTests(FileTestsBase):
 
 
     def test_delete(self):
-        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
-                                        suffix='txt')
+        tmpfile = self._create_tmp_file()
 
         f = File(name='testfile.txt', source=tmpfile, session=self.session)
         self.session.commit()
@@ -124,8 +138,7 @@ class FileTests(FileTestsBase):
         self.assertEqual(len(File.all(self.session)), 0)
 
     def test_max_files(self):
-        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
-                                        suffix='txt')
+        tmpfile = self._create_tmp_file()
         s = Setting(name='max_files', value=1,
                     type=SettingType(name='integer', raw_type='int'))
         self.session.add(s)
@@ -144,8 +157,7 @@ class BannerTests(FileTestsBase):
         self.assertEqual(Banner.full_size, size)
 
     def test_wrong_content(self):
-        content = self._generate_rand_string()
-        tmpfile = self._create_tmp_file(content=content)
+        tmpfile = self._create_tmp_file()
         with self.assertRaises(ValueError):
             Banner(source=tmpfile, session=self.session)
 
@@ -206,10 +218,9 @@ class ImageTests(FileTestsBase):
         full_size = (600, 400)
         handle = PIL.Image.open(self._get_test_file('sample.png'))
         big_handle = handle.resize(full_size)
-        big_image = self._create_tmp_file(suffix=".png")
+        big_image = self._create_tmp_file(content=None, suffix=".png")
         big_handle.save(big_image)
         Image.set_sizes(thumbs=thumbs, full=full_size)
-        Image.private_path = self.tempdir
         i = Image(source=big_image, session=self.session)
         # no need to commit, session is being flushed by pufferfish
 
