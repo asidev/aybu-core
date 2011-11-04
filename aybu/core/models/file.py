@@ -203,6 +203,14 @@ class Image(File):
             res[tname] = Thumbnail(self, tname, self.thumb_sizes[tname])
         return res
 
+    @property
+    def width(self):
+        return PIL.Image.open(self.source).size[0]
+
+    @property
+    def height(self):
+        return PIL.Image.open(self.source).size[1]
+
     def create_thumbnail(self, source):
         """ Called when saving image, both on create and on update.
         """
@@ -222,13 +230,21 @@ class Image(File):
 
         handle.save(self.path)
 
-    def to_dict(self, ref_pages=False):
+    def to_dict(self, ref_pages=False, paths=False):
         res = super(Image, self).to_dict(ref_pages)
+        res['width'] = self.width
+        res['height'] = self.height
+
+        if paths:
+            res['path'] = self.path
+
         for k, t in self.thumbnails.iteritems():
             res['{}_url'.format(k)] = t.url
-            res['{}_path'.format(k)] = t.path
             res['{}_width'.format(k)] = t.width
             res['{}_height'.format(k)] = t.height
+            if paths:
+                res['{}_path'.format(k)] = t.path
+
         return res
 
     @classmethod
