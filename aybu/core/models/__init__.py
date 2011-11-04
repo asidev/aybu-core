@@ -55,6 +55,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
+import sqlalchemy.orm
+import sqlalchemy.event
 import json
 
 log = getLogger(__name__)
@@ -67,6 +69,22 @@ __all__ = ['populate', 'engine_from_config_parser', 'create_session',
            'Section', 'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
            'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription']
+
+
+@sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, "after_configured")
+def _listens_for():
+    """
+    Since Mixins are used, and mixins are not mapped classes, their attributes
+    are normal Column objects, not InstrumentedAttribute instances that accept
+    the 'set' event. We then set the "mapper_configured"  event, and, after
+    the mapping phase, all events are set.
+    """
+
+    sqlalchemy.event.listen(Banner.default, 'set', Banner.set_default)
+#    sqlalchemy.event.listen(Logo.default, 'set', Logo.set_default)
+    sqlalchemy.event.listen(PageInfo.content, 'set', PageInfo.on_content_update,
+                            retval=True)
+    sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
 
 
 def populate(config, data, config_section="app:main", session=None,

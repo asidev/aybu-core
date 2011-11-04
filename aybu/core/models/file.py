@@ -20,6 +20,7 @@ from sqlalchemy import (Column,
                         Unicode,
                         Boolean)
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.orm.exc import NoResultFound
 import logging
 import os
 import shutil
@@ -30,9 +31,7 @@ from aybu.core.models.translation import PageInfo
 from aybu.core.models.setting import Setting
 from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
-import sqlalchemy.event
-import sqlalchemy.orm
-from sqlalchemy.orm.exc import NoResultFound
+
 
 
 __all__ = ['File', 'Image', 'Banner']
@@ -79,13 +78,6 @@ class File(FileSystemEntity, Base):
             log.error("%s", Setting.all(session))
             super(File, cls).create_new(newobj, args, kwargs)
 
-    @classmethod
-    def initialize(cls, base, private=""):
-        """ Override initialize, to add our custom events """
-        if hasattr(cls, "on_name_change"):
-            sqlalchemy.event.listen(cls.name, 'set', cls.on_name_change)
-        super(File, cls).initialize(base, private)
-
     @property
     def pages(self):
         """ Return all translations that have this file in its relation """
@@ -129,7 +121,7 @@ class SimpleImageMixin(object):
     @classmethod
     def set_default(cls, obj, value, oldvalue, initiator):
         if value:
-            cls.search(sqlalchemy.orm.Session.object_session(obj),
+            cls.search(object_session(obj),
                        filters=(cls.id != obj.id), return_query=True)\
                             .update({'default': False},
                                     synchronize_session='fetch')
@@ -174,19 +166,6 @@ class Banner(SimpleImageMixin, File):
 
 class Logo(SimpleImageMixin, File):
     __mapper_args__ = {'polymorphic_identity': 'logo'}
-
-
-@sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, "after_configured")
-def _listens_for():
-    """
-    Since SimpleImageMixin is not a mapped class, SimpleImageMixin.default
-    is a normal Column object, not an InstrumentedAttribute which accepts the
-    set event. We then set the "mapper_configured"  event, and, for the
-    subclasses of the mixin we set the event
-    """
-
-    sqlalchemy.event.listen(Banner.default, 'set', Banner.set_default)
-#    sqlalchemy.event.listen(Logo.default, 'set', Logo.set_default)
 
 
 class Image(File):
@@ -253,7 +232,7 @@ class Image(File):
         return res
 
     @classmethod
-    def on_name_change(cls, obj, value, oldvalue, initiator):
+    def on_name_update(cls, obj, value, oldvalue, initiator):
         try:
             if oldvalue.name == "NO_VALUE":
                 # When constructing object, sqlalchemy calls this event

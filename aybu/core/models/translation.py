@@ -28,7 +28,11 @@ from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
-from aybu.core.htmlmodifier import update_img_src
+from aybu.core.htmlmodifier import (update_img_src,
+                                    associate_pages,
+                                    associate_files,
+                                    associate_images,
+                                    remove_target_attributes)
 from BeautifulSoup import BeautifulSoup
 
 __all__ = []
@@ -223,6 +227,16 @@ class PageInfo(CommonInfo):
             update_img_src(self.soup, image)
         )
         return self.soup
+
+    @classmethod
+    def on_content_update(cls, target, value, oldvalue, initiator):
+        """ When updating content, parse and update relations """
+        soup = BeautifulSoup(value, smartQuotesTo=None)
+        soup = associate_images(soup, target)
+        soup = associate_files(soup, target)
+        soup = associate_pages(soup, target)
+        soup = remove_target_attributes(soup)
+        return unicode(soup)
 
     def to_dict(self):
         dict_ = super(PageInfo, self).to_dict()
