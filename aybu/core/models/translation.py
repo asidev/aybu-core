@@ -26,6 +26,7 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.session import object_session
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
 from aybu.core.htmlmodifier import (update_img_src,
@@ -91,12 +92,16 @@ class NodeInfo(Base):
         return session.query(NodeInfo).filter(criterion).delete('fetch')
 
     def create_translation(self, language):
-        return self.__class__(id=None, label=self.label, lang=language)
+        return self.__class__(label='{} [{}]'.format(self.label, language.lang),
+                              lang=language)
 
     def translate(self, enabled_only=True):
 
+        # Avoid circular imports.
+        from aybu.core.models.language import Language
+
         session = object_session(self)
-        query = session.query(Language)
+        query = session.query(Language).filter(Language.id != self.lang.id)
 
         if enabled_only:
             query = query.filter(Language.enabled == True)
