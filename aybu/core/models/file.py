@@ -230,9 +230,9 @@ class Image(File):
             thumb.save(handle)
         return handle
 
-    def rename_thumbnail(self, old_image_name, new_image_name):
+    def rename_thumbnail(self, old_image_name, old_extension, new_image_name):
         for thumb in self.thumbnails.values():
-            thumb.rename(old_image_name, new_image_name)
+            thumb.rename(old_image_name, old_extension, new_image_name)
 
     def save_file(self, handle):
         """ Called when saving source """
@@ -304,10 +304,10 @@ class Thumbnail(object):
                                        self.name,
                                        self.image.extension)
 
-    def rename(self, old_image_name, new_image_name):
+    def rename(self, old_image_name, old_extension, new_image_name):
         old_path = os.path.join(self.image.dir, "%s_%s%s" %
                                 (old_image_name, self.name,
-                                 self.image.extension))
+                                 old_extension))
         new_path = os.path.join(self.image.dir, "%s_%s%s" %
                                 (new_image_name, self.name,
                                  self.image.extension))
