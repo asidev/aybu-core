@@ -93,6 +93,17 @@ class NodeInfo(Base):
     def create_translation(self, language):
         return self.__class__(id=None, label=self.label, lang=language)
 
+    def translate(self, enabled_only=True):
+
+        session = object_session(self)
+        query = session.query(Language)
+
+        if enabled_only:
+            query = query.filter(Language.enabled == True)
+
+        for language in query.all():
+            session.add(self.create_translation(language))
+
     def to_dict(self):
         return dict(id=self.node.id,
                     button_label=self.label,
@@ -191,7 +202,6 @@ class PageInfo(CommonInfo):
 
     def __repr__(self):
         url = '' if self.url is None else self.url
-
         return "<PageInfo [%s] '%s' %s>" % (self.id,
                                             self.label.encode('utf8'),
                                             url.encode('utf8'))

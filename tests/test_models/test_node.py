@@ -193,16 +193,6 @@ default_data = data/default_data.json
             menu.children.append(child_page)
             menu.children.append(child_section)
 
-    def test_create(self):
-
-        with self.assertRaises(ValidationError):
-            Node.create(self.session, id=1, parent=None, weight=1)
-
-        menu = Menu.create(self.session, id=1, parent=None)
-        #page = Page.create(self.session, id=2, parent=menu)
-        Page.create(self.session, id=2, parent=menu)
-        # TODO test create when finished to be implemented
-
     def test_get_translation(self):
 
         file_ = StringIO.StringIO(

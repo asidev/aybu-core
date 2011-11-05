@@ -99,23 +99,26 @@ class Node(Base):
                           start=start, limit=limit)
 
     @classmethod
-    def get_max_weight(cls, session, **params):
-        q = session.query(func.max(cls.weight))
-        q = q.filter(cls.parent == params['parent'])
-        return  q.scalar()
+    def get_max_weight(cls, session, parent):
+        return session.query(func.max(cls.weight))\
+                      .filter(cls.parent == parent).scalar()
 
     @validates('parent')
     def validate_parent(self, key, value):
-        if isinstance(self, Menu):
-            if value != None:
-                raise ValidationError()
-        else:
-            if not isinstance(value, (Menu, Section, Page)):
-                raise ValidationError()
+
+        if isinstance(self, Menu) and not value is None:
+            raise ValidationError('Menus cannot have any parent.')
+
+        elif not isinstance(self, Menu) and\
+             not isinstance(value, (Menu, Section, Page)):
+
+            raise ValidationError('%s is not allowed.' % value)
+
         return value
 
     @validates('children')
     def validate_children(self, key, value):
+        #FIXME: check usage!
         if isinstance(self, (ExternalLink, InternalLink)):
             if value != None or value != []:
                 raise ValidationError()
@@ -127,18 +130,7 @@ class Node(Base):
             if translation.lang == language:
                 return translation
 
-        raise NoResultFound('No translation for %s' % language.lang)
-
-    @classmethod
-    def create(cls, session, **params):
-        """ Create a persistent 'cls' object and return it."""
-        warnings.warn("Node.create is in pending removal", DeprecationWarning)
-
-        if cls == Node:
-            raise ValidationError('cls: Node creation is not allowed!')
-        entity = cls(**params)
-        session.add(entity)
-        return entity
+        raise NoResultFound('No translation for %s.' % language.lang)
 
     def to_dict(self, language=None, recursive=True):
         return dict(id=self.id,
@@ -335,7 +327,7 @@ class InternalLink(Node):
     linked_to_id = Column(Integer, ForeignKey('nodes.id',
                                               onupdate='cascade',
                                               ondelete='cascade'),)
-#                          nullable=False)
+
     linked_to = relationship('Page', backref='linked_by', remote_side=Page.id,
                             primaryjoin='Page.id == InternalLink.linked_to_id')
 
