@@ -192,7 +192,7 @@ class PageInfo(CommonInfo):
     def __repr__(self):
         url = '' if self.url is None else self.url
 
-        return "<PageInfo [%d] '%s' %s>" % (self.id,
+        return "<PageInfo [%s] '%s' %s>" % (self.id,
                                             self.label.encode('utf8'),
                                             url.encode('utf8'))
 
