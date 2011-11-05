@@ -127,6 +127,20 @@ class FileTests(FileTestsBase):
         d = newfile.to_dict(ref_pages=True)
         self.assertIn('used_by', d)
 
+    def test_max_files(self):
+        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
+                                        suffix='txt')
+        Setting(name='max_files', value=1,
+                type=SettingType(name='integer', raw_type='int'))
+        File(name='testfile.txt', source=tmpfile,
+             session=self.session)
+        self.session.commit()
+
+        with self.assertRaises(QuotaError):
+            File(name="testfile2.txt", source=tmpfile,
+                              session=self.session)
+            self.session.commit()
+
 
     def test_delete(self):
         tmpfile = self._create_tmp_file()
@@ -258,6 +272,13 @@ class ImageTests(FileTestsBase):
 
         d = image.to_dict()
         self.assertIn('small_url', d)
-        self.assertIn('small_path', d)
         self.assertIn('small_width', d)
+        self.assertIn('width', d)
+        self.assertIn('height', d)
         self.assertIn('small_height', d)
+
+        d1 = image.to_dict(paths=True)
+        self.assertIn('path', d1)
+        self.assertIn('small_path', d1)
+
+
