@@ -114,10 +114,12 @@ class Request(BaseRequest):
 
     @language.setter
     def language(self, lang):
-        log.debug('Set language: %s', lang)
         self._language = lang
         self.locale_name = str(lang.locale)
         if self.user:
+            if 'lang' in self.session:
+                if self.session['lang'] == lang:
+                    return
             log.debug("Saving language %s in session", lang)
             self.session['lang'] = lang
 
