@@ -116,8 +116,8 @@ class File(FileSystemEntity, Base):
                                        self.id, self.path, self.url)
 
 class SimpleImageMixin(object):
-    default = Column(Boolean, default=False)
     full_size = None
+    default = Column(Boolean, default=False)
 
     @classmethod
     def get_default(cls, session):
@@ -169,6 +169,17 @@ class SimpleImageMixin(object):
         # Banners/Logos are in relationship with Pages,
         # not translations and the constraint is not enforced
         return []
+
+    def __repr__(self):
+        rep = super(SimpleImageMixin, self).__repr__()
+        if self.default:
+            rep = rep.replace(">", " [default]>")
+        return rep
+
+    def to_dict(self):
+        d = super(SimpleImageMixin, self).to_dict()
+        d['default'] = self.default
+        return d
 
 
 class Banner(SimpleImageMixin, File):
