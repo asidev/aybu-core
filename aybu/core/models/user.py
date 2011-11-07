@@ -25,6 +25,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Unicode
 from sqlalchemy import Table
 from sqlalchemy.orm import (relationship,
+                            object_session,
                             joinedload)
 
 
@@ -74,6 +75,10 @@ class User(Base):
 
         else:
             return True
+
+    def check_password(self, password):
+        return self.__class__.check(object_session(self), self.username,
+                                    password)
 
 
 class Group(Base):

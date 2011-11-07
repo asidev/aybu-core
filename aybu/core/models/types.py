@@ -26,9 +26,7 @@ __all__ = ['Crypt']
 
 class Crypt(types.TypeDecorator):
     """ This class model an encrypted string using UNiX crypt(3). """
-
     impl = types.CHAR
-
     default_length = 16  # this seems to be fixed to 13 in python crypt()
 
     def __init__(self, length=default_length, *args, **kwargs):
