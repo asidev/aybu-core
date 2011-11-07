@@ -56,12 +56,6 @@ class Request(BaseRequest):
         self._localizer = None
         self._session = None
 
-    def __geattribute__(self, attr):
-        value = super(Request, self).__geattribute__(attr)
-        if attr == 'session' and not value is None:
-            value.path = '/admin/'
-        return value
-
     @property
     def user(self):
         userid = unauthenticated_userid(self)
