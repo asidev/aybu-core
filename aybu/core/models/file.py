@@ -21,6 +21,8 @@ from sqlalchemy import (Column,
                         Boolean)
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.ext.declarative import declared_attr
+
 import logging
 import os
 import shutil
@@ -61,7 +63,6 @@ class File(FileSystemEntity, Base):
 
         try:
             setting = 'max_{}s'.format(cls.__name__.lower())
-            log.debug("setting: %s", setting)
             max_files = Setting.get(session, setting).value
             num_files = cls.count(session=session)
             log.debug("Current %s objects: %d, max: %d",
@@ -75,7 +76,6 @@ class File(FileSystemEntity, Base):
 
         except NoResultFound:
             # there is no limit for this filetype
-            log.error("%s", Setting.all(session))
             super(File, cls).create_new(newobj, args, kwargs)
 
     @property
@@ -117,7 +117,10 @@ class File(FileSystemEntity, Base):
 
 class SimpleImageMixin(object):
     full_size = None
-    default = Column(Boolean, default=False)
+
+    @declared_attr
+    def default(self):
+        return Column(Boolean, default=False)
 
     @classmethod
     def get_default(cls, session):
@@ -186,7 +189,7 @@ class Banner(SimpleImageMixin, File):
     __mapper_args__ = {'polymorphic_identity': 'banner'}
 
 
-class Logo(SimpleImageMixin, File):
+class Logo(Banner):
     __mapper_args__ = {'polymorphic_identity': 'logo'}
 
 
