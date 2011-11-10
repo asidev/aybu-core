@@ -53,6 +53,7 @@ from aybu.core.models.view import (View,
 from aybu.core.utils import get_object_from_python_path
 from sqlalchemy import engine_from_config
 from sqlalchemy.orm import class_mapper
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy.orm
@@ -81,9 +82,9 @@ def _listens_for():
     """
 
     sqlalchemy.event.listen(Banner.default, 'set', Banner.set_default)
-#    sqlalchemy.event.listen(Logo.default, 'set', Logo.set_default)
-    sqlalchemy.event.listen(PageInfo.content, 'set', PageInfo.on_content_update,
-                            retval=True)
+    sqlalchemy.event.listen(Logo.default, 'set', Logo.set_default)
+    sqlalchemy.event.listen(Session, 'before_flush',
+                            PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
 
 

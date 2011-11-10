@@ -16,13 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (File, Image)
+from aybu.core.models import (File, Image, PageInfo)
 from aybu.core.htmlmodifier import (associate_files,
                                     associate_images,
                                     associate_pages)
 from test_file import FileTestsBase
 from test_file import create_page
 from BeautifulSoup import BeautifulSoup
+import sqlalchemy.orm
+import sqlalchemy.event
 
 
 class AssociationTests(FileTestsBase):
@@ -31,19 +33,25 @@ class AssociationTests(FileTestsBase):
         super(AssociationTests, self).setUp()
         self.page = create_page(self.session)
         self.session.flush()
+        # reinitialize session event
+        sqlalchemy.event.listen(sqlalchemy.orm.Session, 'before_flush',
+                                PageInfo.before_flush)
 
     def test_associate_files(self):
 
         tmpfile = self._create_tmp_file()
         f1 = File(name='first.txt', session=self.session, source=tmpfile)
         f2 = File(name='second.txt', session=self.session, source=tmpfile)
+        self.session.flush()
 
         html = """<a href={file.url}>{file.name}</a>"""
         self.page.content = html.format(file=f1)
+        self.session.flush()
         self.assertIn(f1, self.page.files)
         self.assertNotIn(f2, self.page.files)
 
         self.page.content = html.format(file=f2)
+        self.session.flush()
         self.assertIn(f2, self.page.files)
         self.assertNotIn(f1, self.page.files)
 
@@ -52,13 +60,16 @@ class AssociationTests(FileTestsBase):
         source = self._get_test_file('sample.png')
         i1 = Image(name='first.png', session=self.session, source=source)
         i2 = Image(name='second.png', session=self.session, source=source)
+        self.session.flush()
 
         html = """<img src='{image.url}>'/>"""
         self.page.content = html.format(image=i1)
+        self.session.flush()
         self.assertIn(i1, self.page.images)
         self.assertNotIn(i2, self.page.images)
 
         self.page.content = html.format(image=i2)
+        self.session.flush()
         self.assertIn(i2, self.page.images)
         self.assertNotIn(i1, self.page.images)
 
@@ -69,10 +80,12 @@ class AssociationTests(FileTestsBase):
 
         html = """<a href='{page.url}'>{page.label}</a>"""
         self.page.content = html.format(page=p1)
+        self.session.flush()
         self.assertIn(p1, self.page.links)
         self.assertNotIn(p2, self.page.links)
 
         self.page.content = html.format(page=p2)
+        self.session.flush()
         self.assertIn(p2, self.page.links)
         self.assertNotIn(p1, self.page.links)
 

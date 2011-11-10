@@ -25,6 +25,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
+import sqlalchemy.orm
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import object_session
 from aybu.core.models.base import Base
@@ -244,14 +245,21 @@ class PageInfo(CommonInfo):
         return self.soup
 
     @classmethod
-    def on_content_update(cls, target, value, oldvalue, initiator):
+    def before_flush(cls, session, flush_context, instances):
         """ When updating content, parse and update relations """
-        soup = BeautifulSoup(value, smartQuotesTo=None)
-        soup = associate_images(soup, target)
-        soup = associate_files(soup, target)
-        soup = associate_pages(soup, target)
-        soup = remove_target_attributes(soup)
-        return unicode(soup)
+        log.debug("Executing after_flush on PageInfo")
+        pages = [obj for obj in session.new if type(obj) == cls and obj.content]
+        pages.extend([obj for obj in session.dirty if type(obj) == cls and
+                      obj.content])
+        log.debug("Instances: %s", pages)
+        for instance in pages:
+            log.debug("instance.content: %s", instance.content)
+            soup = BeautifulSoup(instance.content, smartQuotesTo=None)
+            soup = associate_images(soup, instance)
+            soup = associate_files(soup, instance)
+            soup = associate_pages(soup, instance)
+            soup = remove_target_attributes(soup)
+            instance.content = unicode(soup)
 
     def to_dict(self):
         dict_ = super(PageInfo, self).to_dict()
