@@ -25,7 +25,6 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
-import sqlalchemy.orm
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import object_session
 from aybu.core.models.base import Base
