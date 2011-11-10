@@ -93,7 +93,8 @@ class NodeInfo(Base):
         return session.query(NodeInfo).filter(criterion).delete('fetch')
 
     def create_translation(self, language):
-        return self.__class__(label='{} [{}]'.format(self.label, language.lang),
+        return self.__class__(label=u'{} [{}]'.format(self.label,
+                                                      language.lang),
                               lang=language)
 
     def translate(self, enabled_only=True):

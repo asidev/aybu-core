@@ -96,11 +96,10 @@ default_data = data/default_data.json
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
-        menu_info = self.session.query(MenuInfo).first()       
+        menu_info = self.session.query(MenuInfo).first()
         new_menu_info = menu_info.create_translation(language)
         self.assertNotEqual(menu_info, new_menu_info)
         self.assertNotEqual(menu_info.id, new_menu_info.id)
-        self.assertEqual(menu_info.label, new_menu_info.label)
         self.assertNotEqual(menu_info.lang, new_menu_info.lang)
         self.assertEqual(new_menu_info.lang, language)
         self.assertEqual(menu_info.node, new_menu_info.node)
@@ -115,7 +114,6 @@ default_data = data/default_data.json
         new_page_info = page_info.create_translation(language)
         self.assertNotEqual(page_info, new_page_info)
         self.assertNotEqual(page_info.id, new_page_info.id)
-        self.assertEqual(page_info.label, new_page_info.label)
         self.assertNotEqual(page_info.lang, new_page_info.lang)
         self.assertEqual(new_page_info.lang, language)
         self.assertEqual(page_info.node, new_page_info.node)
@@ -131,11 +129,10 @@ default_data = data/default_data.json
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
-        info = self.session.query(SectionInfo).first()       
+        info = self.session.query(SectionInfo).first()
         new_info = info.create_translation(language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
-        self.assertEqual(info.label, new_info.label)
         self.assertNotEqual(info.lang, new_info.lang)
         self.assertEqual(new_info.lang, language)
         self.assertEqual(info.node, new_info.node)
@@ -146,11 +143,10 @@ default_data = data/default_data.json
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
-        info = self.session.query(ExternalLinkInfo).first()       
+        info = self.session.query(ExternalLinkInfo).first()
         new_info = info.create_translation(language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
-        self.assertEqual(info.label, new_info.label)
         self.assertNotEqual(info.lang, new_info.lang)
         self.assertEqual(new_info.lang, language)
         self.assertEqual(info.node, new_info.node)
@@ -161,11 +157,10 @@ default_data = data/default_data.json
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
-        info = self.session.query(InternalLinkInfo).first()       
+        info = self.session.query(InternalLinkInfo).first()
         new_info = info.create_translation(language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
-        self.assertEqual(info.label, new_info.label)
         self.assertNotEqual(info.lang, new_info.lang)
         self.assertEqual(new_info.lang, language)
         self.assertEqual(info.node, new_info.node)
