@@ -128,6 +128,13 @@ class Setting(Base):
         return "<Setting %s (%s)>" % (self.name, self.value)
 
     @classmethod
+    def get_filters(cls, user):
+        filters = []
+        if not user is None and not user.has_permission('all_settings'):
+            filters.append(Setting.ui_administrable == True)
+        return filters
+
+    @classmethod
     def all(cls, session, start=None, limit=None):
         # query_options must not be in the method signature:
         # the user should not use SQLA internals.
@@ -135,18 +142,14 @@ class Setting(Base):
                                        query_options=(joinedload('type'),))
 
     @classmethod
-    def count(cls, session, ui_administrable=False):
-        """ Count settings in the collection:
-            count UI administrable settings only when ui_adminstrable == True.
-        """
-        return super(Setting, cls).count(session,
-                                         Setting.ui_administrable == True)
+    def count(cls, session, user):
+        return super(Setting, cls).count(session, *cls.get_filters(user))
 
     @classmethod
-    def list(cls, session, ui_administrable=False, 
-             sort_by=None, sort_order='asc', start=None, limit=None):
+    def list(cls, session, user=None, sort_by=None, sort_order='asc',
+             start=None, limit=None):
         return super(Setting, cls).search(session,
-                                          Setting.ui_administrable == True,
+                                          *cls.get_filters(user),
                                           sort_by=sort_by,
                                           sort_order=sort_order,
                                           start=start,

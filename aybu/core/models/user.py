@@ -80,6 +80,12 @@ class User(Base):
         return self.__class__.check(object_session(self), self.username,
                                     password)
 
+    def has_permission(self, perm):
+        return bool(set((perm, 'admin')) & set(g.name for g in self.groups))
+
+    def __repr__(self):
+        return "<User {}>".format(self.username)
+
 
 class Group(Base):
 
@@ -87,3 +93,6 @@ class Group(Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
     name = Column(Unicode(32), primary_key=True)
+
+    def __repr__(self):
+        return "<Group {}>".format(self.name)
