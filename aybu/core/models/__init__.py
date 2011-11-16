@@ -86,6 +86,8 @@ def _listens_for():
     sqlalchemy.event.listen(Session, 'before_flush',
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
+    sqlalchemy.event.listen(SectionInfo.url_part, 'set',
+                            SectionInfo.on_url_part_update)
 
 
 def populate(config, data, config_section="app:main", session=None,

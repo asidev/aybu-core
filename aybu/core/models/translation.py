@@ -26,6 +26,7 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
 from sqlalchemy.orm.session import object_session
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
@@ -130,8 +131,7 @@ class CommonInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'common_info'}
     title = Column(Unicode(64), default=None)
     url_part = Column(Unicode(64), default=None)
-    # This field is very useful but denormalize the DB
-    #FIXME:
+    # Use 'partial_url' as 'parent_url'
     partial_url = Column(Unicode(512), default=None)
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
@@ -212,6 +212,35 @@ class PageInfo(CommonInfo):
                                             self.label.encode('utf8'),
                                             url.encode('utf8'))
 
+
+    @validates('url_part')
+    def validate_url_part(self, key, value):
+
+        if getattr(self, key) != value:
+
+            q = object_session(self).query(self.__class__)
+            partial_url = '{}/{}'.format(self.partial_url, self.url_part)
+
+            # Update children partial_url (self included).
+            criterion = self.__class__.partial_url.ilike(partial_url + '%')
+            for item in q.filter(criterion).all():
+                item.partial_url.replace('^' + partial_url,
+                                         '{}/{}'.format(self.partial_url,
+                                                        value))
+
+            # Replace old part of the URL with the new one.
+            q = object_session(self).query(self.__class__)
+            url = '{}/{}'.format(self.partial_url, self.url_part)
+            # Update children URLs (self included).
+            criterion = self.__class__.url.ilike(url + '%')
+            for item in q.filter(criterion).all():
+                item.url.replace('^' + url,
+                                 '{}/{}'.format(self.partial_url, value))
+
+            # FIXME: old_urls = _collect_old_urls(node)
+            # check_url(nodeinfo)
+            # _check_contents(old_urls)
+
     def create_translation(self, language):
         obj = super(PageInfo, self).create_translation(language)
         obj.url = self.url
@@ -270,6 +299,30 @@ class PageInfo(CommonInfo):
 class SectionInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'section_info'}
     node = relationship('Section', backref='translations')
+
+    @classmethod
+    def on_url_part_update(cls, obj, new, old, initiator):
+
+        if new == old:
+            return old
+
+        partial_url = '{}/{}'.format(obj.partial_url, old)
+        new_partial_url = '{}/{}'.format(obj.partial_url, new)
+
+        # Update children partial_url (self included).
+        q = object_session(obj).query(CommonInfo)
+        criterion = CommonInfo.partial_url.ilike(partial_url + '%')
+        for item in q.filter(criterion).all():
+            log.debug('Found: %s', item)
+            item.partial_url = item.partial_url.replace(partial_url,
+                                                        new_partial_url, 1)
+            log.debug('Replaced: %s', item.partial_url)
+
+        # FIXME: old_urls = _collect_old_urls(node)
+        # check_url(nodeinfo)
+        # _check_contents(old_urls)
+
+        return new
 
     def create_translation(self, language):
         obj = super(SectionInfo, self).create_translation(language)

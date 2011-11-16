@@ -280,6 +280,27 @@ default_data = data/default_data.json
         self.assertEqual(PageInfo.get_homepage(self.session, it), page_info_3)
         self.assertEqual(PageInfo.get_homepage(self.session, en), page_info_4)
 
+    def test_validate_url_part(self):
+
+        self.populate()
+
+        section = self.session.query(Section).filter(Section.id == 4).one()
+        self.assertEqual(section.id, 4)
+        section_info = section.translations[0]
+        self.assertEqual(section_info.lang.lang, 'it')
+        page_5 = self.session.query(Page).filter(Page.id == 5).one()
+        page_6 = self.session.query(Page).filter(Page.id == 6).one()
+        self.assertIn(page_5, section.children)
+        self.assertIn(page_6, section.children)
+        page_5_info = page_5.translations[0]
+        self.assertEqual(page_5_info.lang.lang, 'it')
+        page_6_info = page_6.translations[0]
+        self.assertEqual(page_6_info.lang.lang, 'it')
+        section_info.url_part = section_info.url_part + '_test'
+        section_url = '{}/{}'.format(section_info.partial_url,
+                                     section_info.url_part)
+        self.assertEqual(section_url, page_5_info.partial_url)
+
 
 class PageInfoTests(BaseTests):
 
