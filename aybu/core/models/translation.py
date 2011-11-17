@@ -64,8 +64,11 @@ class NodeInfo(Base):
         return self.__class__.__name__
 
     def __repr__(self):
-        return "<%s [%s] '%s'>" % (self.__class__.__name__, self.id,
-                                   self.label.encode('utf8'))
+        try:
+            return "<%s [%s] '%s'>" % (self.__class__.__name__, self.id,
+                                       self.label.encode('utf8'))
+        except:
+            return super(NodeInfo, self).__repr__()
 
     @classmethod
     def create_translations(cls, session, src_lang_id, dst_language):
@@ -239,10 +242,13 @@ class PageInfo(CommonInfo):
                          secondaryjoin=NodeInfo.id == _links_table.c.links_id)
 
     def __repr__(self):
-        url = '' if self.url is None else self.url
-        return "<PageInfo [%s] '%s' %s>" % (self.id,
-                                            self.label.encode('utf8'),
-                                            url.encode('utf8'))
+        try:
+            url = '' if self.url is None else self.url
+            return "<PageInfo [%s] '%s' %s>" % (self.id,
+                                                self.label.encode('utf8'),
+                                                url.encode('utf8'))
+        except:
+            return super(PageInfo, self).__repr__()
 
     def create_translation(self, language):
         obj = super(PageInfo, self).create_translation(language)
