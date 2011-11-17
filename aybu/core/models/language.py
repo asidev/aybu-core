@@ -46,10 +46,12 @@ class Language(Base):
     enabled = Column(Boolean, default=True)
 
     def __repr__(self):
-        return "<Language %s_%s [%s]>" % (self.lang,
-                                          self.country,
-                                          "enabled" if self.\
-                                                    enabled else "disabled")
+        try:
+            return "<Language %s_%s [%s]>" % (self.lang,
+                                              self.country,
+                                              "enabled" if self.enabled else "disabled")
+        except:
+            return super(Language, self).__repr__()
 
     def __setattr__(self, attr, value):
         if attr == u"lang":

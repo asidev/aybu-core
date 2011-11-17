@@ -37,6 +37,7 @@ from aybu.core.models.node import (ExternalLink,
                                    Section)
 from aybu.core.models.translation import (MenuInfo,
                                           NodeInfo,
+                                          CommonInfo,
                                           PageInfo,
                                           SectionInfo,
                                           ExternalLinkInfo,
@@ -87,7 +88,9 @@ def _listens_for():
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
     sqlalchemy.event.listen(SectionInfo.url_part, 'set',
-                            SectionInfo.on_url_part_update)
+                            CommonInfo.on_url_part_update)
+    sqlalchemy.event.listen(PageInfo.url_part, 'set',
+                            CommonInfo.on_url_part_update)
 
 
 def populate(config, data, config_section="app:main", session=None,
