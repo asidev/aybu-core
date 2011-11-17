@@ -185,6 +185,7 @@ class CommonInfo(NodeInfo):
         dict_ = super(CommonInfo, self).to_dict()
         dict_.update(dict(title=self.title,
                           url_part=self.url_part,
+                          partial_url=self.partial_url,
                           meta_description=self.meta_description,
                           head_content=self.head_content))
         return dict_
