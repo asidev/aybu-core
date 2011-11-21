@@ -31,8 +31,9 @@ from sqlalchemy.orm.exc import (NoResultFound,
                                 MultipleResultsFound)
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.util.langhelpers import symbol
 from aybu.core.models.base import Base
-from aybu.core.models.node import Page
+from aybu.core.models.node import Menu, Section, Page
 from aybu.core.htmlmodifier import (update_img_src,
                                     associate_pages,
                                     associate_files,
@@ -135,49 +136,69 @@ class MenuInfo(NodeInfo):
 
 class CommonInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'common_info'}
-    title = Column(Unicode(64), default=None)
-    url_part = Column(Unicode(64), default=None)
-    parent_url = Column(Unicode(512), default=None)
+    title = Column(Unicode(64), default=u'')
+    url_part = Column(Unicode(64), default=u'')
+    parent_url = Column(Unicode(512), default=u'')
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
 
+    @hybrid_property
+    def url(self):
+        # Use as is!!! Don't use str.format or '%s/%s' % (...)
+        # Filtering will not work!
+        return self.parent_url + '/' + self.url_part
+
+    @url.setter
+    def url(self, url):
+        """ Split value into 'parent_url' and 'url_part' parts.
+
+            For example, '/en/company/about_us.html' will be split into
+            '/en/company' (parent_url) and 'about_us' (url_part).
+        """
+        self.parent_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
+
     @classmethod
-    def on_url_part_update(cls, obj, new, old, attr):
-        obj._url_part_new = new
-        obj._url_part_old = old
+    def on_attr_update(cls, obj, new, old, attr):
+        if not hasattr(obj, '_attrs_updates'):
+            obj._attrs_updates = {}
+        obj._attrs_updates[attr.key] = dict(old=old, new=new)
         return new
 
     @classmethod
-    def before_commit(cls, session):
+    def after_flush(cls, session, *args):
+        """ Set 'parent_url' and update it when 'url_part' was changed.
+        """
 
-        for obj in list(session.new) + list(session.dirty):
+        log.debug('Executing after_flush on CommonInfo.')
+
+        for obj in session:
 
             if not isinstance(obj, CommonInfo) or \
-               not hasattr(obj, '_url_part_new') or \
-               not hasattr(obj, '_url_part_old') or \
-               obj._url_part_old == obj._url_part_new:
+               not hasattr(obj, '_attrs_updates'):
                 continue
 
-            log.debug('Handling %s object...', obj)
+            log.debug('Handle obj: %s', obj)
 
-            old_parent_url = '{}/{}'.format(obj.parent_url, obj._url_part_old)
-            new_parent_url = '{}/{}'.format(obj.parent_url, obj._url_part_new)
+            if 'url_part' in obj._attrs_updates and \
+               obj._attrs_updates['url_part']['old'] != symbol('NO_VALUE') and \
+               obj._attrs_updates['url_part']['old'] != symbol('NEVER_SET') and \
+               obj.node.children:
 
-            # Update children (self included).
-            criterion = cls.parent_url.ilike(old_parent_url + '%')
-            for item in session.query(cls).filter(criterion).all():
+                old = '{}/{}'.format(obj.parent_url,
+                                     obj._attrs_updates['url_part']['old'])
+                new = '{}/{}'.format(obj.parent_url,
+                                     obj._attrs_updates['url_part']['new'])
 
-                item.parent_url = item.parent_url.replace(old_parent_url,
-                                                          new_parent_url, 1)
-                log.debug('Changed from %s to %s in %s.',
-                          old_parent_url, new_parent_url, item)
+                # Update children.
+                criterion = cls.parent_url.ilike(old + '%')
+                for item in session.query(cls).filter(criterion).all():
+                    item.parent_url = item.parent_url.replace(old, new, 1)
 
     def create_translation(self, language):
         obj = super(CommonInfo, self).create_translation(language)
         obj.node = self.node
-        obj.title = self.title
-        obj.url_part = self.url_part
-        obj.parent_url = self.parent_url
+        obj.title = self.title + '[{}]'.format(language.lang)
+        obj.url_part = self.url_part + '[{}]'.format(language.lang)
         obj.meta_description = self.meta_description
         obj.head_content = self.head_content
         return obj
@@ -241,21 +262,6 @@ class PageInfo(CommonInfo):
                          primaryjoin=NodeInfo.id == _links_table.c.inverse_id,
                          secondaryjoin=NodeInfo.id == _links_table.c.links_id)
 
-    @hybrid_property
-    def url(self):
-        # Use as is!!! Don't use str.format or '%s/%s' % (...)
-        # Filtering will not work!
-        return self.parent_url + '/' + self.url_part
-
-    @url.setter
-    def url(self, url):
-        """ Split value into 'parent_url' and 'url_part' parts.
-
-            For example, '/en/company/about_us.html' will be split into
-            '/en/company' (parent_url) and 'about_us' (url_part).
-        """
-        self.parent_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
-
     def __repr__(self):
         try:
             url = '' if self.url is None else self.url
@@ -277,7 +283,6 @@ class PageInfo(CommonInfo):
 
     @classmethod
     def get_by_url(cls, session, url):
-        log.debug(cls.url)
         criterion = cls.url.ilike(url)
         return session.query(cls).filter(criterion).one()
 
@@ -299,7 +304,7 @@ class PageInfo(CommonInfo):
     @classmethod
     def before_flush(cls, session, flush_context, instances):
         """ When updating content, parse and update relations """
-        log.debug("Executing after_flush on PageInfo")
+        log.debug("Executing before_flush on PageInfo")
         pages = [obj for obj in session.new if type(obj) == cls and obj.content]
         pages.extend([obj for obj in session.dirty if type(obj) == cls and
                       obj.content])

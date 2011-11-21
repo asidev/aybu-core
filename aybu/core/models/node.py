@@ -70,11 +70,14 @@ class Node(Base):
         return self.__class__.__name__
 
     def __repr__(self):
-        parent_id = None if self.parent is None else self.parent.id
-        return '<%s id="%s" parent="%s" weight="%s" />' % (self.type,
-                                                           self.id,
-                                                           parent_id,
-                                                           self.weight)
+        try:
+            parent_id = None if self.parent is None else self.parent.id
+            return '<%s id="%s" parent="%s" weight="%s" />' % (self.type,
+                                                               self.id,
+                                                               parent_id,
+                                                               self.weight)
+        except:
+            return '<%s>' % (self.type)
 
     def __str__(self):
         return self.__repr__()
@@ -95,7 +98,7 @@ class Node(Base):
 
     @classmethod
     def get_by_enabled(cls, session, enabled, start=None, limit=None):
-        return cls.search(session, filters=(cls.enabled == enabled,), 
+        return cls.search(session, filters=(cls.enabled == enabled,),
                           start=start, limit=limit)
 
     @classmethod

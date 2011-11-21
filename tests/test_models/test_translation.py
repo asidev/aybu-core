@@ -20,7 +20,7 @@ import ConfigParser
 import StringIO
 
 from aybu.core.models import Node, NodeInfo, Menu, MenuInfo, Page, PageInfo
-from aybu.core.models import Section, SectionInfo
+from aybu.core.models import Section, SectionInfo, CommonInfo
 from aybu.core.models import ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
 from aybu.core.models import Language
@@ -46,7 +46,7 @@ default_data = data/default_data.json
         config.readfp(file_)
         data = default_data_from_config(config)
 
-        populate(self.config, data)
+        populate(self.config, data, session=self.session)
 
     def test_create_translations(self):
 
@@ -96,6 +96,7 @@ default_data = data/default_data.json
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
+
         menu_info = self.session.query(MenuInfo).first()
         new_menu_info = menu_info.create_translation(language)
         self.assertNotEqual(menu_info, new_menu_info)
@@ -104,12 +105,14 @@ default_data = data/default_data.json
         self.assertEqual(new_menu_info.lang, language)
         self.assertEqual(menu_info.node, new_menu_info.node)
 
-    def test_page_info_create_translation(self):
+        info = self.session.query(SectionInfo).first()
+        new_info = info.create_translation(language)
+        self.assertNotEqual(info, new_info)
+        self.assertNotEqual(info.id, new_info.id)
+        self.assertNotEqual(info.lang, new_info.lang)
+        self.assertEqual(new_info.lang, language)
+        self.assertEqual(info.node, new_info.node)
 
-        self.populate()
-
-        language = self.session.query(Language).\
-                        filter(Language.lang==u'de').one()
         page_info = self.session.query(PageInfo).first()
         new_page_info = page_info.create_translation(language)
         self.assertNotEqual(page_info, new_page_info)
@@ -122,20 +125,6 @@ default_data = data/default_data.json
         self.assertEqual(page_info.files, new_page_info.files)
         self.assertEqual(page_info.images, new_page_info.images)
         self.assertEqual(page_info.links, new_page_info.links)
-
-    def test_section_info_create_translation(self):
-
-        self.populate()
-
-        language = self.session.query(Language).\
-                        filter(Language.lang==u'de').one()
-        info = self.session.query(SectionInfo).first()
-        new_info = info.create_translation(language)
-        self.assertNotEqual(info, new_info)
-        self.assertNotEqual(info.id, new_info.id)
-        self.assertNotEqual(info.lang, new_info.lang)
-        self.assertEqual(new_info.lang, language)
-        self.assertEqual(info.node, new_info.node)
 
     def test_external_link_info_create_translation(self):
 
@@ -206,31 +195,11 @@ default_data = data/default_data.json
                          "<SectionInfo [1] 'Azienda'>")
 
     def test_get_by_url(self):
-        menu = Menu(id=1, parent=None, weight=1)
-        self.session.add(menu)
-        page = Page(id=2, parent=menu, weight=1)
-        self.session.add(page)
-        it = Language(lang=u'it', country=u'it')
-        self.session.add(it)
-        en = Language(lang=u'en', country=u'gb')
-        self.session.add(en)
-
-        page_info_1 = PageInfo(id=1, label='Home', title='Pagina Principale',
-                             url_part='index', url='/it/index.html', node=page,
-                             lang=it)
-        self.session.add(page_info_1)
-
-        page_info_2 = PageInfo(id=2, label='Home', title='Main Page',
-                             url_part='index', url='/en/index.html', node=page,
-                             lang=en)
-        self.session.add(page_info_2)
-
-        self.session.flush()
-
-        self.assertEqual(page_info_1, PageInfo.get_by_url(self.session,
-                                                          '/it/index'))
-        self.assertEqual(page_info_2, PageInfo.get_by_url(self.session,
-                                                          '/en/index'))
+        self.populate()
+        url = u'/it/index'
+        self.assertEqual(PageInfo.get_by_url(self.session, url).url, url)
+        url = u'/en/index'
+        self.assertEqual(PageInfo.get_by_url(self.session, url).url, url)
 
     def test_get_homepage(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -250,23 +219,23 @@ default_data = data/default_data.json
         self.session.add(en)
 
         page_info_1 = PageInfo(id=1, label='Home', title='Pagina Principale',
-                               url_part='index', url='/it/index.html',
+                               url_part='index',
                                node=page_4, lang=it)
         self.session.add(page_info_1)
 
         page_info_2 = PageInfo(id=2, label='Home', title='Main Page',
-                               url_part='index', url='/en/index.html',
+                               url_part='index',
                                node=page_4, lang=en)
         self.session.add(page_info_2)
 
         page_info_3 = PageInfo(id=3, label='Home 2',
                                title='Pagina Principale 2',
-                               url_part='index', url='/it/index2.html',
+                               url_part='index',
                                node=page_1, lang=it)
         self.session.add(page_info_1)
 
         page_info_4 = PageInfo(id=4, label='Home 2', title='Main Page 2',
-                             url_part='index', url='/en/index2.html',
+                             url_part='index',
                              node=page_1, lang=en)
         self.session.add(page_info_2)
 
@@ -280,12 +249,13 @@ default_data = data/default_data.json
         self.assertEqual(PageInfo.get_homepage(self.session, it), page_info_3)
         self.assertEqual(PageInfo.get_homepage(self.session, en), page_info_4)
 
-    def test_url_part_change(self):
+    def test_common_info_after_flush(self):
 
         self.populate()
 
         section = self.session.query(Section).filter(Section.id == 4).one()
         section_info = section.translations[0]
+        self.assertIn(section_info, self.session)
         page_5 = self.session.query(Page).filter(Page.id == 5).one()
         page_6 = self.session.query(Page).filter(Page.id == 6).one()
         page = self.session.query(Page).filter(Page.id == 9).one()
@@ -300,18 +270,18 @@ default_data = data/default_data.json
         self.assertIn(page_6, section.children)
         self.assertEqual(page_5_info.lang.lang, 'it')
         self.assertEqual(page_6_info.lang.lang, 'it')
+        self.assertNotEqual(page_5_info.parent_url, u'')
+        self.assertNotEqual(page_6_info.parent_url, u'')
         section_info.url_part = section_info.url_part + '_test'
-        self.session.commit()
+        self.session.flush()
 
-        section_url = '{}/{}'.format(section_info.parent_url,
-                                     section_info.url_part)
-        self.assertEqual(section_url, page_5_info.parent_url)
+        self.assertEqual(section_info.url, page_5_info.parent_url)
 
         self.assertEqual(page_info.lang.lang, 'it')
         old_url = page_info.url
         page_10_info_old_url = page_10_info.url
         page_info.url_part = page_info.url_part + '_test'
-        self.session.commit()
+        self.session.flush()
         self.assertNotEqual(page_info.url, old_url)
 
         self.assertIn(page_10, page.children)

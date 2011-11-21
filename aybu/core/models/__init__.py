@@ -87,11 +87,13 @@ def _listens_for():
     sqlalchemy.event.listen(Session, 'before_flush',
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
+    # Add events needed to keep synchronized 'parent_url' columns.
     sqlalchemy.event.listen(SectionInfo.url_part, 'set',
-                            CommonInfo.on_url_part_update)
-    sqlalchemy.event.listen(PageInfo.url_part, 'set',
-                            CommonInfo.on_url_part_update)
-    sqlalchemy.event.listen(Session, 'before_commit', CommonInfo.before_commit)
+                            CommonInfo.on_attr_update)
+    sqlalchemy.event.listen(PageInfo.url_part, 'set', CommonInfo.on_attr_update)
+    sqlalchemy.event.listen(SectionInfo.node, 'set', CommonInfo.on_attr_update)
+    sqlalchemy.event.listen(PageInfo.node, 'set', CommonInfo.on_attr_update)
+    sqlalchemy.event.listen(Session, 'after_flush', CommonInfo.after_flush)
 
 
 def populate(config, data, config_section="app:main", session=None,
@@ -196,7 +198,7 @@ def add_default_data(session, data):
         """
 
         obj = cls(**params)
-        session.merge(obj)
+        obj = session.merge(obj)
 
 
 def default_data_from_config(config):

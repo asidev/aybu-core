@@ -43,8 +43,10 @@ class BaseTests(unittest.TestCase):
             raise Exception("Cannot find configuration file '%s'" % ini)
 
         self.engine = engine_from_config_parser(self.config)
-        self.session = create_session(self.engine)
+        self.Session = create_session(self.engine)
+        self.session = self.Session()
 
     def tearDown(self):
-        self.session.remove()
+        self.session.close()
+        self.Session.remove()
         Base.metadata.drop_all(self.engine)
