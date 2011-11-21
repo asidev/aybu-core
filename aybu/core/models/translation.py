@@ -137,22 +137,20 @@ class CommonInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'common_info'}
     title = Column(Unicode(64), default=None)
     url_part = Column(Unicode(64), default=None)
-    # Use 'partial_url' as 'parent_url'
-    partial_url = Column(Unicode(512), default=None)
+    parent_url = Column(Unicode(512), default=None)
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
 
     @classmethod
     def on_url_part_update(cls, obj, new, old, attr):
-        self._url_part_new = new
-        self._url_part_old = old
+        obj._url_part_new = new
+        obj._url_part_old = old
+        return new
 
     @classmethod
     def before_commit(cls, session):
 
-        return
-
-        for obj in session.new + session.dirty:
+        for obj in list(session.new) + list(session.dirty):
 
             if not isinstance(obj, CommonInfo) or \
                not hasattr(obj, '_url_part_new') or \
@@ -160,22 +158,26 @@ class CommonInfo(NodeInfo):
                obj._url_part_old == obj._url_part_new:
                 continue
 
-            old_partial_url = '{}/{}'.format(obj.partial_url, obj._url_part_old)
-            new_partial_url = '{}/{}'.format(obj.partial_url, obj._url_part_new)
+            log.debug('Handling %s object...', obj)
 
-            # Update children partial_url (self included).
-            criterion = cls.partial_url.ilike(old_partial_url + '%')
+            old_parent_url = '{}/{}'.format(obj.parent_url, obj._url_part_old)
+            new_parent_url = '{}/{}'.format(obj.parent_url, obj._url_part_new)
+
+            # Update children (self included).
+            criterion = cls.parent_url.ilike(old_parent_url + '%')
             for item in session.query(cls).filter(criterion).all():
 
-                item.partial_url = item.partial_url.replace(partial_url,
-                                                            new_partial_url, 1)
+                item.parent_url = item.parent_url.replace(old_parent_url,
+                                                          new_parent_url, 1)
+                log.debug('Changed from %s to %s in %s.',
+                          old_parent_url, new_parent_url, item)
 
     def create_translation(self, language):
         obj = super(CommonInfo, self).create_translation(language)
         obj.node = self.node
         obj.title = self.title
         obj.url_part = self.url_part
-        obj.partial_url = self.partial_url
+        obj.parent_url = self.parent_url
         obj.meta_description = self.meta_description
         obj.head_content = self.head_content
         return obj
@@ -184,7 +186,7 @@ class CommonInfo(NodeInfo):
         dict_ = super(CommonInfo, self).to_dict()
         dict_.update(dict(title=self.title,
                           url_part=self.url_part,
-                          partial_url=self.partial_url,
+                          parent_url=self.parent_url,
                           meta_description=self.meta_description,
                           head_content=self.head_content))
         return dict_
@@ -243,16 +245,16 @@ class PageInfo(CommonInfo):
     def url(self):
         # Use as is!!! Don't use str.format or '%s/%s' % (...)
         # Filtering will not work!
-        return self.partial_url + '/' + self.url_part
+        return self.parent_url + '/' + self.url_part
 
     @url.setter
     def url(self, url):
-        """ Split value into 'partial_url' and 'url_part' parts.
+        """ Split value into 'parent_url' and 'url_part' parts.
 
             For example, '/en/company/about_us.html' will be split into
-            '/en/company' (partial_url) and 'about_us' (url_part).
+            '/en/company' (parent_url) and 'about_us' (url_part).
         """
-        self.partial_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
+        self.parent_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
 
     def __repr__(self):
         try:

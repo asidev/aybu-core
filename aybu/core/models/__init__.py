@@ -87,6 +87,10 @@ def _listens_for():
     sqlalchemy.event.listen(Session, 'before_flush',
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
+    sqlalchemy.event.listen(SectionInfo.url_part, 'set',
+                            CommonInfo.on_url_part_update)
+    sqlalchemy.event.listen(PageInfo.url_part, 'set',
+                            CommonInfo.on_url_part_update)
     sqlalchemy.event.listen(Session, 'before_commit', CommonInfo.before_commit)
 
 

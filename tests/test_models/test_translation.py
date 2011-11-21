@@ -280,7 +280,7 @@ default_data = data/default_data.json
         self.assertEqual(PageInfo.get_homepage(self.session, it), page_info_3)
         self.assertEqual(PageInfo.get_homepage(self.session, en), page_info_4)
 
-    def test_on_update_url_part(self):
+    def test_url_part_change(self):
 
         self.populate()
 
@@ -301,9 +301,11 @@ default_data = data/default_data.json
         self.assertEqual(page_5_info.lang.lang, 'it')
         self.assertEqual(page_6_info.lang.lang, 'it')
         section_info.url_part = section_info.url_part + '_test'
-        section_url = '{}/{}'.format(section_info.partial_url,
+        self.session.commit()
+
+        section_url = '{}/{}'.format(section_info.parent_url,
                                      section_info.url_part)
-        self.assertEqual(section_url, page_5_info.partial_url)
+        self.assertEqual(section_url, page_5_info.parent_url)
 
         self.assertEqual(page_info.lang.lang, 'it')
         old_url = page_info.url
@@ -314,6 +316,6 @@ default_data = data/default_data.json
 
         self.assertIn(page_10, page.children)
         self.assertEqual(page_10_info.lang.lang, 'it')
-        page_url = '{}/{}'.format(page_info.partial_url,  page_info.url_part)
-        self.assertEqual(page_url, page_10_info.partial_url)
+        page_url = '{}/{}'.format(page_info.parent_url,  page_info.url_part)
+        self.assertEqual(page_url, page_10_info.parent_url)
         self.assertNotEqual(page_10_info_old_url, page_10_info.url)

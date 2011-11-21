@@ -56,14 +56,23 @@ class PageInfoTests(BaseTests):
     def test_url(self):
         info = PageInfo(label=u'Dummy', url=u'/en/company/board/ceo.html')
         self.session.add(info)
-        self.assertEqual(info.partial_url, u'/en/company/board')
+        self.assertEqual(info.parent_url, u'/en/company/board')
         self.assertEqual(info.url_part, u'ceo')
-        partial_url = u'partial_url rulez!'
+
+        parent_url = u'parent_url rulez!'
         url_part = u'url_part rulez!'
         info = PageInfo(label=u'Dummy 2',
                         url=u'/en/company/board/cto.html',
-                        partial_url = partial_url,
+                        parent_url = parent_url,
                         url_part = url_part)
         self.session.add(info)
-        self.assertEqual(info.partial_url, partial_url)
+        self.assertEqual(info.parent_url, u'/en/company/board')
+        self.assertEqual(info.url_part, u'cto')
+
+        info = PageInfo(label=u'Dummy 3',
+                        parent_url = parent_url,
+                        url_part = url_part,
+                        url=u'/en/company/board/cto.html')
+        self.session.add(info)
+        self.assertEqual(info.parent_url, parent_url)
         self.assertEqual(info.url_part, url_part)
