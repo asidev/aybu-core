@@ -87,10 +87,7 @@ def _listens_for():
     sqlalchemy.event.listen(Session, 'before_flush',
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
-    sqlalchemy.event.listen(SectionInfo.url_part, 'set',
-                            CommonInfo.on_url_part_update)
-    sqlalchemy.event.listen(PageInfo.url_part, 'set',
-                            CommonInfo.on_url_part_update)
+    sqlalchemy.event.listen(Session, 'before_commit', CommonInfo.before_commit)
 
 
 def populate(config, data, config_section="app:main", session=None,
@@ -148,7 +145,10 @@ def add_default_data(session, data):
 
             if not value is None:
 
-                property_ = mapper.get_property(key)
+                try:
+                    property_ = mapper.get_property(key)
+                except:
+                    continue
 
                 if not hasattr(property_, 'argument'):
                     continue

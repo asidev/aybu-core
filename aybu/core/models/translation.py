@@ -27,7 +27,10 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
+from sqlalchemy.orm.exc import (NoResultFound,
+                                MultipleResultsFound)
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.ext.hybrid import hybrid_property
 from aybu.core.models.base import Base
 from aybu.core.models.node import Page
 from aybu.core.htmlmodifier import (update_img_src,
@@ -140,36 +143,32 @@ class CommonInfo(NodeInfo):
     head_content = Column(UnicodeText(), default=u'')
 
     @classmethod
-    def on_url_part_update(cls, obj, new, old, initiator):
+    def on_url_part_update(cls, obj, new, old, attr):
+        self._url_part_new = new
+        self._url_part_old = old
 
-        if new == old:
-            return old
+    @classmethod
+    def before_commit(cls, session):
 
-        partial_url = '{}/{}'.format(obj.partial_url, old)
-        new_partial_url = '{}/{}'.format(obj.partial_url, new)
+        return
 
-        if isinstance(obj, PageInfo) and not obj.url is None:
-            obj.url = obj.url.replace(partial_url, new_partial_url, 1)
-            log.debug('Replaced: %s', obj.url)
+        for obj in session.new + session.dirty:
 
-        # Update children partial_url (self included).
-        q = object_session(obj).query(CommonInfo)
-        criterion = CommonInfo.partial_url.ilike(partial_url + '%')
-        for item in q.filter(criterion).all():
-            log.debug('Found: %s', item)
-            item.partial_url = item.partial_url.replace(partial_url,
-                                                        new_partial_url, 1)
-            log.debug('Replaced: %s', item.partial_url)
+            if not isinstance(obj, CommonInfo) or \
+               not hasattr(obj, '_url_part_new') or \
+               not hasattr(obj, '_url_part_old') or \
+               obj._url_part_old == obj._url_part_new:
+                continue
 
-            if isinstance(item, PageInfo):
-                item.url = item.url.replace(partial_url, new_partial_url, 1)
-                log.debug('Replaced: %s', item.url)
+            old_partial_url = '{}/{}'.format(obj.partial_url, obj._url_part_old)
+            new_partial_url = '{}/{}'.format(obj.partial_url, obj._url_part_new)
 
-        # FIXME: old_urls = _collect_old_urls(node)
-        # check_url(nodeinfo)
-        # _check_contents(old_urls)
+            # Update children partial_url (self included).
+            criterion = cls.partial_url.ilike(old_partial_url + '%')
+            for item in session.query(cls).filter(criterion).all():
 
-        return new
+                item.partial_url = item.partial_url.replace(partial_url,
+                                                            new_partial_url, 1)
 
     def create_translation(self, language):
         obj = super(CommonInfo, self).create_translation(language)
@@ -193,8 +192,6 @@ class CommonInfo(NodeInfo):
 
 class PageInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'page_info'}
-    # This field is very useful but denormalize the DB
-    url = Column(Unicode(512), default=None)
     node = relationship('Page', backref='translations')
     content = Column(UnicodeText(), default=u'')
 
@@ -242,6 +239,21 @@ class PageInfo(CommonInfo):
                          primaryjoin=NodeInfo.id == _links_table.c.inverse_id,
                          secondaryjoin=NodeInfo.id == _links_table.c.links_id)
 
+    @hybrid_property
+    def url(self):
+        # Use as is!!! Don't use str.format or '%s/%s' % (...)
+        # Filtering will not work!
+        return self.partial_url + '/' + self.url_part
+
+    @url.setter
+    def url(self, url):
+        """ Split value into 'partial_url' and 'url_part' parts.
+
+            For example, '/en/company/about_us.html' will be split into
+            '/en/company' (partial_url) and 'about_us' (url_part).
+        """
+        self.partial_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
+
     def __repr__(self):
         try:
             url = '' if self.url is None else self.url
@@ -263,6 +275,7 @@ class PageInfo(CommonInfo):
 
     @classmethod
     def get_by_url(cls, session, url):
+        log.debug(cls.url)
         criterion = cls.url.ilike(url)
         return session.query(cls).filter(criterion).one()
 
@@ -278,9 +291,7 @@ class PageInfo(CommonInfo):
         return BeautifulSoup(self.content, smartQuotesTo=None)
 
     def update_image_src(self, image):
-        self.content = unicode(
-            update_img_src(self.soup, image)
-        )
+        self.content = unicode(update_img_src(self.soup, image))
         return self.soup
 
     @classmethod

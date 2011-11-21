@@ -228,9 +228,9 @@ default_data = data/default_data.json
         self.session.flush()
 
         self.assertEqual(page_info_1, PageInfo.get_by_url(self.session,
-                                                          '/it/index.html'))
+                                                          '/it/index'))
         self.assertEqual(page_info_2, PageInfo.get_by_url(self.session,
-                                                          '/en/index.html'))
+                                                          '/en/index'))
 
     def test_get_homepage(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -317,24 +317,3 @@ default_data = data/default_data.json
         page_url = '{}/{}'.format(page_info.partial_url,  page_info.url_part)
         self.assertEqual(page_url, page_10_info.partial_url)
         self.assertNotEqual(page_10_info_old_url, page_10_info.url)
-
-
-
-class PageInfoTests(BaseTests):
-
-    def test_str_and_repr(self):
-        menu = Menu(id=1, parent=None, weight=1)
-        self.session.add(menu)
-        page = Page(id=2, parent=menu, weight=1)
-        self.session.add(page)
-        lang = Language(lang=u'it', country=u'it')
-        self.session.add(lang)
-
-        page_info = PageInfo(id=1, label='Home', title='Pagina Principale',
-                             url_part='index', url='/it/index.html', node=page,
-                             lang=lang)
-        self.session.add(page_info)
-        self.session.flush()
-
-        self.assertEqual(str(page_info),
-                         "<PageInfo [1] 'Home' /it/index.html>")
