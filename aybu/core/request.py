@@ -17,44 +17,35 @@ limitations under the License.
 """
 
 from aybu.core.models import (User, Language)
-from babel import Locale
 from logging import getLogger
 from pyramid.decorator import reify
-from pyramid.request import Request as BaseRequest
+from pyramid.request import Request as PyramidRequest
 from pyramid.i18n import get_localizer, TranslationStringFactory
 from pyramid.security import unauthenticated_userid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (scoped_session,
                             sessionmaker)
-import locale
 
-__all__ = []
-
+__all__ = ['Request', 'BaseRequest']
 log = getLogger(__name__)
 
 
-class Request(BaseRequest):
+class BaseRequest(PyramidRequest):
 
     db_engine = None
     DBScopedSession = None
 
     def __init__(self, *args, **kwargs):
 
-        super(Request, self).__init__(*args, **kwargs)
+        super(BaseRequest, self).__init__(*args, **kwargs)
 
         self.db_session = self.DBScopedSession()
-#        self.db_session.configure(bind=self.db_engine)
-
-        self.add_finished_callback(self.finished_callback)
-
-        # i18n support
-        # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
-        self.translation_factory = TranslationStringFactory('aybu-website')
-
-        self._locale_name = None
-        self._language = None
-        self._localizer = None
+        self.add_finished_callback(self._finished_callback)
         self._session = None
+
+    def _finished_callback(self, request):
+        self.db_session.close()
+        self.DBScopedSession.remove()
 
     @property
     def user(self):
@@ -66,7 +57,7 @@ class Request(BaseRequest):
         return self.registry.settings
 
     @classmethod
-    def set_db_engine(cls, engine):
+    def set_db_engine(cls, engine, **kwargs):
 
         if isinstance(engine, basestring):
             engine = create_engine(engine)
@@ -74,7 +65,22 @@ class Request(BaseRequest):
         cls.db_engine = engine
         # FIXME: add a uwsgi post-fork hook to recreate this session
         # per-process
-        cls.DBScopedSession = scoped_session(sessionmaker(engine))
+        cls.DBScopedSession = scoped_session(sessionmaker(engine, **kwargs))
+
+
+class Request(BaseRequest):
+
+    def __init__(self, *args, **kwargs):
+        super(Request, self).__init__(*args, **kwargs)
+
+        # i18n support
+        # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
+        # FIXME: take the 'egg' from ini!
+        self.translation_factory = TranslationStringFactory('aybu-website')
+
+        self._locale_name = None
+        self._language = None
+        self._localizer = None
 
     @property
     def locale_name(self):
@@ -89,6 +95,8 @@ class Request(BaseRequest):
 
     @locale_name.setter
     def locale_name(self, loc_name):
+        import locale
+
         # i18n support
         # http://docs.pylonsproject.org/projects/pyramid_cookbook/dev/i18n.html
         self._locale_name = loc_name
@@ -133,6 +141,8 @@ class Request(BaseRequest):
 
     @property
     def accepted_locales(self):
+        from babel import Locale
+
         for language in self.languages:
             sep = '-' if '-' in language else '_'
             try:
@@ -156,11 +166,6 @@ class Request(BaseRequest):
     def translate(self, string):
         """ This function will be exported to templates as '_' """
         return self.localizer.translate(self.translation_factory(string))
-
-    def finished_callback(self, request):
-        """ It clears the database session. """
-        self.db_session.close()
-        self.DBScopedSession.remove()
 
     def set_language_from_session_or_default(self):
         # USE language.setter!
