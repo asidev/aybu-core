@@ -110,7 +110,7 @@ class Node(Base):
     def delete(cls, session, id_):
         """ Delete (and all its translations) a node from the database.
         """
-        node = Node.get(self.session, id_)
+        node = Node.get(session, id_)
 
         if isinstance(node, Menu):
             raise ConstraintError('Menu deletion is not allowed.')
@@ -137,6 +137,37 @@ class Node(Base):
                 page_info.delete()
 
         node.delete()
+
+    @classmethod
+    def move(cls, session, id_, parent_id, previous_node_id):
+        """ Move a node from position to another in the Node tree.
+        """
+        node = Node.get(session, id_)
+        parent = Node.get(session, parent_id)
+
+        if isinstance(node, Menu):
+            raise ConstraintError('Menu cannot be moved.')
+
+        if not isinstance(parent, (Menu, Page, Section)):
+            msg = '%s cannot have children.' % parent.__class__.__name__
+            raise ConstraintError(msg)
+
+        if not previous_node_id is None:
+            previous = Node.get(session, previous_node_id)
+
+        q = session.query(Node).filter(Node.parent == parent)
+
+        if previous is None:
+            weight = 1
+            q = q.filter(Node.weight >= 0)
+
+        else:
+            weight = previous + 1
+            q = q.filter(Node.weight > previous.weight)
+
+        q.update({'weight': Node.weight + 1})
+        node.weight = weight
+        node.parent = parent
 
     @validates('parent')
     def validate_parent(self, key, value):
