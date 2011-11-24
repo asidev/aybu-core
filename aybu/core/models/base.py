@@ -35,6 +35,13 @@ log = logging.getLogger(__name__)
 class AybuBase(object):
 
     @classmethod
+    def on_attr_update(cls, obj, new, old, attr):
+        if not hasattr(obj, '_attrs_updates'):
+            obj._attrs_updates = {}
+        obj._attrs_updates[attr.key] = dict(old=old, new=new)
+        return new
+
+    @classmethod
     def count(cls, session, *filters):
 
         query = session.query(cls)

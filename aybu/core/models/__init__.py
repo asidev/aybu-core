@@ -88,15 +88,15 @@ def _listens_for():
                             PageInfo.before_flush)
     sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
     # Add events needed to keep synchronized 'parent_url' columns.
-    sqlalchemy.event.listen(SectionInfo.url_part, 'set',
-                            CommonInfo.on_attr_update)
-    sqlalchemy.event.listen(PageInfo.url_part, 'set', CommonInfo.on_attr_update)
-    sqlalchemy.event.listen(SectionInfo.node, 'set', CommonInfo.on_attr_update)
-    sqlalchemy.event.listen(PageInfo.node, 'set', CommonInfo.on_attr_update)
-    sqlalchemy.event.listen(Session, 'after_flush', CommonInfo.after_flush)
-    # FIXME:
-    # Add events needed to keep synchronized linked pages, in case of update.
-
+    # Add events needed to update 'parent_url' when Node.parent is changed.
+    sqlalchemy.event.listen(SectionInfo.parent_url, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(PageInfo.parent_url, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(SectionInfo.url_part, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(PageInfo.url_part, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(SectionInfo.node, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(PageInfo.node, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(Node.parent, 'set', Base.on_attr_update)
+    sqlalchemy.event.listen(Session, 'after_flush', Node.after_flush)
 
 def populate(config, data, config_section="app:main", session=None,
              drop_all=True):

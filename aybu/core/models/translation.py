@@ -148,52 +148,6 @@ class CommonInfo(NodeInfo):
         # Filtering will not work!
         return self.parent_url + '/' + self.url_part
 
-    @url.setter
-    def url(self, url):
-        """ Split value into 'parent_url' and 'url_part' parts.
-
-            For example, '/en/company/about_us.html' will be split into
-            '/en/company' (parent_url) and 'about_us' (url_part).
-        """
-        self.parent_url, self.url_part = url.rsplit('.', 1)[0].rsplit('/', 1)
-
-    @classmethod
-    def on_attr_update(cls, obj, new, old, attr):
-        if not hasattr(obj, '_attrs_updates'):
-            obj._attrs_updates = {}
-        obj._attrs_updates[attr.key] = dict(old=old, new=new)
-        return new
-
-    @classmethod
-    def after_flush(cls, session, *args):
-        """ Set 'parent_url' and update it when 'url_part' was changed.
-        """
-
-        log.debug('Executing after_flush on CommonInfo.')
-
-        for obj in session:
-
-            if not isinstance(obj, CommonInfo) or \
-               not hasattr(obj, '_attrs_updates'):
-                continue
-
-            log.debug('Handle obj: %s', obj)
-
-            if 'url_part' in obj._attrs_updates and \
-               obj._attrs_updates['url_part']['old'] != symbol('NO_VALUE') and \
-               obj._attrs_updates['url_part']['old'] != symbol('NEVER_SET') and \
-               obj.node.children:
-
-                old = '{}/{}'.format(obj.parent_url,
-                                     obj._attrs_updates['url_part']['old'])
-                new = '{}/{}'.format(obj.parent_url,
-                                     obj._attrs_updates['url_part']['new'])
-
-                # Update children.
-                criterion = cls.parent_url.ilike(old + '%')
-                for item in session.query(cls).filter(criterion).all():
-                    item.parent_url = item.parent_url.replace(old, new, 1)
-
     def create_translation(self, language):
         obj = super(CommonInfo, self).create_translation(language)
         obj.node = self.node
