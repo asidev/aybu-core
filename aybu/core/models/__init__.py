@@ -94,6 +94,8 @@ def _listens_for():
     sqlalchemy.event.listen(SectionInfo.node, 'set', CommonInfo.on_attr_update)
     sqlalchemy.event.listen(PageInfo.node, 'set', CommonInfo.on_attr_update)
     sqlalchemy.event.listen(Session, 'after_flush', CommonInfo.after_flush)
+    # FIXME:
+    # Add events needed to keep synchronized linked pages, in case of update.
 
 
 def populate(config, data, config_section="app:main", session=None,

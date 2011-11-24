@@ -17,7 +17,7 @@ limitations under the License.
 """
 
 from aybu.core.utils.modifiers import boolify
-from aybu.core.exc import ValidationError
+from aybu.core.exc import ValidationError, ConstraintError
 from aybu.core.models.base import Base
 from aybu.core.models.view import View
 from aybu.core.models.setting import Setting
@@ -105,6 +105,38 @@ class Node(Base):
     def get_max_weight(cls, session, parent):
         return session.query(func.max(cls.weight))\
                       .filter(cls.parent == parent).scalar()
+
+    @classmethod
+    def delete(cls, session, id_):
+        """ Delete (and all its translations) a node from the database.
+        """
+        node = Node.get(self.session, id_)
+
+        if isinstance(node, Menu):
+            raise ConstraintError('Menu deletion is not allowed.')
+
+        if isinstance(node, Page) and \
+           Page.count(self.session, (Page.enabled == True,)) < 2:
+            raise ConstraintError('Last Page cannot be deleted.')
+
+        if node.children:
+            # This constraint simplify node deletion:
+            # update of children (weight, parent and urls) is not needed.
+            raise ConstraintError('Cannot delete a Node with children.')
+
+        if isinstance(node, Page):
+            # FIXME: add constraint!
+            # Cannot delete a PageInfo when it is referred by other PageInfo.
+            for page_info in node.translations:
+
+                if PageInfo.count(session,
+                                  (PageInfo.links.contains(page_info),)):
+                    raise ConstraintError('Cannot delete a referred Page.')
+
+                # FIXME: test Pufferfish to verify files deletion.
+                page_info.delete()
+
+        node.delete()
 
     @validates('parent')
     def validate_parent(self, key, value):
