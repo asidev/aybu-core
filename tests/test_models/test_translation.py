@@ -112,6 +112,7 @@ default_data = data/default_data.json
         self.assertNotEqual(info.lang, new_info.lang)
         self.assertEqual(new_info.lang, language)
         self.assertEqual(info.node, new_info.node)
+        self.assertNotEqual(info.parent_url, new_info.parent_url)
 
         page_info = self.session.query(PageInfo).first()
         new_page_info = page_info.create_translation(language)
@@ -120,7 +121,8 @@ default_data = data/default_data.json
         self.assertNotEqual(page_info.lang, new_page_info.lang)
         self.assertEqual(new_page_info.lang, language)
         self.assertEqual(page_info.node, new_page_info.node)
-        self.assertEqual(page_info.url, new_page_info.url)
+        self.assertNotEqual(page_info.parent_url, new_page_info.parent_url)
+        self.assertNotEqual(page_info.url, new_page_info.url)
         self.assertEqual(page_info.content, new_page_info.content)
         self.assertEqual(page_info.files, new_page_info.files)
         self.assertEqual(page_info.images, new_page_info.images)

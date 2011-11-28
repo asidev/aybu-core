@@ -50,7 +50,8 @@ def create_page(session, copy_from=None):
         session.add(page)
 
     pageinfo = PageInfo(node=page, lang=lang, label=unicode(page.weight))
-    pageinfo.url = '/%s/%s.html' % (lang.lang, pageinfo.label)
+    pageinfo.parent_url = '/%s' % lang.lang
+    pageinfo.url_part = pageinfo.label
     session.add(pageinfo)
     return pageinfo
 
@@ -280,5 +281,3 @@ class ImageTests(FileTestsBase):
         d1 = image.to_dict(paths=True)
         self.assertIn('path', d1)
         self.assertIn('small_path', d1)
-
-

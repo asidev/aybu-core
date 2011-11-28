@@ -38,6 +38,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import cast
+from sqlalchemy.util.langhelpers import symbol
 import warnings
 
 
@@ -173,6 +174,9 @@ class Node(Base):
     def after_flush(cls, session, *args):
         """ Set 'parent_url' and update it when 'url_part' was changed.
         """
+
+        # This import is needed to avoid circular imports.
+        from translation import CommonInfo
 
         log.debug('Executing after_flush...')
         nones = (symbol('NO_VALUE'), symbol('NEVER_SET'), None)

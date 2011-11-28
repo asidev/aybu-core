@@ -45,8 +45,8 @@ class PageInfoTests(BaseTests):
         self.session.add(lang)
 
         page_info = PageInfo(id=1, label='Home', title='Pagina Principale',
-                             url_part='index', url='/it/index.html', node=page,
-                             lang=lang)
+                             parent_url='/it', url_part='index',
+                             node=page, lang=lang)
         self.session.add(page_info)
         self.session.flush()
 
@@ -54,25 +54,7 @@ class PageInfoTests(BaseTests):
                          "<PageInfo [1] 'Home' /it/index>")
 
     def test_url(self):
-        info = PageInfo(label=u'Dummy', url=u'/en/company/board/ceo.html')
+        info = PageInfo(label=u'Dummy', parent_url=u'/en/company/board',
+                        url_part=u'ceo')
         self.session.add(info)
-        self.assertEqual(info.parent_url, u'/en/company/board')
-        self.assertEqual(info.url_part, u'ceo')
-
-        parent_url = u'parent_url rulez!'
-        url_part = u'url_part rulez!'
-        info = PageInfo(label=u'Dummy 2',
-                        url=u'/en/company/board/cto.html',
-                        parent_url = parent_url,
-                        url_part = url_part)
-        self.session.add(info)
-        self.assertEqual(info.parent_url, u'/en/company/board')
-        self.assertEqual(info.url_part, u'cto')
-
-        info = PageInfo(label=u'Dummy 3',
-                        parent_url = parent_url,
-                        url_part = url_part,
-                        url=u'/en/company/board/cto.html')
-        self.session.add(info)
-        self.assertEqual(info.parent_url, parent_url)
-        self.assertEqual(info.url_part, url_part)
+        self.assertEqual(info.url, u'/en/company/board/ceo')

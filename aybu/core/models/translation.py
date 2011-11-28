@@ -31,7 +31,6 @@ from sqlalchemy.orm.exc import (NoResultFound,
                                 MultipleResultsFound)
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.util.langhelpers import symbol
 from aybu.core.models.base import Base
 from aybu.core.models.node import Menu, Section, Page
 from aybu.core.htmlmodifier import (update_img_src,
@@ -153,6 +152,7 @@ class CommonInfo(NodeInfo):
         obj.node = self.node
         obj.title = self.title + '[{}]'.format(language.lang)
         obj.url_part = self.url_part + '[{}]'.format(language.lang)
+        obj.parent_url = self.parent_url
         obj.meta_description = self.meta_description
         obj.head_content = self.head_content
         return obj
@@ -227,7 +227,6 @@ class PageInfo(CommonInfo):
 
     def create_translation(self, language):
         obj = super(PageInfo, self).create_translation(language)
-        obj.url = self.url
         obj.content = self.content
         obj.node = self.node
         obj.files.extend([file_ for file_ in self.files])
