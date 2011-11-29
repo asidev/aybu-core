@@ -144,7 +144,7 @@ class CommonInfo(NodeInfo):
     @hybrid_property
     def url(self):
         # Use as is!!! Don't use str.format or '%s/%s' % (...)
-        # Filtering will not work!
+        # Queries will not work!
         return self.parent_url + '/' + self.url_part
 
     def create_translation(self, language):
@@ -257,13 +257,13 @@ class PageInfo(CommonInfo):
     @classmethod
     def before_flush(cls, session, flush_context, instances):
         """ When updating content, parse and update relations """
-        log.debug("Executing before_flush on PageInfo")
+        #log.debug("Executing before_flush on PageInfo")
         pages = [obj for obj in session.new if type(obj) == cls and obj.content]
         pages.extend([obj for obj in session.dirty if type(obj) == cls and
                       obj.content])
-        log.debug("Instances: %s", pages)
+        #log.debug("Instances: %s", pages)
         for instance in pages:
-            log.debug("instance.content: %s", instance.content)
+            #log.debug("instance.content: %s", instance.content)
             soup = BeautifulSoup(instance.content, smartQuotesTo=None)
             soup = associate_images(soup, instance)
             soup = associate_files(soup, instance)
@@ -275,7 +275,6 @@ class PageInfo(CommonInfo):
         dict_ = super(PageInfo, self).to_dict()
         dict_.update(dict(page_type_id=self.node.view.id))
         return dict_
-
 
 class SectionInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'section_info'}

@@ -16,17 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import ConfigParser
-import StringIO
-
 from aybu.core.exc import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
 from aybu.core.models import Language
 from aybu.core.models import MenuInfo, PageInfo, SectionInfo, ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
-from aybu.core.models import default_data_from_config
-from aybu.core.models import populate
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
 from logging import getLogger
@@ -38,16 +33,8 @@ log = getLogger(__name__)
 class NodeTests(BaseTests):
 
     def test_property_type(self):
-        file_ = StringIO.StringIO(
-"""
-[app:aybu-website]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
 
-        populate(self.config, data)
+        self.populate()
 
         menu = self.session.query(Menu).\
                     order_by(func.random()).first()
@@ -195,16 +182,7 @@ default_data = data/default_data.json
 
     def test_get_translation(self):
 
-        file_ = StringIO.StringIO(
-"""
-[app:aybu-website]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
-
-        populate(self.config, data)
+        self.populate()
 
         it = self.session.query(Language).filter(Language.lang == 'it').one()
         en = self.session.query(Language).filter(Language.lang == 'en').one()
@@ -220,6 +198,41 @@ default_data = data/default_data.json
         es_translation = home.get_translation(es)
         self.assertEqual(es_translation,
                          PageInfo.get_homepage(self.session, es))
+
+    def test_after_flush(self):
+
+        en = Language(id=2, lang="en", country="GB", enabled=True)
+        menu = Menu(id=1, weight=1)
+        menu_info = MenuInfo(id=29, label=u"Main Menu", lang=en, node=menu)
+        index = Page(id=2, home=True, parent=menu, weight=1)
+        index_info = PageInfo(id=2, label="Home", title="Home Page",
+                              url_part="index", content="<h2>Home Page</h2>",
+                              lang=en, node=index)
+        company = Page(id=3, home=True, parent=menu, weight=2)
+        company_info = PageInfo(id=3, label="Company", title="Company",
+                                url_part="company", content="<h2>Company</h2>",
+                                lang=en, node=company)
+        team = Page(id=4, home=True, parent=company, weight=3)
+        team_info = PageInfo(id=4, label="Team", title="Team",
+                              url_part="team", content="<h2>Team</h2>",
+                              lang=en, node=team)
+        self.session.add(menu)
+
+        self.assertEqual(index_info.parent_url, None)
+        self.assertEqual(company_info.parent_url, None)
+        self.assertEqual(team_info.parent_url, None)
+        self.session.flush()
+        self.assertEqual(index_info.parent_url, u'/en')
+        self.assertEqual(index_info.url, u'/en/index')
+        self.assertEqual(company_info.parent_url, u'/en')
+        self.assertEqual(company_info.url, u'/en/company')
+        self.assertEqual(team_info.parent_url, company_info.url)
+        self.assertEqual(team_info.url, company_info.url + u'/team')
+
+        team.parent = menu
+        self.session.flush()
+        self.assertEqual(team_info.parent_url, u'/en')
+        self.assertEqual(team_info.url, u'/en/team')
 
 
 class PageTests(BaseTests):

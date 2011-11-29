@@ -62,8 +62,8 @@ def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
         pginfo_attr = attr_name
     else:
         pginfo_attr = "{}s".format(type_.__name__.lower())
-    log.debug("Updating %s.%s associations for %s",
-              pginfo_cls.__name__, pginfo_attr, pginfo)
+    #log.debug("Updating %s.%s associations for %s",
+    #          pginfo_cls.__name__, pginfo_attr, pginfo)
     old_associations = list(getattr(pginfo, pginfo_attr))
     session = object_session(pginfo)
 
@@ -102,14 +102,14 @@ def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
                       static_obj, pginfo, pginfo_attr)
             getattr(pginfo, pginfo_attr).append(static_obj)
 
-    log.debug("%s %s has obj.%s = %s",
-              pginfo_cls.__name__, pginfo.id, pginfo_attr,
-              [s.id for s in getattr(pginfo, pginfo_attr)])
+    #log.debug("%s %s has obj.%s = %s",
+    #          pginfo_cls.__name__, pginfo.id, pginfo_attr,
+    #          [s.id for s in getattr(pginfo, pginfo_attr)])
 
-    log.debug("%ss %s are no more associated with obj %s",
-              type_.__name__,
-              [s.id for s in old_associations if s not in getattr(pginfo, pginfo_attr)],
-              pginfo.id)
+    #log.debug("%ss %s are no more associated with obj %s",
+    #          type_.__name__,
+    #          [s.id for s in old_associations if s not in getattr(pginfo, pginfo_attr)],
+    #          pginfo.id)
     return soup
 
 

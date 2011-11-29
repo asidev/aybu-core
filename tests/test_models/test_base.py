@@ -17,8 +17,11 @@ limitations under the License.
 """
 
 import ConfigParser
+import StringIO
 import os
 from aybu.core.models import engine_from_config_parser, create_session
+from aybu.core.models import default_data_from_config
+from aybu.core.models import populate, init_session_events
 from aybu.core.models.base import Base
 from logging import getLogger
 import unittest
@@ -45,8 +48,21 @@ class BaseTests(unittest.TestCase):
         self.engine = engine_from_config_parser(self.config)
         self.Session = create_session(self.engine)
         self.session = self.Session()
+        init_session_events(self.session)
 
     def tearDown(self):
         self.session.close()
         self.Session.remove()
         Base.metadata.drop_all(self.engine)
+
+    def populate(self):
+        file_ = StringIO.StringIO(
+"""
+[app:aybu-website]
+default_data = data/default_data.json
+""")
+        config = ConfigParser.ConfigParser()
+        config.readfp(file_)
+        data = default_data_from_config(config)
+
+        populate(self.config, data, session=self.session)
