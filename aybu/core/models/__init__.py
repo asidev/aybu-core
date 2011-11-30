@@ -90,112 +90,112 @@ def init_attrs_events(mapper, class_):
         sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
 
     elif class_ is SectionInfo or class_ is PageInfo:
-        sqlalchemy.event.listen(class_.parent_url,
-                                'set',
-                                Base.on_attr_update)
         sqlalchemy.event.listen(class_.url_part,
                                 'set',
                                 Base.on_attr_update)
-        sqlalchemy.event.listen(class_.node_id,
+        sqlalchemy.event.listen(class_.node,
                                 'set',
                                 Base.on_attr_update)
+        if class_ is PageInfo:
+            sqlalchemy.event.listen(class_.content,
+                                    'set',
+                                    Base.on_attr_update)
 
     elif class_ is Section or class_ is Page:
         sqlalchemy.event.listen(class_.parent_id, 'set', Base.on_attr_update)
 
 
 def init_session_events(session=Session):
-    sqlalchemy.event.listen(session, 'before_flush', PageInfo.before_flush)
-    sqlalchemy.event.listen(session, 'after_flush', after_flush)
+    sqlalchemy.event.listen(session, 'before_flush', before_flush)
 
 
-def after_flush(session, *args):
+def before_flush(session, *args):
     """ Set 'parent_url' and update it when 'url_part' was changed.
     """
 
     nones = (symbol('NO_VALUE'), symbol('NEVER_SET'), None)
 
-    # Handle 'parent_id' changes in Page and Section objects:
-    # replace olds CommonInfo.parent_url with new ones.
-    for obj in [obj
-                for obj in session
-                if isinstance(obj, (Page, Section)) and \
-                   hasattr(obj, '_attrs_updates') and \
-                   'parent_id' in obj._attrs_updates]:
+    # NOTE: cannot know objects order in session.new and session.dirty,
+    #       for that reason multiple 'for' cicles are needed.
 
-        for t in obj.translations:
+    # Handle 'CommonInfo.parent_url' for 'new' objects.
+    for obj in session.new:
 
-            if isinstance(obj.parent, (Section, Page)):
-                t.parent_url = obj.parent.get_translation(t.lang).url
-            else:
-                t.parent_url = '/{}'.format(t.lang.lang)
+        if not isinstance(obj, CommonInfo):
+            continue
 
+        if obj.node is None and obj.node_id is None:
+            msg = '{} object must belong to a Node.'
+            msg = msg.format(obj.__class__.__name__)
+            raise ValueError(msg)
+
+        elif obj.node is None:
+            obj.node = Node.get(session, obj.node_id)
+
+        # Call the hybrid_property 'obj.parent_url' to set _parent_url.
+        assert(obj.parent_url not in (None, u'', ''))
+
+    # First phase.
     # Handle 'node' changes in CommonInfo objects:
     # replace olds CommonInfo.parent_url with new ones.
-    for obj in [obj
-                for obj in session
-                if isinstance(obj, CommonInfo) and \
-                   hasattr(obj, '_attrs_updates') and \
-                   'node_id' in obj._attrs_updates]:
+    for obj in session.dirty:
 
-        node = Node.get(session, obj._attrs_updates['node_id']['new'])
-
-        if isinstance(obj.node.parent, (Section, Page)):
-            obj.parent_url = obj.node.parent.get_translation(obj.lang).url
-        else:
-            obj.parent_url = '/{}'.format(obj.lang.lang)
-
-    # Handle 'parent_url' changes in CommonInfo objects:
-    # replace olds CommonInfo.parent_url with new ones.
-    for obj in [obj
-                for obj in session
-                if isinstance(obj, CommonInfo) and \
-                   hasattr(obj, '_attrs_updates') and \
-                   'parent_url' in obj._attrs_updates]:
-
-        old = obj._attrs_updates['parent_url']['old']
-        new = obj._attrs_updates['parent_url']['new']
-
-        if old in nones or not obj.node.children:
+        if not isinstance(obj, CommonInfo) or \
+           not hasattr(obj, '_attrs_updates') or \
+           'node' not in obj._attrs_updates:
             continue
 
-        # Update children in the URL tree.
-        criterion = CommonInfo.parent_url.ilike(old + '%')
-        for item in session.query(CommonInfo).filter(criterion).all():
-            # FIXME!!!
-            # Handle 'url' changes in PageInfo objects:
-            # replace links in PageInfo objects that referer them.
-            if isinstance(item, PageInfo): pass
+        # Call the hybrid_property 'parent_url' to set refresh _parent_url
+        # if it is needed.
+        assert(obj.parent_url not in (None, u'', ''))
 
-            item.parent_url = item.parent_url.replace(old, new, 1)
+    # Second phase: handle Page|Section objects changes.
+    # Handle 'parent_id' changes in Page and Section objects:
+    # replace olds CommonInfo.parent_url with new ones.
+    for obj in session.dirty:
 
+        if not isinstance(obj, (Page, Section)) or \
+           not hasattr(obj, '_attrs_updates') or \
+           'parent_id' not in obj._attrs_updates:
+            continue
+
+        for translation in obj.translations:
+            # Call the hybrid_property 'parent_url' to set refresh _parent_url
+            # if it is needed.
+            assert(translation.parent_url not in (None, u'', ''))
+
+    # Third phase: handle CommonInfo.url_part changes.
     # Handle 'url_part' changes in CommonInfo objects:
     # replace olds CommonInfo.parent_url with new ones.
-    for obj in [obj
-                for obj in session
-                if isinstance(obj, CommonInfo) and \
-                   hasattr(obj, '_attrs_updates') and \
-                   'url_part' in obj._attrs_updates]:
+    for obj in session.dirty:
 
-        old = obj._attrs_updates['url_part']['old']
-
-        if old not in nones or not obj.node.children:
+        if not isinstance(obj, CommonInfo) or \
+           not hasattr(obj, '_attrs_updates') or \
+           'url_part' not in obj._attrs_updates:
             continue
 
-        old_url = '{}/{}'.format(obj.parent_url, old)
+        old = obj._attrs_updates['url_part']['old']
+        new = obj._attrs_updates['url_part']['new']
+
+        if old not in nones:
+            continue
+
+        old_url = '{}/{}%'.format(obj.parent_url, old)
         new_url = '{}/{}'.format(obj.parent_url, new)
 
-        # Update children in the URL tree.
-        criterion = CommonInfo.parent_url.ilike(old_url + '%')
-        for item in session.query(CommonInfo).filter(criterion).all():
-            # FIXME!!!
-            # Handle 'url' changes in PageInfo objects:
-            # replace links in PageInfo objects that referer them.
-            if isinstance(item, PageInfo): pass
+        criterion = PageInfo.links.any(PageInfo.id == obj.id)
+        q = session.query(PageInfo).filter(criterion)
+        for item in q.all():
+            soup = item.soup
+            for a in soup.findAll('a'):
+                if a['href'].startswith(old_url):
+                    a['href'] = a['href'].replace(old_url, new_url, 1)
+            obj._content = unicode(soup)
 
-            item.parent_url = item.parent_url.replace(old_url,
-                                                      new_url,
-                                                      1)
+        # Update children in the URL tree.
+        criterion = CommonInfo.parent_url.ilike(old_url)
+        for item in session.query(CommonInfo).filter(criterion).all():
+            assert(item.parent_url == new_url)
 
 
 def populate(config, data, config_section="app:main", session=None,

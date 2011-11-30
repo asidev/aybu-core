@@ -36,7 +36,7 @@ log = getLogger(__name__)
 
 class PageInfoTests(BaseTests):
 
-    def test_str_and_repr(self):
+    def create_pageinfo(self):
         menu = Menu(id=1, parent=None, weight=1)
         self.session.add(menu)
         page = Page(id=2, parent=menu, weight=1)
@@ -49,12 +49,8 @@ class PageInfoTests(BaseTests):
                              node=page, lang=lang)
         self.session.add(page_info)
         self.session.flush()
+        return page_info
 
-        self.assertEqual(str(page_info),
+    def test_str_and_repr(self):
+        self.assertEqual(str(self.create_pageinfo()),
                          "<PageInfo [1] 'Home' /it/index>")
-
-    def test_url(self):
-        info = PageInfo(label=u'Dummy', parent_url=u'/en/company/board',
-                        url_part=u'ceo')
-        self.session.add(info)
-        self.assertEqual(info.url, u'/en/company/board/ceo')

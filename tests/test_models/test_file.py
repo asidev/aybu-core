@@ -113,6 +113,8 @@ class FileTests(FileTestsBase):
         page.files.append(newfile)
         page.images.append(newimage)
         self.session.commit()
+        self.assertIn(page, newfile.pages)
+        self.assertIn(page, newimage.pages)
 
         with self.assertRaises(ConstraintError):
             newfile.delete()

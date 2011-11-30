@@ -180,6 +180,9 @@ class Node(Base):
 
             raise ValidationError('%s is not allowed.' % value)
 
+        if not value is None:
+            self.parent_id = value.id
+
         return value
 
     @validates('children')

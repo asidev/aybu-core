@@ -39,6 +39,8 @@ from aybu.core.htmlmodifier import (update_img_src,
                                     associate_images,
                                     remove_target_attributes)
 from BeautifulSoup import BeautifulSoup
+from sqlalchemy.orm import validates
+from sqlalchemy.orm.session import object_session
 
 __all__ = []
 
@@ -72,6 +74,12 @@ class NodeInfo(Base):
                                        self.label.encode('utf8'))
         except:
             return super(NodeInfo, self).__repr__()
+
+    @validates('node')
+    def validate_node(self, key, value):
+        if not value is None:
+            self.node_id = value.id
+        return value
 
     @classmethod
     def create_translations(cls, session, src_lang_id, dst_language):
@@ -137,14 +145,77 @@ class CommonInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'common_info'}
     title = Column(Unicode(64), default=u'')
     url_part = Column(Unicode(64), default=u'')
-    parent_url = Column(Unicode(512), default=u'')
+    _parent_url = Column(Unicode(512), default=u'', name='parent_url')
     meta_description = Column(UnicodeText(), default=u'')
     head_content = Column(UnicodeText(), default=u'')
 
+    @property
+    def current_parent_url(self):
+        # Calculate the right 'self.parent_url'.
+        if isinstance(self.node.parent, (Section, Page)):
+            # This CommonInfo belong to a Section|Page under Section|Page.
+            # In this case the parent has 'CommonInfo.url'.
+            return self.node.parent.get_translation(self.lang).url
+
+        # This CommonInfo belong to Section|Page under a Menu.
+        # 'parent_url' format must be: '/en', '/it', ...
+        return '/{}'.format(self.lang.lang)
+
+    @hybrid_property
+    def parent_url(self):
+
+        parent_url = self.current_parent_url
+
+        if self._parent_url != parent_url:
+            old_parent_url = self._parent_url
+            self._parent_url = parent_url
+            # Update children parent_urls before change _parent_url!
+            session = object_session(self)
+            criterion = CommonInfo.parent_url.ilike(str(old_parent_url) + '%')
+            q = session.query(CommonInfo).filter(criterion)
+            for item in q.all():
+                old_item_parent_url = item._parent_url
+                # Calculate a new parent_url if it is needed.
+                new_item_parent_url = item.parent_url
+                # Handle 'url' changes in PageInfo objects:
+                # replace links in PageInfo objects that referer them.
+                if isinstance(item, PageInfo):
+                    log.debug('Handle child: %s', item)
+                    criterion = PageInfo.links.any(PageInfo.id == item.id)
+                    q = session.query(PageInfo).filter(criterion)
+                    for obj in q.all():
+                        log.debug('Handle links from obj: %s', obj)
+                        log.debug('Obj content: %s', obj.content)
+                        soup = obj.soup
+                        for a in soup.findAll('a'):
+                            if not a['href'].startswith(old_item_parent_url):
+                                continue
+                            old_href = a['href']
+                            a['href'] = item.url
+                            log.debug('Replaced %s with %s',
+                                      old_href, a['href'])
+
+                        # Use _content to avoid calling of hybrid_property.
+                        obj._content = unicode(soup)
+                        log.debug('New obj content: %s', obj.content)
+
+        return self._parent_url
+
+    @parent_url.setter
+    def parent_url(self, value):
+        # Raise an exception if 'obj.parent_url' != 'parent_url'.
+        if self.parent_url != value:
+            msg = "Wrong '{}.parent_url': '{}'. The right value is '{}'."
+            msg = msg.format(self.__class__.__name__, value, self._parent_url)
+            raise ValueError(msg)
+
+    @parent_url.expression
+    def parent_url(self):
+        return self._parent_url
+
     @hybrid_property
     def url(self):
-        # Use as is!!! Don't use str.format or '%s/%s' % (...)
-        # Queries will not work!
+        # Use self.parent_url instead of self._parent_url!
         return self.parent_url + '/' + self.url_part
 
     def create_translation(self, language):
@@ -152,7 +223,6 @@ class CommonInfo(NodeInfo):
         obj.node = self.node
         obj.title = self.title + '[{}]'.format(language.lang)
         obj.url_part = self.url_part + '[{}]'.format(language.lang)
-        obj.parent_url = self.parent_url
         obj.meta_description = self.meta_description
         obj.head_content = self.head_content
         return obj
@@ -170,7 +240,7 @@ class CommonInfo(NodeInfo):
 class PageInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'page_info'}
     node = relationship('Page', backref='translations')
-    content = Column(UnicodeText(), default=u'')
+    _content = Column(UnicodeText(), default=u'', name='content')
 
     _files_table = Table('node_infos_files__files',
                          Base.metadata,
@@ -225,6 +295,19 @@ class PageInfo(CommonInfo):
         except:
             return super(PageInfo, self).__repr__()
 
+    @hybrid_property
+    def content(self):
+        return self._content
+
+    @content.setter
+    def content(self, value):
+        soup = BeautifulSoup(value, smartQuotesTo=None)
+        soup = associate_images(soup, self)
+        soup = associate_files(soup, self)
+        soup = associate_pages(soup, self)
+        soup = remove_target_attributes(soup)
+        self._content = unicode(soup)
+
     def create_translation(self, language):
         obj = super(PageInfo, self).create_translation(language)
         obj.content = self.content
@@ -253,23 +336,6 @@ class PageInfo(CommonInfo):
     def update_image_src(self, image):
         self.content = unicode(update_img_src(self.soup, image))
         return self.soup
-
-    @classmethod
-    def before_flush(cls, session, flush_context, instances):
-        """ When updating content, parse and update relations """
-        #log.debug("Executing before_flush on PageInfo")
-        pages = [obj for obj in session.new if type(obj) == cls and obj.content]
-        pages.extend([obj for obj in session.dirty if type(obj) == cls and
-                      obj.content])
-        #log.debug("Instances: %s", pages)
-        for instance in pages:
-            #log.debug("instance.content: %s", instance.content)
-            soup = BeautifulSoup(instance.content, smartQuotesTo=None)
-            soup = associate_images(soup, instance)
-            soup = associate_files(soup, instance)
-            soup = associate_pages(soup, instance)
-            soup = remove_target_attributes(soup)
-            instance.content = unicode(soup)
 
     def to_dict(self):
         dict_ = super(PageInfo, self).to_dict()

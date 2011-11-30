@@ -33,9 +33,6 @@ class AssociationTests(FileTestsBase):
         super(AssociationTests, self).setUp()
         self.page = create_page(self.session)
         self.session.flush()
-        # reinitialize session event
-        sqlalchemy.event.listen(sqlalchemy.orm.Session, 'before_flush',
-                                PageInfo.before_flush)
 
     def test_associate_files(self):
 

@@ -36,9 +36,15 @@ class AybuBase(object):
 
     @classmethod
     def on_attr_update(cls, obj, new, old, attr):
+
+        if old == new:
+            return old
+
         if not hasattr(obj, '_attrs_updates'):
             obj._attrs_updates = {}
+
         obj._attrs_updates[attr.key] = dict(old=old, new=new)
+
         return new
 
     @classmethod

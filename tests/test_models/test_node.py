@@ -19,7 +19,7 @@ limitations under the License.
 from aybu.core.exc import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
-from aybu.core.models import Language
+from aybu.core.models import Language, Banner, Image, File
 from aybu.core.models import MenuInfo, PageInfo, SectionInfo, ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
 from sqlalchemy.orm.exc import MultipleResultsFound
@@ -31,6 +31,12 @@ log = getLogger(__name__)
 
 
 class NodeTests(BaseTests):
+
+    def setUp(self):
+        super(NodeTests, self).setUp()
+        Banner.initialize(base='/static', private='/static/private')
+        File.initialize(base='/static', private='/static/private')
+        Image.initialize(base='/static', private='/static/private')
 
     def test_property_type(self):
 
@@ -199,7 +205,7 @@ class NodeTests(BaseTests):
         self.assertEqual(es_translation,
                          PageInfo.get_homepage(self.session, es))
 
-    def test_after_flush(self):
+    def test_before_flush(self):
 
         en = Language(id=2, lang="en", country="GB", enabled=True)
         menu = Menu(id=1, weight=1)
@@ -216,23 +222,95 @@ class NodeTests(BaseTests):
         team_info = PageInfo(id=4, label="Team", title="Team",
                               url_part="team", content="<h2>Team</h2>",
                               lang=en, node=team)
+        dummy = Page(id=5, home=True, parent=menu, weight=4)
         self.session.add(menu)
 
-        self.assertEqual(index_info.parent_url, None)
-        self.assertEqual(company_info.parent_url, None)
-        self.assertEqual(team_info.parent_url, None)
-        self.session.flush()
-        self.assertEqual(index_info.parent_url, u'/en')
-        self.assertEqual(index_info.url, u'/en/index')
-        self.assertEqual(company_info.parent_url, u'/en')
-        self.assertEqual(company_info.url, u'/en/company')
+        parent_url = '/' + en.lang
+        self.assertEqual(index_info.parent_url, parent_url)
+        index_info_url = parent_url + '/' + index_info.url_part
+        self.assertEqual(index_info.url, index_info_url)
+        self.assertEqual(company_info.parent_url, parent_url)
+        company_info_url = parent_url + '/' + company_info.url_part
+        self.assertEqual(company_info.url, company_info_url)
         self.assertEqual(team_info.parent_url, company_info.url)
-        self.assertEqual(team_info.url, company_info.url + u'/team')
+        team_info_url = company_info.url + '/' + team_info.url_part
+        self.assertEqual(team_info.url, team_info_url)
+
+        team_info = self.session.query(PageInfo).filter(PageInfo.id == 4).one()
+        self.assertEqual(team_info.url, team_info_url)
 
         team.parent = menu
         self.session.flush()
-        self.assertEqual(team_info.parent_url, u'/en')
-        self.assertEqual(team_info.url, u'/en/team')
+        self.assertEqual(team_info.parent_url, parent_url)
+        self.assertEqual(team_info.url, parent_url + '/' + team_info.url_part)
+
+        team_info.node = dummy
+        self.session.flush()
+        team_info = self.session.query(PageInfo).filter(PageInfo.id == 4).one()
+        self.assertEqual(team_info.url, parent_url + '/' + team_info.url_part)
+
+    def test_before_flush_populate(self):
+        self.populate()
+        menu = self.session.query(Menu).first()
+        en = self.session.query(Language).filter(Language.lang == 'en').one()
+        info = self.session.query(PageInfo).filter(PageInfo.id == 14).one()
+        self.assertEqual(info.url, u'/en/company/our_history')
+        team = Page(home=True, parent=info.node, weight=3)
+        team_info = PageInfo(label="Team", title="The Team",
+                             url_part="team",
+                             content='<h2><a href="/en/company/our_history">History</a></h2>',
+                             lang=en, node=team)
+        self.assertIn(info, team_info.links)
+        self.assertEqual(team_info.parent_url, u'/en/company/our_history')
+        self.assertIn(u'/en/company/our_history', team_info.content)
+        self.session.flush()
+        self.assertIn(info, team_info.links)
+
+        info.node.weight = 1000
+        info.node.parent = menu
+        self.session.flush()
+        self.assertEqual(info.parent_url, u'/en')
+        self.assertEqual(team_info.parent_url, u'/en/our_history')
+        self.assertNotIn(u'/en/company/our_history', team_info.content)
+        self.assertIn(u'/en/our_history', team_info.content)
+        self.assertIn(info, team_info.links)
+
+    def test_content_links_parsing(self):
+        self.populate()
+        en = self.session.query(Language).filter(Language.lang == 'en').one()
+        menu = self.session.query(Menu).first()
+        home_info = self.session.query(PageInfo).filter(PageInfo.id == 2).one()
+        home = home_info.node
+        contact_info = self.session.query(PageInfo).filter(PageInfo.id == 4).one()
+        contact = contact_info.node
+        team = Page(home=True, parent=menu, weight=300)
+        content = '<h2>'
+        content += '<a href="{obj.url}">{obj.label}</a>'.format(obj=home_info)
+        content += '</h2>'
+        team_info = PageInfo(label="Team", title="The Team",
+                             url_part="team",
+                             content=content,
+                             lang=en, node=team)
+        self.session.flush()
+        self.assertIn(home_info, team_info.links)
+        self.assertNotIn(contact_info, team_info.links)
+
+        content = '<a href="{obj.url}">{obj.label}</a>'.format(obj=contact_info)
+        team_info.content = team_info.content + content
+        self.session.flush()
+        self.assertIn(home_info, team_info.links)
+        self.assertIn(contact_info, team_info.links)
+        self.assertIn(home_info.url, team_info.content)
+        self.assertIn(contact_info.url, team_info.content)
+
+        home.weight = 3000
+        home.parent = self.session.query(Section).filter(Section.id == 4).one()
+        log.debug('Flushing...')
+        self.session.flush()
+        self.assertIn(home_info.url, team_info.content)
+        self.assertIn(contact_info.url, team_info.content)
+        self.assertIn(home_info, team_info.links)
+        self.assertIn(contact_info, team_info.links)
 
 
 class PageTests(BaseTests):
