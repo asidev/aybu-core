@@ -48,7 +48,6 @@ class BaseTests(unittest.TestCase):
         self.engine = engine_from_config_parser(self.config)
         self.Session = create_session(self.engine)
         self.session = self.Session()
-        init_session_events(self.session)
 
     def tearDown(self):
         self.session.close()

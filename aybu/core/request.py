@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (User, Language)
+from aybu.core.models import (User, Language, init_session_events)
 from logging import getLogger
 from pyramid.decorator import reify
 from pyramid.request import Request as PyramidRequest
@@ -66,6 +66,8 @@ class BaseRequest(PyramidRequest):
         # FIXME: add a uwsgi post-fork hook to recreate this session
         # per-process
         cls.DBScopedSession = scoped_session(sessionmaker(engine, **kwargs))
+        init_session_events(session=cls.DBScopedSession)
+
 
 
 class Request(BaseRequest):

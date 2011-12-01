@@ -35,18 +35,6 @@ log = getLogger(__name__)
 
 class LanguageTests(BaseTests):
 
-    def populate(self):
-        file_ = StringIO.StringIO(
-"""
-[app:aybu-website]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
-
-        populate(self.config, data)
-
     def test_enable(self):
 
         self.populate()

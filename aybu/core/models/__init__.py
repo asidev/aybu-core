@@ -198,15 +198,9 @@ def before_flush(session, *args):
             assert(item.parent_url == new_url)
 
 
-def populate(config, data, config_section="app:main", session=None,
-             drop_all=True):
-    engine = engine_from_config_parser(config, config_section)
-    if session is None:
-        session = create_session(engine, drop_all)
-        close_session = True
-    else:
-        close_session = False
+def populate(config, data, session):
 
+    init_session_events(session=session)
     add_default_data(session, data)
     user = default_user_from_config(config)
     session.merge(user)
@@ -216,8 +210,6 @@ def populate(config, data, config_section="app:main", session=None,
     session.merge(group)
 
     session.commit()
-    if close_session:
-        session.close()
 
 
 def engine_from_config_parser(config, section="app:main"):

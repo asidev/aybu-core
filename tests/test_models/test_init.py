@@ -43,7 +43,7 @@ default_data = data/default_data.json
         config.readfp(file_)
         data = default_data_from_config(config)
 
-        populate(self.config, data)
+        populate(self.config, data, self.session)
 
     def test_engine_from_config_parser(self):
         file_ = StringIO.StringIO(
