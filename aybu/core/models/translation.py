@@ -88,8 +88,10 @@ class NodeInfo(Base):
         for translation in session.query(cls).filter(criterion).all():
 
             obj = translation.create_translation(language=dst_language)
+            log.debug('Translation created: %s', obj)
 
-            if obj not in session.new:
+            if obj not in session:
+                log.debug('Added translation to the session.')
                 session.add(obj)
 
             translations.append(obj)
@@ -174,13 +176,13 @@ class CommonInfo(NodeInfo):
 
         if self._parent_url != parent_url:
 
-            log.debug("Updating 'parent_url' of %s from %s to %s",
-                      self.label, self._parent_url, parent_url)
+            #log.debug("Updating 'parent_url' of %s from %s to %s",
+            #          self.label, self._parent_url, parent_url)
 
             old_url = '{}/{}'.format(self._parent_url, self.url_part)
             self._parent_url = parent_url
             new_url = self.url
-            log.debug('URL is %s.', new_url)
+            #log.debug('URL is %s.', new_url)
 
             self.update_children_parent_url()
 
@@ -198,20 +200,20 @@ class CommonInfo(NodeInfo):
 
     def update_children_parent_url(self):
         # Trigger the change of 'parent_url' to the children.
-        log.debug('Triggering change event to children ...')
+        #log.debug('Triggering change event to children ...')
         for obj in self.node.children:
 
             if not isinstance(obj, (Section, Page)):
                 continue
 
-            log.debug('Handle translations of %s.', obj.id)
+            #log.debug('Handle translations of %s.', obj.id)
 
             for translation in obj.translations:
 
                 if translation.lang != self.lang:
                     continue
 
-                log.debug('Handle translation %s.', translation.label)
+                #log.debug('Handle translation %s.', translation.label)
                 translation.update_parent_url()
 
     def create_translation(self, **kwargs):

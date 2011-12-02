@@ -23,7 +23,7 @@ import StringIO
 
 from aybu.core.models import default_data_from_config
 from aybu.core.models import Language
-from aybu.core.models import NodeInfo
+from aybu.core.models import NodeInfo, PageInfo
 from aybu.core.models import populate
 from babel import Locale
 from babel.core import LOCALE_ALIASES, UnknownLocaleError
@@ -344,3 +344,16 @@ class LanguageTests(BaseTests):
             self.assertIn(lang_locale, all_locales)
             self.assertIn(full_locale, all_strict_locales)
             self.assertNotIn(lang_locale, all_strict_locales)
+
+    def test_create_translations(self):
+        self.populate()
+        en = self.session.query(Language).filter(Language.lang == 'en').one()
+        it = self.session.query(Language).filter(Language.lang == 'it').one()
+        q = self.session.query(PageInfo).filter(PageInfo.lang == en)
+        self.assertNotEqual(q.all(), [])
+        Language.disable(self.session, 2)
+        self.assertEqual(q.all(), [])
+        Language.enable(self.session, 2, 1)
+        translations = q.all()
+        self.assertNotEqual(translations, [])
+        self.assertEqual(set([t.lang for t in translations]), set([en]))

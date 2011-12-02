@@ -136,6 +136,7 @@ class Language(Base):
 
         language = cls.get(session, id_)
         language.enabled = True
+        log.debug('Enabled language: %s', language)
 
         NodeInfo.create_translations(session,
                                      translation_lang_id,

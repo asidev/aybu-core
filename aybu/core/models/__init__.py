@@ -134,7 +134,7 @@ def before_flush(session, *args):
         elif obj.node is None:
             obj.node = Node.get(session, obj.node_id)
 
-        log.debug("Update 'parent_url' of %s", obj.label)
+        #log.debug("Update 'parent_url' of %s", obj.label)
         obj.update_parent_url()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -143,7 +143,7 @@ def before_flush(session, *args):
         if not isinstance(obj, PageInfo):
             continue
 
-        log.debug("Update associations of %s", obj.label)
+        #log.debug("Update associations of %s", obj.label)
         obj.update_associations()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -154,7 +154,7 @@ def before_flush(session, *args):
            'content' not in obj._attrs_updates:
             continue
 
-        log.debug("Update associations of %s", obj.label)
+        #log.debug("Update associations of %s", obj.label)
         obj.update_associations()
 
     # First phase.
@@ -179,10 +179,10 @@ def before_flush(session, *args):
            'parent_id' not in obj._attrs_updates:
             continue
 
-        log.debug('Update translations of %s', obj.id)
+        #log.debug('Update translations of %s', obj.id)
 
         for translation in obj.translations:
-            log.debug('Update translation: %s', translation.label)
+            #log.debug('Update translation: %s', translation.label)
             translation.update_parent_url()
 
     # Third phase: handle CommonInfo.url_part changes.
@@ -198,25 +198,10 @@ def before_flush(session, *args):
         old = obj._attrs_updates['url_part']['old']
         new = obj._attrs_updates['url_part']['new']
 
-        if old not in nones:
+        if old not in nones or old == new:
             continue
 
-        old_url = '{}/{}%'.format(obj.parent_url, old)
-        new_url = '{}/{}'.format(obj.parent_url, new)
-
-        criterion = PageInfo.links.any(PageInfo.id == obj.id)
-        q = session.query(PageInfo).filter(criterion)
-        for item in q.all():
-            soup = item.soup
-            for a in soup.findAll('a'):
-                if a['href'].startswith(old_url):
-                    a['href'] = a['href'].replace(old_url, new_url, 1)
-            obj._content = unicode(soup)
-
-        # Update children in the URL tree.
-        criterion = CommonInfo.parent_url.ilike(old_url)
-        for item in session.query(CommonInfo).filter(criterion).all():
-            assert(item.parent_url == new_url)
+        obj.update_children_parent_url()
 
 
 def populate(config, data, session):
