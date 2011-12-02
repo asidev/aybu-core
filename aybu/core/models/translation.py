@@ -118,7 +118,7 @@ class NodeInfo(Base):
             query = query.filter(Language.enabled == True)
 
         for language in query.all():
-            session.add(self.create_translation(language))
+            session.add(self.create_translation(language=language))
 
     def to_dict(self):
         return dict(id=self.node.id,
