@@ -29,6 +29,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import (NoResultFound,
                                 MultipleResultsFound)
+from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from aybu.core.models.base import Base
@@ -62,7 +63,7 @@ class NodeInfo(Base):
     lang_id = Column(Integer, ForeignKey('languages.id',
                                          onupdate='cascade',
                                          ondelete='cascade'), nullable=False)
-    lang = relationship('Language')
+    lang = relationship('Language', lazy='joined')
 
     @property
     def type(self):
@@ -127,7 +128,9 @@ class NodeInfo(Base):
 
 class MenuInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'menu_info'}
-    node = relationship('Menu', backref='translations')
+    node = relationship('Menu',
+                        backref=backref('translations', lazy='joined'),
+                        lazy='joined')
 
     def create_translation(self, **kwargs):
         kwargs['node'] = self.node
@@ -230,7 +233,9 @@ class CommonInfo(NodeInfo):
 
 class PageInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'page_info'}
-    node = relationship('Page', backref='translations')
+    node = relationship('Page',
+                        backref=backref('translations', lazy='joined'),
+                        lazy='joined')
     content = Column(UnicodeText(), default=u'', name='content')
 
     _files_table = Table('node_infos_files__files',
@@ -276,7 +281,8 @@ class PageInfo(CommonInfo):
     links = relationship('PageInfo', secondary=_links_table,
                          primaryjoin=NodeInfo.id == _links_table.c.inverse_id,
                          secondaryjoin=NodeInfo.id == _links_table.c.links_id,
-                         backref='referers')
+                         backref=backref('referers', lazy='joined'),
+                         lazy='joined')
 
     def __repr__(self):
         try:
@@ -333,7 +339,9 @@ class PageInfo(CommonInfo):
 
 class SectionInfo(CommonInfo):
     __mapper_args__ = {'polymorphic_identity': 'section_info'}
-    node = relationship('Section', backref='translations')
+    node = relationship('Section',
+                        backref=backref('translations', lazy='joined'),
+                        lazy='joined')
 
     def create_translation(self, **kwargs):
         kwargs['node'] = self.node
@@ -342,7 +350,9 @@ class SectionInfo(CommonInfo):
 
 class ExternalLinkInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'externallink_info'}
-    node = relationship('ExternalLink', backref='translations')
+    node = relationship('ExternalLink',
+                        backref=backref('translations', lazy='joined'),
+                        lazy='joined')
     # This is has been moved from ExternalLink to internationalize the
     # external link too
     # ie: http://www.apple.com or http://www.apple.it
@@ -361,7 +371,9 @@ class ExternalLinkInfo(NodeInfo):
 
 class InternalLinkInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'internallink_info'}
-    node = relationship('InternalLink', backref='translations')
+    node = relationship('InternalLink',
+                        backref=backref('translations', lazy='joined'),
+                        lazy='joined')
 
     def create_translation(self, **kwargs):
         kwargs['node'] = self.node

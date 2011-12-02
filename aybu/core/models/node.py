@@ -62,8 +62,13 @@ class Node(Base):
 
     parent_id = Column(Integer, ForeignKey('nodes.id'))
     children = relationship('Node',
-                            backref=backref('parent', remote_side=[id]),
-                            primaryjoin='Node.id == Node.parent_id')
+                            backref=backref('parent',
+                                            lazy='immediate',
+                                            join_depth=5,
+                                            remote_side=[id]),
+                            primaryjoin='Node.id == Node.parent_id',
+                            lazy='immediate',
+                            join_depth=5)
 
     @property
     def type(self):
@@ -162,7 +167,7 @@ class Node(Base):
             q = q.filter(Node.weight >= 0)
 
         else:
-            weight = previous + 1
+            weight = previous.weight + 1
             q = q.filter(Node.weight > previous.weight)
 
         q.update({'weight': Node.weight + 1})
@@ -397,8 +402,11 @@ class InternalLink(Node):
                                               onupdate='cascade',
                                               ondelete='cascade'),)
 
-    linked_to = relationship('Page', backref='linked_by', remote_side=Page.id,
-                            primaryjoin='Page.id == InternalLink.linked_to_id')
+    linked_to = relationship('Page',
+                             backref=backref('linked_by', lazy='joined'),
+                             remote_side=Page.id,
+                             primaryjoin='Page.id == InternalLink.linked_to_id',
+                             lazy='joined')
 
     @validates('linked_to')
     def validate_linked_to(self, key, value):
