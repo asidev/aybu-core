@@ -98,7 +98,7 @@ default_data = data/default_data.json
                         filter(Language.lang==u'de').one()
 
         menu_info = self.session.query(MenuInfo).first()
-        new_menu_info = menu_info.create_translation(language)
+        new_menu_info = menu_info.create_translation(language=language)
         self.assertNotEqual(menu_info, new_menu_info)
         self.assertNotEqual(menu_info.id, new_menu_info.id)
         self.assertNotEqual(menu_info.lang, new_menu_info.lang)
@@ -106,7 +106,7 @@ default_data = data/default_data.json
         self.assertEqual(menu_info.node, new_menu_info.node)
 
         info = self.session.query(SectionInfo).first()
-        new_info = info.create_translation(language)
+        new_info = info.create_translation(language=language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
         self.assertNotEqual(info.lang, new_info.lang)
@@ -115,7 +115,7 @@ default_data = data/default_data.json
         self.assertNotEqual(info.parent_url, new_info.parent_url)
 
         page_info = self.session.query(PageInfo).first()
-        new_page_info = page_info.create_translation(language)
+        new_page_info = page_info.create_translation(language=language)
         self.assertNotEqual(page_info, new_page_info)
         self.assertNotEqual(page_info.id, new_page_info.id)
         self.assertNotEqual(page_info.lang, new_page_info.lang)
@@ -135,7 +135,7 @@ default_data = data/default_data.json
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
         info = self.session.query(ExternalLinkInfo).first()
-        new_info = info.create_translation(language)
+        new_info = info.create_translation(language=language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
         self.assertNotEqual(info.lang, new_info.lang)
@@ -149,7 +149,7 @@ default_data = data/default_data.json
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
         info = self.session.query(InternalLinkInfo).first()
-        new_info = info.create_translation(language)
+        new_info = info.create_translation(language=language)
         self.assertNotEqual(info, new_info)
         self.assertNotEqual(info.id, new_info.id)
         self.assertNotEqual(info.lang, new_info.lang)
@@ -221,24 +221,24 @@ default_data = data/default_data.json
         self.session.add(en)
 
         page_info_1 = PageInfo(id=1, label='Home', title='Pagina Principale',
-                               url_part='index',
+                               url_part='index', content='',
                                node=page_4, lang=it)
         self.session.add(page_info_1)
 
         page_info_2 = PageInfo(id=2, label='Home', title='Main Page',
-                               url_part='index',
+                               url_part='index', content='',
                                node=page_4, lang=en)
         self.session.add(page_info_2)
 
         page_info_3 = PageInfo(id=3, label='Home 2',
                                title='Pagina Principale 2',
-                               url_part='index',
+                               url_part='index', content='',
                                node=page_1, lang=it)
         self.session.add(page_info_1)
 
         page_info_4 = PageInfo(id=4, label='Home 2', title='Main Page 2',
-                             url_part='index',
-                             node=page_1, lang=en)
+                               url_part='index', content='',
+                               node=page_1, lang=en)
         self.session.add(page_info_2)
 
         self.session.flush()

@@ -209,6 +209,7 @@ class NodeTests(BaseTests):
 
         en = Language(id=2, lang="en", country="GB", enabled=True)
         menu = Menu(id=1, weight=1)
+        self.session.add(menu)
         menu_info = MenuInfo(id=29, label=u"Main Menu", lang=en, node=menu)
         index = Page(id=2, home=True, parent=menu, weight=1)
         index_info = PageInfo(id=2, label="Home", title="Home Page",
@@ -223,7 +224,6 @@ class NodeTests(BaseTests):
                               url_part="team", content="<h2>Team</h2>",
                               lang=en, node=team)
         dummy = Page(id=5, home=True, parent=menu, weight=4)
-        self.session.add(menu)
 
         parent_url = '/' + en.lang
         self.assertEqual(index_info.parent_url, parent_url)
@@ -250,7 +250,10 @@ class NodeTests(BaseTests):
         self.assertEqual(team_info.url, parent_url + '/' + team_info.url_part)
 
     def test_before_flush_populate(self):
+
         self.populate()
+        log.debug('Populate ended. Starting tests ...')
+
         menu = self.session.query(Menu).first()
         en = self.session.query(Language).filter(Language.lang == 'en').one()
         info = self.session.query(PageInfo).filter(PageInfo.id == 14).one()
@@ -260,10 +263,10 @@ class NodeTests(BaseTests):
                              url_part="team",
                              content='<h2><a href="/en/company/our_history">History</a></h2>',
                              lang=en, node=team)
+        self.session.flush()
         self.assertIn(info, team_info.links)
         self.assertEqual(team_info.parent_url, u'/en/company/our_history')
         self.assertIn(u'/en/company/our_history', team_info.content)
-        self.session.flush()
         self.assertIn(info, team_info.links)
 
         info.node.weight = 1000

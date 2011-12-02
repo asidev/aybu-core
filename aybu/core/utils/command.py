@@ -21,7 +21,7 @@ from paste.script.command import Command
 import ConfigParser
 import os
 
-from aybu.core.models import populate
+from aybu.core.models import populate, init_session_events
 from aybu.core.models import (engine_from_config_parser,
                               default_data_from_config,
                               create_session)
@@ -60,7 +60,8 @@ class SetupApp(Command):
         config = ConfigParser.ConfigParser()
         config.read([file_name])
         engine = engine_from_config_parser(config, section_name)
-        session = create_session(engine, drop_all)
+        session = create_session(engine, True)
+        init_session_events(session=session)
         data = default_data_from_config(config)
-        populate(config, data, section_name)
+        populate(config, data, session)
         session.close()

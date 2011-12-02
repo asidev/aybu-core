@@ -49,9 +49,8 @@ def create_page(session, copy_from=None):
         page = Page(weight=copy_from.node.weight +1)
         session.add(page)
 
-    pageinfo = PageInfo(node=page, lang=lang, label=unicode(page.weight))
-    pageinfo.parent_url = '/%s' % lang.lang
-    pageinfo.url_part = pageinfo.label
+    pageinfo = PageInfo(node=page, lang=lang, label=unicode(page.weight),
+                        url_part=unicode(page.weight), content='')
     session.add(pageinfo)
     return pageinfo
 
@@ -110,8 +109,11 @@ class FileTests(FileTestsBase):
         self.session.commit()
 
         page = create_page(self.session)
-        page.files.append(newfile)
-        page.images.append(newimage)
+        content = '<a href={f.url}>{f.name}</a><img src={img.url}/>'
+        page.content = content.format(f=newfile, img=newimage)
+        # Statements aren't needed: append will be performed by after_flush.
+        #page.files.append(newfile)
+        #page.images.append(newimage)
         self.session.commit()
         self.assertIn(page, newfile.pages)
         self.assertIn(page, newimage.pages)

@@ -20,7 +20,7 @@ import ConfigParser
 import StringIO
 import os
 from aybu.core.models import engine_from_config_parser, create_session
-from aybu.core.models import default_data_from_config
+from aybu.core.models import default_data_from_config, init_session_events
 from aybu.core.models import populate, init_session_events
 from aybu.core.models.base import Base
 from logging import getLogger
@@ -48,6 +48,7 @@ class BaseTests(unittest.TestCase):
         self.engine = engine_from_config_parser(self.config)
         self.Session = create_session(self.engine)
         self.session = self.Session()
+        init_session_events(session=self.session)
 
     def tearDown(self):
         self.session.close()

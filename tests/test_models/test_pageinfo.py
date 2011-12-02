@@ -45,8 +45,7 @@ class PageInfoTests(BaseTests):
         self.session.add(lang)
 
         page_info = PageInfo(id=1, label='Home', title='Pagina Principale',
-                             parent_url='/it', url_part='index',
-                             node=page, lang=lang)
+                             url_part='index', node=page, lang=lang, content='')
         self.session.add(page_info)
         self.session.flush()
         return page_info

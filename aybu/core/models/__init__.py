@@ -113,6 +113,8 @@ def before_flush(session, *args):
     """ Set 'parent_url' and update it when 'url_part' was changed.
     """
 
+    log.debug('Before flush event handler...')
+
     nones = (symbol('NO_VALUE'), symbol('NEVER_SET'), None)
 
     # NOTE: cannot know objects order in session.new and session.dirty,
@@ -132,8 +134,28 @@ def before_flush(session, *args):
         elif obj.node is None:
             obj.node = Node.get(session, obj.node_id)
 
-        # Call the hybrid_property 'obj.parent_url' to set _parent_url.
-        assert(obj.parent_url not in (None, u'', ''))
+        log.debug("Update 'parent_url' of %s", obj.label)
+        obj.update_parent_url()
+
+    # Handle 'PageInfo.content' for 'new' objects.
+    for obj in session.new:
+
+        if not isinstance(obj, PageInfo):
+            continue
+
+        log.debug("Update associations of %s", obj.label)
+        obj.update_associations()
+
+    # Handle 'PageInfo.content' for 'new' objects.
+    for obj in session.dirty:
+
+        if not isinstance(obj, PageInfo) or \
+           not hasattr(obj, '_attrs_updates') or \
+           'content' not in obj._attrs_updates:
+            continue
+
+        log.debug("Update associations of %s", obj.label)
+        obj.update_associations()
 
     # First phase.
     # Handle 'node' changes in CommonInfo objects:
@@ -145,9 +167,7 @@ def before_flush(session, *args):
            'node' not in obj._attrs_updates:
             continue
 
-        # Call the hybrid_property 'parent_url' to set refresh _parent_url
-        # if it is needed.
-        assert(obj.parent_url not in (None, u'', ''))
+        obj.update_parent_url()
 
     # Second phase: handle Page|Section objects changes.
     # Handle 'parent_id' changes in Page and Section objects:
@@ -159,10 +179,11 @@ def before_flush(session, *args):
            'parent_id' not in obj._attrs_updates:
             continue
 
+        log.debug('Update translations of %s', obj.id)
+
         for translation in obj.translations:
-            # Call the hybrid_property 'parent_url' to set refresh _parent_url
-            # if it is needed.
-            assert(translation.parent_url not in (None, u'', ''))
+            log.debug('Update translation: %s', translation.label)
+            translation.update_parent_url()
 
     # Third phase: handle CommonInfo.url_part changes.
     # Handle 'url_part' changes in CommonInfo objects:
@@ -200,7 +221,6 @@ def before_flush(session, *args):
 
 def populate(config, data, session):
 
-    init_session_events(session=session)
     add_default_data(session, data)
     user = default_user_from_config(config)
     session.merge(user)
@@ -261,8 +281,7 @@ def add_default_data(session, data):
                 query = session.query(class_)
 
                 if not property_.uselist and len(mapper.primary_key) == 1:
-                    attr = getattr(class_, mapper.primary_key[0].name)
-                    params[key] = query.filter(attr == value).one()
+                    params[key] = query.get(value)
                     continue
         """
                 # The code below is needed when data specifies relationships
