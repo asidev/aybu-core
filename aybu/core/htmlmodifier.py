@@ -45,6 +45,9 @@ def match_pufferfish_urls(value, type_, session):
 
 def match_pageinfo_urls(value, type_, session):
     try:
+        # Remove '.html' at the end of the URL value before querying.
+        if value.endswith('.html'):
+            value = value.split('.html')[0]
         rel = type_.get_by_url(session, value)
         key = rel.id
         log.debug('Found %s which matches %s', rel, value)

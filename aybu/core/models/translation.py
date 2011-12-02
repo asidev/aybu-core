@@ -189,10 +189,21 @@ class CommonInfo(NodeInfo):
             if isinstance(self, PageInfo):
                 for obj in self.referers:
                     soup = obj.soup
+
                     for a in soup.findAll('a'):
+                        has_ext = False
+
+                        if a['href'].endswith('.html'):
+                            has_ext = True
+                            a['href'] = a['href'].split('.html')[0]
+
                         if a['href'] == old_url:
                             log.debug('Found %s in %s', obj.label, old_url)
-                            a['href'] = new_url
+                            a['href'] = new_url + '.html' if has_ext else new_url
+
+                        elif has_ext:
+                            a['href'] = a['href'] + '.html'
+
                     # Use _content to avoid calling of hybrid_property.
                     obj.content = unicode(soup)
 

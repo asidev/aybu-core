@@ -261,7 +261,7 @@ class NodeTests(BaseTests):
         team = Page(home=True, parent=info.node, weight=3)
         team_info = PageInfo(label="Team", title="The Team",
                              url_part="team",
-                             content='<h2><a href="/en/company/our_history">History</a></h2>',
+                             content='<h2><a href="/en/company/our_history.html">History</a></h2>',
                              lang=en, node=team)
         self.session.flush()
         self.assertIn(info, team_info.links)
