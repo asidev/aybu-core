@@ -364,6 +364,37 @@ class Page(Node):
         return dict_
 
 
+class MediaPage(Page):
+    __mapper_args__ = {'polymorphic_identity': 'media_pages'}
+    file_id = Column(Integer, ForeignKey('files.id',
+                                         onupdate='cascade',
+                                         ondelete='restrict'))
+
+
+class MediaCollection(MediaPage):
+    __mapper_args__ = {'polymorphic_identity': 'media_collections'}
+    cover = relationship('File',
+                         lazy='joined',
+                         primaryjoin='MediaCollection.file_id == File.id')
+    items = relationship('MediaItem', lazy='joined',
+                         primaryjoin='MediaCollection.id == MediaItem.collection_id')
+    translations = relationship('MediaCollectionInfo', lazy='joined')
+
+
+class MediaItem(MediaPage):
+    __mapper_args__ = {'polymorphic_identity': 'media_collections_items'}
+    collection_id = Column(Integer, ForeignKey('nodes.id',
+                                               onupdate='cascade',
+                                               ondelete='restrict'))
+    collection = relationship('MediaCollection',
+                              lazy='joined',
+                              primaryjoin='MediaItem.collection_id == MediaCollection.id')
+    media = relationship('File',
+                         lazy='joined',
+                         primaryjoin='MediaCollection.file_id == File.id')
+    translations = relationship('MediaItemInfo', lazy='joined')
+
+
 class Section(Node):
     __mapper_args__ = {'polymorphic_identity': 'section'}
     banners = relationship('Banner', secondary=node_banners)

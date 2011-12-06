@@ -361,6 +361,16 @@ class SectionInfo(CommonInfo):
         return super(SectionInfo, self).create_translation(**kwargs)
 
 
+class MediaCollectionInfo(CommonInfo):
+    __mapper_args__ = {'polymorphic_identity': 'media_collection_info'}
+    node = relationship('MediaCollection', lazy='joined')
+
+
+class MediaItemInfo(CommonInfo):
+    __mapper_args__ = {'polymorphic_identity': 'media_item_info'}
+    node = relationship('MediaItem', lazy='joined')
+
+
 class ExternalLinkInfo(NodeInfo):
     __mapper_args__ = {'polymorphic_identity': 'externallink_info'}
     node = relationship('ExternalLink',
