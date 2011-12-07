@@ -16,16 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import ConfigParser
-import StringIO
 
-from aybu.core.models import Node, NodeInfo, Menu, MenuInfo, Page, PageInfo
-from aybu.core.models import Section, SectionInfo, CommonInfo
+from aybu.core.models import NodeInfo, Menu, MenuInfo, Page, PageInfo
+from aybu.core.models import Section, SectionInfo
 from aybu.core.models import ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
 from aybu.core.models import Language
-from aybu.core.models import default_data_from_config
-from aybu.core.models import populate
 from logging import getLogger
 from test_base import BaseTests
 
@@ -35,18 +31,6 @@ log = getLogger(__name__)
 
 
 class NodeInfoTests(BaseTests):
-
-    def populate(self):
-        file_ = StringIO.StringIO(
-"""
-[app:aybu-website]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
-
-        populate(self.config, data, session=self.session)
 
     def test_create_translations(self):
 

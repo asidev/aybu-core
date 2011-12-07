@@ -17,7 +17,6 @@ limitations under the License.
 """
 
 from aybu.core.utils.modifiers import boolify, urlify
-from pyramid import testing
 import logging
 import unittest
 
@@ -25,12 +24,6 @@ log = logging.getLogger(__name__)
 
 
 class ModifiersTests(unittest.TestCase):
-
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
 
     def test_boolify(self):
 
@@ -82,8 +75,3 @@ class ModifiersTests(unittest.TestCase):
         urlified = urlified.lower()
 
         self.assertEqual(urlify(url), urlified)
-
-
-
-
-

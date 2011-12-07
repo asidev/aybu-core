@@ -16,53 +16,61 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import ConfigParser
-import StringIO
+import json
+import logging
 import os
-from aybu.core.models import engine_from_config_parser, create_session
-from aybu.core.models import default_data_from_config, init_session_events
-from aybu.core.models import populate, init_session_events
-from aybu.core.models.base import Base
-from logging import getLogger
+import pkg_resources
 import unittest
-
-log = getLogger(__name__)
+from aybu.core.models import init_session_events
+from aybu.core.models import (add_default_data,
+                              Base,
+                              User,
+                              Group)
+from paste.deploy.loadwsgi import appconfig
+from sqlalchemy import engine_from_config
+from sqlalchemy.orm import sessionmaker
 
 
 class BaseTests(unittest.TestCase):
 
-    def setUp(self):
-        self.config = ConfigParser.ConfigParser()
+    @classmethod
+    def setUpClass(cls):
         ini = os.path.realpath(
                 os.path.join(os.path.dirname(__file__),
                     "..", "..",
                     'tests.ini'))
+        cls.config = appconfig("config:{}#aybu-core".format(ini))
+        cls.engine = engine_from_config(cls.config, prefix='sqlalchemy.')
+        cls.Session = sessionmaker(bind=cls.engine)
+        cls.log = logging.getLogger("{}.{}".format(__name__, cls.__name__))
+        Base.metadata.create_all(cls.engine)
 
-        try:
-            with open(ini) as f:
-                self.config.readfp(f)
+    @classmethod
+    def tearDownClass(cls):
+        cls.Session.close_all()
+        Base.metadata.drop_all(cls.engine)
 
-        except IOError:
-            raise Exception("Cannot find configuration file '%s'" % ini)
-
-        self.engine = engine_from_config_parser(self.config)
-        self.Session = create_session(self.engine)
-        self.session = self.Session()
+    def setUp(self):
+        connection = self.engine.connect()
+        self.trans = connection.begin()
+        self.session = self.Session(bind=connection)
         init_session_events(session=self.session)
 
     def tearDown(self):
+        self.trans.rollback()
         self.session.close()
-        self.Session.remove()
-        Base.metadata.drop_all(self.engine)
 
     def populate(self):
-        file_ = StringIO.StringIO(
-"""
-[app:aybu-website]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
+        source_ = pkg_resources.resource_stream('aybu.core.data',
+                                             'default_data.json')
+        data = json.loads(source_.read())
+        source_.close()
+        add_default_data(self.session, data)
+        user = User(username=self.config['default_user.username'],
+                    password=self.config['default_user.password'])
+        self.session.merge(user)
+        group = Group(name=u'admin')
+        group.users.append(user)
+        self.session.merge(group)
+        self.session.commit()
 
-        populate(self.config, data, session=self.session)

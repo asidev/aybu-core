@@ -26,24 +26,13 @@ from logging import getLogger
 from test_base import BaseTests
 import ConfigParser
 import json
+import pkg_resources
 import StringIO
 
 log = getLogger(__name__)
 
 
 class InitTests(BaseTests):
-
-    def test_populate(self):
-        file_ = StringIO.StringIO(
-"""
-[app:main]
-default_data = data/default_data.json
-""")
-        config = ConfigParser.ConfigParser()
-        config.readfp(file_)
-        data = default_data_from_config(config)
-
-        populate(self.config, data, self.session)
 
     def test_engine_from_config_parser(self):
         file_ = StringIO.StringIO(
@@ -79,7 +68,7 @@ default_data =
         file_ = StringIO.StringIO(
 """
 [app:main]
-default_data = data/default_data.json
+default_data = aybu/core/data/default_data.json
 """)
         config = ConfigParser.ConfigParser()
         config.readfp(file_)
@@ -87,7 +76,8 @@ default_data = data/default_data.json
         self.assertNotEqual(data, None)
 
     def test_add_default_data(self):
-        data = file('data/default_data.json').read()
+        data = pkg_resources.resource_stream('aybu.core.data',
+                                             'default_data.json').read()
         data = json.loads(data)
         add_default_data(self.session, data)
 
