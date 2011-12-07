@@ -18,12 +18,12 @@ limitations under the License.
 
 from aybu.core.models import View, ViewDescription, Language
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 log = getLogger(__name__)
 
 
-class ViewTests(BaseTests):
+class ViewTests(TransactionalTestsBase):
 
     def test_str_and_repr(self):
         view = View(id=1, name='TEST VIEW', fs_view_path='/pages/full.mako')
@@ -33,7 +33,7 @@ class ViewTests(BaseTests):
         self.assertEqual(str(view), "<View TEST VIEW (/pages/full.mako)>")
 
 
-class ViewDescriptionTests(BaseTests):
+class ViewDescriptionTests(TransactionalTestsBase):
 
     def test_str_and_repr(self):
         view = View(id=1, name='TEST VIEW', fs_view_path='/pages/full.mako')

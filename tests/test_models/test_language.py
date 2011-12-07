@@ -28,16 +28,16 @@ from aybu.core.models import populate
 from babel import Locale
 from babel.core import LOCALE_ALIASES, UnknownLocaleError
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 log = getLogger(__name__)
 
 
-class LanguageTests(BaseTests):
+class LanguageTests(TransactionalTestsBase):
 
     def test_enable(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'en').one()
@@ -63,7 +63,7 @@ class LanguageTests(BaseTests):
 
     def test_disable(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'it').one()
@@ -346,7 +346,7 @@ class LanguageTests(BaseTests):
             self.assertNotIn(lang_locale, all_strict_locales)
 
     def test_create_translations(self):
-        self.populate()
+        self.populate(self.session)
         en = self.session.query(Language).filter(Language.lang == 'en').one()
         it = self.session.query(Language).filter(Language.lang == 'it').one()
         q = self.session.query(PageInfo).filter(PageInfo.lang == en)

@@ -16,25 +16,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import ConfigParser
-import StringIO
-
-from aybu.core.models import Node, NodeInfo, Menu, MenuInfo, Page, PageInfo
-from aybu.core.models import Section, SectionInfo
-from aybu.core.models import ExternalLinkInfo
-from aybu.core.models import InternalLinkInfo
-from aybu.core.models import Language
-from aybu.core.models import default_data_from_config
-from aybu.core.models import populate
+from aybu.core.models import (Menu,
+                              Page,
+                              PageInfo,
+                              Language)
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
-from sqlalchemy.sql import func
 
 log = getLogger(__name__)
 
 
-class PageInfoTests(BaseTests):
+class PageInfoTests(TransactionalTestsBase):
 
     def create_pageinfo(self):
         menu = Menu(id=1, parent=None, weight=1)

@@ -21,12 +21,12 @@ import random
 import string
 from aybu.core.models import User
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 log = getLogger(__name__)
 
 
-class CryptTests(BaseTests):
+class CryptTests(TransactionalTestsBase):
 
     def test_crypt(self):
 

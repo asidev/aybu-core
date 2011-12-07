@@ -60,6 +60,10 @@ setup(name='aybu-core',
 
       [paste.paster_command]
       uwsgi = pasteuwsgi.serve:ServeCommand
+
+      [nose.plugins.0.10]
+      aybuconfig = aybu.core.testing:ReadAybuConfigPlugin
+
       """,
       paster_plugins=['pyramid'],
       )

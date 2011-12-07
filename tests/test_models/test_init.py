@@ -16,14 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import populate
 from aybu.core.models import add_default_data
 from aybu.core.models import default_data_from_config
 from aybu.core.models import default_user_from_config
 from aybu.core.models import engine_from_config_parser
 from aybu.core.models import Setting
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 import ConfigParser
 import json
 import pkg_resources
@@ -32,7 +31,7 @@ import StringIO
 log = getLogger(__name__)
 
 
-class InitTests(BaseTests):
+class InitTests(TransactionalTestsBase):
 
     def test_engine_from_config_parser(self):
         file_ = StringIO.StringIO(

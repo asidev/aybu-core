@@ -25,12 +25,12 @@ from aybu.core.models import InternalLinkInfo
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 log = getLogger(__name__)
 
 
-class NodeTests(BaseTests):
+class NodeTests(TransactionalTestsBase):
 
     def setUp(self):
         super(NodeTests, self).setUp()
@@ -40,7 +40,7 @@ class NodeTests(BaseTests):
 
     def test_property_type(self):
 
-        self.populate()
+        self.populate(self.session)
 
         menu = self.session.query(Menu).\
                     order_by(func.random()).first()
@@ -188,7 +188,7 @@ class NodeTests(BaseTests):
 
     def test_get_translation(self):
 
-        self.populate()
+        self.populate(self.session)
 
         it = self.session.query(Language).filter(Language.lang == 'it').one()
         en = self.session.query(Language).filter(Language.lang == 'en').one()
@@ -251,7 +251,7 @@ class NodeTests(BaseTests):
 
     def test_before_flush_populate(self):
 
-        self.populate()
+        self.populate(self.session)
         log.debug('Populate ended. Starting tests ...')
 
         menu = self.session.query(Menu).first()
@@ -279,7 +279,7 @@ class NodeTests(BaseTests):
         self.assertIn(info, team_info.links)
 
     def test_content_links_parsing(self):
-        self.populate()
+        self.populate(self.session)
         en = self.session.query(Language).filter(Language.lang == 'en').one()
         menu = self.session.query(Menu).first()
         home_info = self.session.query(PageInfo).filter(PageInfo.id == 2).one()
@@ -316,7 +316,7 @@ class NodeTests(BaseTests):
         self.assertIn(contact_info, team_info.links)
 
 
-class PageTests(BaseTests):
+class PageTests(TransactionalTestsBase):
 
     def test_get_homepage(self):
         menu = Menu(id=1, parent=None, weight=1)
@@ -454,7 +454,7 @@ class PageTests(BaseTests):
         self.assertFalse(Page.new_page_allowed(self.session))
 
 
-class InternalLinkTests(BaseTests):
+class InternalLinkTests(TransactionalTestsBase):
 
     def test_validate_linked_to(self):
         menu = Menu(id=1, parent=None, weight=1)

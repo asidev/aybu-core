@@ -16,15 +16,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (File, Image, PageInfo)
+from aybu.core.models import (File, Image)
 from aybu.core.htmlmodifier import (associate_files,
                                     associate_images,
                                     associate_pages)
 from test_file import FileTestsBase
 from test_file import create_page
 from BeautifulSoup import BeautifulSoup
-import sqlalchemy.orm
-import sqlalchemy.event
 
 
 class AssociationTests(FileTestsBase):

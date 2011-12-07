@@ -19,12 +19,12 @@ limitations under the License.
 from aybu.core.models import Setting
 from aybu.core.models import SettingType
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 log = getLogger(__name__)
 
 
-class SettingTests(BaseTests):
+class SettingTests(TransactionalTestsBase):
 
     def add_ex_setting(self):
         self.max_pages = Setting(name=u'max_pages',
@@ -90,7 +90,7 @@ class SettingTests(BaseTests):
 
 
 
-class SettingTypeTests(BaseTests):
+class SettingTypeTests(TransactionalTestsBase):
 
     def test_str_and_repr(self):
         type = SettingType(name=u'integer', raw_type=u'int')

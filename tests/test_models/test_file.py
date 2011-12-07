@@ -35,7 +35,7 @@ from aybu.core.models import (Banner,
                               PageInfo)
 from aybu.core.exc import QuotaError
 
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 
 def create_page(session, copy_from=None):
@@ -55,7 +55,7 @@ def create_page(session, copy_from=None):
     return pageinfo
 
 
-class FileTestsBase(BaseTests):
+class FileTestsBase(TransactionalTestsBase):
 
     def _create_tmp_file(self, content='__random__', **kwargs):
         """ Create a temporary file and return its name """

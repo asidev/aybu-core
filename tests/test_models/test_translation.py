@@ -23,18 +23,18 @@ from aybu.core.models import ExternalLinkInfo
 from aybu.core.models import InternalLinkInfo
 from aybu.core.models import Language
 from logging import getLogger
-from test_base import BaseTests
+from aybu.core.testing import TransactionalTestsBase
 
 from sqlalchemy.sql import func
 
 log = getLogger(__name__)
 
 
-class NodeInfoTests(BaseTests):
+class NodeInfoTests(TransactionalTestsBase):
 
     def test_create_translations(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'en').one()
@@ -61,7 +61,7 @@ class NodeInfoTests(BaseTests):
 
     def test_remove_translations(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'it').one()
@@ -76,7 +76,7 @@ class NodeInfoTests(BaseTests):
 
     def test_menu_info_create_translation(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
@@ -114,7 +114,7 @@ class NodeInfoTests(BaseTests):
 
     def test_external_link_info_create_translation(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
@@ -128,7 +128,7 @@ class NodeInfoTests(BaseTests):
 
     def test_internal_link_info_create_translation(self):
 
-        self.populate()
+        self.populate(self.session)
 
         language = self.session.query(Language).\
                         filter(Language.lang==u'de').one()
@@ -142,7 +142,7 @@ class NodeInfoTests(BaseTests):
 
     def test_property_type(self):
 
-        self.populate()
+        self.populate(self.session)
 
         menu_info = self.session.query(MenuInfo).\
                          order_by(func.random()).first()
@@ -181,7 +181,7 @@ class NodeInfoTests(BaseTests):
                          "<SectionInfo [1] 'Azienda'>")
 
     def test_get_by_url(self):
-        self.populate()
+        self.populate(self.session)
         url = u'/it/index'
         self.assertEqual(PageInfo.get_by_url(self.session, url).url, url)
         url = u'/en/index'
