@@ -18,13 +18,9 @@ limitations under the License.
 
 import random
 import string
-import ConfigParser
-import StringIO
 
-from aybu.core.models import default_data_from_config
 from aybu.core.models import Language
 from aybu.core.models import NodeInfo, PageInfo
-from aybu.core.models import populate
 from babel import Locale
 from babel.core import LOCALE_ALIASES, UnknownLocaleError
 from logging import getLogger

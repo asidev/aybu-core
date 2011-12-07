@@ -20,8 +20,7 @@ from aybu.core.exc import ValidationError
 from aybu.core.models import Node, Menu, Page, Section, InternalLink
 from aybu.core.models import ExternalLink, View, Setting, SettingType
 from aybu.core.models import Language, Banner, Image, File
-from aybu.core.models import MenuInfo, PageInfo, SectionInfo, ExternalLinkInfo
-from aybu.core.models import InternalLinkInfo
+from aybu.core.models import MenuInfo, PageInfo
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.sql import func
 from logging import getLogger
