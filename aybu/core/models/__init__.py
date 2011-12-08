@@ -16,12 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__all__ = ['Base', 'File', 'Image', 'Banner', 'Logo', 'Language',
-           'Node', 'Menu', 'Page', 'Section', 'ExternalLink', 'InternalLink',
-           'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
-           'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
-           'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription']
-
 from logging import getLogger
 from aybu.core.models.base import Base
 from aybu.core.models.file import (Banner,
@@ -52,22 +46,16 @@ from aybu.core.models.view import (View,
                                    ViewDescription)
 
 from aybu.core.utils import get_object_from_python_path
-from sqlalchemy import engine_from_config
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
 import sqlalchemy.orm
 import sqlalchemy.event
 from sqlalchemy.util.langhelpers import symbol
-import json
 
 log = getLogger(__name__)
 
 
-__all__ = ['populate', 'engine_from_config_parser', 'create_session',
-           'add_default_data', 'default_data_from_config',
-           'default_user_from_config', 'Base', 'Banner', 'Image', 'File',
+__all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'Language', 'ExternalLink', 'InternalLink', 'Menu', 'Node', 'Page',
            'Section', 'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
@@ -204,40 +192,6 @@ def before_flush(session, *args):
         obj.update_children_parent_url()
 
 
-def populate(config, data, session):
-
-    add_default_data(session, data)
-    user = default_user_from_config(config)
-    session.merge(user)
-
-    group = Group(name=u'admin')
-    group.users.append(user)
-    session.merge(group)
-
-    session.commit()
-
-
-def engine_from_config_parser(config, section="app:main"):
-
-    options = {opt: config.get(section, opt)
-               for opt in config.options(section)
-               if opt.startswith("sqlalchemy.")}
-
-    return engine_from_config(options)
-
-
-def create_session(engine, drop_all=True):
-
-    session = scoped_session(sessionmaker())
-    session.configure(bind=engine)
-
-    if drop_all:
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
-
-    return session
-
-
 def add_default_data(session, data):
 
     for params in data:
@@ -297,47 +251,3 @@ def add_default_data(session, data):
 
         obj = cls(**params)
         obj = session.merge(obj)
-
-
-def default_data_from_config(config):
-
-    for section in config.sections():
-        for option in config.options(section):
-
-            if not option.startswith('default_data'):
-                continue
-
-            file_ = str(config.get(section, option))
-
-            if not file_:
-                continue
-
-            data = open(file_).read()
-            return json.loads(data)
-
-
-def default_user_from_config(config):
-
-    options = {}
-
-    for section in config.sections():
-        for option in config.options(section):
-
-            if not option.startswith('default_user'):
-                continue
-            elif option.startswith('default_user.username'):
-                key = 'username'
-            elif option.startswith('default_user.password'):
-                key = 'password'
-
-            value = unicode(config.get(section, option))
-
-            if not value:
-                continue
-
-            options[key] = value
-
-    if not options:
-        raise ValueError('No default user in configuration file!')
-
-    return User(**options)
