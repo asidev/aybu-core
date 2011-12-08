@@ -18,19 +18,23 @@ limitations under the License.
 
 from paste.script.command import BadCommand
 from paste.script.command import Command
-import ConfigParser
+from paste.deploy.loadwsgi import appconfig
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import engine_from_config
+import json
 import os
+import pkg_resources
 
-from aybu.core.models import populate, init_session_events
-from aybu.core.models import (engine_from_config_parser,
-                              default_data_from_config,
-                              create_session)
-
+from aybu.core.models import (add_default_data,
+                              init_session_events,
+                              User,
+                              Base,
+                              Group)
 
 class SetupApp(Command):
 
     min_args = 0
-    usage = 'CONFIG_FILE SECTION'
+    usage = 'CONFIG_FILE[#section]'
     takes_config_file = 1
     summary = "Run the described application setup routine."
     description = """\
@@ -45,23 +49,42 @@ class SetupApp(Command):
         if not self.args:
             raise BadCommand('You must give a configuration file.')
 
-        if len(self.args) < 2:
-            raise BadCommand('You must give a section name')
-
         file_name = self.args[0]
         if not file_name.startswith("/"):
             file_name = os.path.join(os.getcwd(), file_name)
 
-        section_name = self.args[1]
         # Setup logging via the logging module's fileConfig function
         # with the specified 'config_file', if applicable.
         self.logging_file_config(file_name)
 
-        config = ConfigParser.ConfigParser()
-        config.read([file_name])
-        engine = engine_from_config_parser(config, section_name)
-        session = create_session(engine, True)
-        init_session_events(session=session)
-        data = default_data_from_config(config)
-        populate(config, data, session)
-        session.close()
+        config = appconfig('config:{}'.format(file_name))
+        engine = engine_from_config(config, 'sqlalchemy.')
+        Base.metadata.bind = engine
+        Base.metadata.drop_all()
+        Base.metadata.create_all()
+        Session = sessionmaker(bind=engine)
+        try:
+            session = Session()
+            init_session_events(session)
+            source_ = pkg_resources.resource_stream('aybu.core.data',
+                                                    'default_data.json')
+            data = json.loads(source_.read())
+
+            add_default_data(session, data)
+            user = User(username=config['default_user.username'],
+                        password=config['default_user.password'])
+            session.merge(user)
+            group = Group(name=u'admin')
+            group.users.append(user)
+            session.merge(group)
+            session.flush()
+
+        except:
+            session.rollback()
+
+        else:
+            session.commit()
+
+        finally:
+            session.close()
+            source_.close()
