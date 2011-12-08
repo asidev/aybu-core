@@ -20,7 +20,9 @@ import json
 import logging
 import os
 import pkg_resources
+import pyramid.testing
 import unittest
+from aybu.core.request import Request
 from aybu.core.models import init_session_events
 from aybu.core.models import (add_default_data,
                               Base,
@@ -139,9 +141,9 @@ class TransactionalTestsBase(TestsBase):
         cls.Session = sessionmaker(bind=cls.engine)
 
     def setUp(self):
-        connection = self.engine.connect()
-        self.trans = connection.begin()
-        self.session = self.Session(bind=connection)
+        self.connection = self.engine.connect()
+        self.trans = self.connection.begin()
+        self.session = self.Session(bind=self.connection)
         init_session_events(session=self.session)
 
     def tearDown(self):
@@ -152,6 +154,22 @@ class TransactionalTestsBase(TestsBase):
     def tearDownClass(cls):
         super(TransactionalTestsBase, cls).tearDownClass()
         cls.Session.close_all()
+
+
+class UnitTestsBase(TransactionalTestsBase):
+
+    def setUp(self):
+        super(UnitTestsBase, self).setUp()
+        Request.set_db_session(self.connection, self.Session)
+        self.req = Request({})
+        self.ctx = pyramid.testing.DummyResource
+        self.configurator = pyramid.testing.setUp(request=self.req)
+        self.req.registry = self.configurator.registry
+        self.configurator.include('pyramid_mailer.testing')
+
+    def tearDown(self):
+        pyramid.testing.tearDown()
+        super(UnitTestsBase, self).tearDown()
 
 
 class FunctionalTestsBase(TestsBase):

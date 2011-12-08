@@ -57,6 +57,24 @@ class BaseRequest(PyramidRequest):
         return self.registry.settings
 
     @classmethod
+    def get_session(cls):
+        def noop():
+            return
+
+        if not hasattr(cls.SessionFactory, 'remove'):
+            cls.SessionFactory.remove = noop
+
+        return cls.SessionFactory(bind=cls.connection)
+
+    @classmethod
+    def set_db_session(cls, connection, SessionFactory):
+        """ use this to bind all requests to a connection """
+        cls.connection = connection
+        cls.SessionFactory = SessionFactory
+        cls.DBScopedSession = cls.get_session
+
+
+    @classmethod
     def set_db_engine(cls, engine, **kwargs):
 
         if isinstance(engine, basestring):
