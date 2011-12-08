@@ -16,6 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from alembic.config import Config
+from alembic import command
 from paste.script.command import BadCommand
 from paste.script.command import Command
 from paste.deploy.loadwsgi import appconfig
@@ -62,6 +64,7 @@ class SetupApp(Command):
         Base.metadata.bind = engine
         Base.metadata.drop_all()
         Base.metadata.create_all()
+        command.stamp(Config(file_name.split('#')[0]), 'head')
         Session = sessionmaker(bind=engine)
         try:
             session = Session()

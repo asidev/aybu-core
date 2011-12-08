@@ -101,8 +101,6 @@ def before_flush(session, *args):
     """ Set 'parent_url' and update it when 'url_part' was changed.
     """
 
-    log.debug('Before flush event handler...')
-
     nones = (symbol('NO_VALUE'), symbol('NEVER_SET'), None)
 
     # NOTE: cannot know objects order in session.new and session.dirty,
