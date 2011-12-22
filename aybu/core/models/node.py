@@ -38,6 +38,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import cast
+from sqlalchemy.ext.declarative import declared_attr
 import warnings
 
 
@@ -121,7 +122,7 @@ class Node(Base):
             raise ConstraintError('Menu deletion is not allowed.')
 
         if isinstance(node, Page) and \
-           Page.count(self.session, (Page.enabled == True,)) < 2:
+           Page.count(session, Page.enabled == True) < 2:
             raise ConstraintError('Last Page cannot be deleted.')
 
         if node.children:
@@ -132,16 +133,17 @@ class Node(Base):
         if isinstance(node, Page):
             # FIXME: add constraint!
             # Cannot delete a PageInfo when it is referred by other PageInfo.
+            from aybu.core.models.translation import PageInfo
             for page_info in node.translations:
 
                 if PageInfo.count(session,
-                                  (PageInfo.links.contains(page_info),)):
+                                  PageInfo.links.contains(page_info)):
                     raise ConstraintError('Cannot delete a referred Page.')
 
                 # FIXME: test Pufferfish to verify files deletion.
                 page_info.delete()
 
-        node.delete()
+        session.delete(node)
 
     @classmethod
     def move(cls, session, id_, parent_id, previous_node_id):
@@ -259,7 +261,6 @@ class Page(Node):
     home = Column(Boolean, default=False)
     sitemap_priority = Column(Integer, default=50)
     banners = relationship('Banner', secondary=node_banners)
-
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',
                                          ondelete='restrict'))
@@ -362,37 +363,6 @@ class Page(Node):
                 dict_['title'] = translation.title
 
         return dict_
-
-
-class MediaPage(Page):
-    __mapper_args__ = {'polymorphic_identity': 'media_pages'}
-    file_id = Column(Integer, ForeignKey('files.id',
-                                         onupdate='cascade',
-                                         ondelete='restrict'))
-
-
-class MediaCollection(MediaPage):
-    __mapper_args__ = {'polymorphic_identity': 'media_collections'}
-    cover = relationship('File',
-                         lazy='joined',
-                         primaryjoin='MediaCollection.file_id == File.id')
-    items = relationship('MediaItem', lazy='joined',
-                         primaryjoin='MediaCollection.id == MediaItem.collection_id')
-    translations = relationship('MediaCollectionInfo', lazy='joined')
-
-
-class MediaItem(MediaPage):
-    __mapper_args__ = {'polymorphic_identity': 'media_collections_items'}
-    collection_id = Column(Integer, ForeignKey('nodes.id',
-                                               onupdate='cascade',
-                                               ondelete='restrict'))
-    collection = relationship('MediaCollection',
-                              lazy='joined',
-                              primaryjoin='MediaItem.collection_id == MediaCollection.id')
-    media = relationship('File',
-                         lazy='joined',
-                         primaryjoin='MediaCollection.file_id == File.id')
-    translations = relationship('MediaItemInfo', lazy='joined')
 
 
 class Section(Node):

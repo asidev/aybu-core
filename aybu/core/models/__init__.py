@@ -45,6 +45,10 @@ from aybu.core.models.user import (User,
 from aybu.core.models.view import (View,
                                    ViewDescription)
 
+from aybu.core.models.media import (MediaCollectionPage,
+                                    MediaCollectionPageInfo,
+                                    MediaItemPage,
+                                    MediaItemPageInfo)
 from aybu.core.utils import get_object_from_python_path
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
@@ -204,6 +208,7 @@ def add_default_data(session, data):
 
                 try:
                     property_ = mapper.get_property(key)
+                    #log.debug('property: %s', property_)
                 except:
                     continue
 
@@ -215,11 +220,16 @@ def add_default_data(session, data):
                 except AttributeError:
                     class_ = property_.argument()
 
+                #log.debug('class: %s', class_)
+
                 query = session.query(class_)
 
                 if not property_.uselist and len(mapper.primary_key) == 1:
                     params[key] = query.get(value)
+                    #log.debug('param: %s', params[key])
                     continue
+
+                #log.debug('param was not updated: %s', params[key])
         """
                 # The code below is needed when data specifies relationships
                 # as list or scalar of primary keys.

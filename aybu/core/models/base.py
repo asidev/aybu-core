@@ -134,7 +134,11 @@ class AybuBase(object):
     def to_dict(self, includes=(), excludes=()):
         """ Dictify entity.
         """
-        dict_ = {'__class_name__': self.__class__.__name__}
+        if '__class__' not in excludes:
+            dict_ = {'__class__': {'name': self.__class__.__name__,
+                                   'module': self.__class__.__module__}}
+        else:
+            dict_ = {}
 
         for property_ in object_mapper(self).iterate_properties:
 
@@ -151,5 +155,10 @@ class AybuBase(object):
                 dict_[property_.key] = getattr(self, property_.key).to_dict()
 
         return dict_
+
+    dictify = to_dict
+    #FIXME: this function will replace to_dict in the future!
+    # Reason: to_dict was ported from LF aybu version.
+
 
 Base = declarative_base(cls=AybuBase)

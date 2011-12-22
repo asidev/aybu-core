@@ -44,7 +44,10 @@ class View(Base):
     fs_view_path = Column(String(255), unique=True)
 
     def __repr__(self):
-        return "<View %s (%s)>" % (self.name, self.fs_view_path)
+        try:
+            return "<View %s (%s)>" % (self.name, self.fs_view_path)
+        except:
+            return "<View>"
 
     @classmethod
     def all(cls, session, start=None, limit=None):

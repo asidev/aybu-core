@@ -42,7 +42,10 @@ class SettingType(Base):
     raw_type = Column(String(8), nullable=False)
 
     def __repr__(self):
-        return "<SettingType %s (%s)>" % (self.name, self.raw_type)
+        try:
+            return "<SettingType %s (%s)>" % (self.name, self.raw_type)
+        except:
+            return '<SettingType>'
 
     def to_dict(self):
         return {'name': self.name, 'raw_type': self.raw_type}
