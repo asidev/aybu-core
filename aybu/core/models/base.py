@@ -152,7 +152,12 @@ class AybuBase(object):
             elif isinstance(property_, RelationshipProperty) and \
                  property_.key in includes:
 
-                dict_[property_.key] = getattr(self, property_.key).to_dict()
+                if property_.uselist:
+                    dict_[property_.key] = [item.to_dict()
+                                            for item in getattr(self,
+                                                                property_.key)]
+                else:
+                    dict_[property_.key] = getattr(self, property_.key).to_dict()
 
         return dict_
 

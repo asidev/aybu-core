@@ -109,8 +109,11 @@ class Node(Base):
 
     @classmethod
     def get_max_weight(cls, session, parent):
-        return session.query(func.max(cls.weight))\
-                      .filter(cls.parent == parent).scalar()
+        value = session.query(func.max(cls.weight))\
+                       .filter(cls.parent == parent).scalar()
+        if not value:
+            value = 0
+        return value
 
     @classmethod
     def delete(cls, session, id_):
