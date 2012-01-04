@@ -234,7 +234,6 @@ class Menu(Node):
     def to_dict(self, language=None, recursive=True):
         dict_ = super(Menu, self).to_dict(language, recursive)
         dict_['iconCls'] = 'folder'
-        #dict_['url'] = language.lang
 
         for translation in self.translations:
             if translation.lang == language:
