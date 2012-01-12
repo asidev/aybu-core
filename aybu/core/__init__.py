@@ -18,5 +18,11 @@ limitations under the License.
 
 __version__ = (0, 2, 0, 'dev', 0)
 
+import warnings
+from sqlalchemy import exc as sa_exc
+
+warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+
+
 def main(*args):
     pass
