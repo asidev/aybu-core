@@ -60,6 +60,7 @@ class User(Base):
 
     @classmethod
     def get(cls, session, pkey):
+        # FIXME this should raise NoResultFound if query returns None!
         return session.query(cls).options(joinedload('groups')).get(pkey)
 
     @classmethod
