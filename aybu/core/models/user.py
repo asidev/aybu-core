@@ -19,6 +19,7 @@ limitations under the License.
 from aybu.core.models.base import Base
 from aybu.core.models.types import Crypt
 import crypt
+import re
 from logging import getLogger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -27,6 +28,7 @@ from sqlalchemy import Table
 from sqlalchemy.orm import (relationship,
                             object_session,
                             joinedload)
+from sqlalchemy.orm.exc import NoResultFound
 
 
 __all__ = []
@@ -53,6 +55,8 @@ class User(Base):
     __tablename__ = 'users'
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
+    hash_re = re.compile(r'(\$[1,5-6]\$|\$2a\$)')
+
     username = Column(Unicode(255), primary_key=True)
     password = Column(Crypt(), nullable=False)
 
@@ -61,17 +65,22 @@ class User(Base):
     @classmethod
     def get(cls, session, pkey):
         # FIXME this should raise NoResultFound if query returns None!
-        return session.query(cls).options(joinedload('groups')).get(pkey)
+        user = session.query(cls).options(joinedload('groups')).get(pkey)
+        if user is None:
+            raise NoResultFound("No obj with key {} in class {}"\
+                                .format(pkey, cls.__name__))
+        return user
 
     @classmethod
     def check(cls, session, username, password):
         try:
             user = cls.get(session, username)
-            enc_password = crypt.crypt(password, user.password[0:2])
+            length = len(cls.hash_re.match(user.password).group())
+            enc_password = crypt.crypt(password, user.password[0:length])
             assert user.password == enc_password
 
-        except:
-            log.error('Invalid login for %s', username)
+        except (AssertionError, NoResultFound) :
+            log.warn('Invalid login for %s', username)
             raise ValueError('invalid username or password')
 
         else:
