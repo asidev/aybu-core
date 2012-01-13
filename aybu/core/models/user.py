@@ -70,7 +70,7 @@ class User(Base):
             assert user.password == enc_password
 
         except:
-            log.error('Invalid login: %s != %s', password, enc_password)
+            log.error('Invalid login for %s', username)
             raise ValueError('invalid username or password')
 
         else:
