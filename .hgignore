@@ -4,3 +4,4 @@ syntax: glob
 ./*.ini
 ./.coverage
 ./aybu_core.egg-info
+.rvmrc
