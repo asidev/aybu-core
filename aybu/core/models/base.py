@@ -16,7 +16,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import object_mapper
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.properties import ColumnProperty
