@@ -17,7 +17,6 @@ limitations under the License.
 """
 
 from aybu.core.models.base import Base
-from aybu.core.models.types import Crypt
 import crypt
 import re
 from logging import getLogger
@@ -25,6 +24,7 @@ from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Unicode
 from sqlalchemy import Table
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (relationship,
                             object_session,
                             joinedload)
@@ -56,9 +56,10 @@ class User(Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
     hash_re = re.compile(r'(\$[1,5-6]\$|\$2a\$)')
+    salt = "$6$"
 
     username = Column(Unicode(255), primary_key=True)
-    password = Column(Crypt(), nullable=False)
+    crypted_password = Column("password", Unicode(95), nullable=False)
 
     groups = relationship('Group', secondary=users_groups, backref='users')
 
@@ -85,6 +86,14 @@ class User(Base):
 
         else:
             return True
+
+    @hybrid_property
+    def password(self):
+        return self.crypted_password
+
+    @password.setter
+    def password(self, value):
+        self.crypted_password = crypt.crypt(value, self.salt)
 
     def check_password(self, password):
         return self.__class__.check(object_session(self), self.username,
