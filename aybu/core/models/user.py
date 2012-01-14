@@ -59,7 +59,7 @@ class User(Base):
     salt = "$6$"
 
     username = Column(Unicode(255), primary_key=True)
-    crypted_password = Column("password", Unicode(95), nullable=False)
+    crypted_password = Column("password", Unicode(128), nullable=False)
 
     groups = relationship('Group', secondary=users_groups, backref='users')
 
