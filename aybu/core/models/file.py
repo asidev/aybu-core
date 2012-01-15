@@ -35,7 +35,6 @@ from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
 
 
-
 __all__ = ['File', 'Image', 'Banner']
 log = logging.getLogger(__name__)
 
@@ -75,7 +74,7 @@ class File(FileSystemEntity, Base):
             super(File, cls).create_new(newobj, args, kwargs)
 
         except NoResultFound:
-            # there is no limit for this filetype
+            # there is no limit for this file type
             super(File, cls).create_new(newobj, args, kwargs)
 
     @property
@@ -110,10 +109,10 @@ class File(FileSystemEntity, Base):
         return cls.search(session, start=start, limit=limit,
                           query_options=query_options, filters=filters)
 
-
     def __repr__(self):  # pragma: nocover
         return "<%s %s at %s : %s>" % (self.__class__.__name__,
                                        self.id, self.path, self.url)
+
 
 class SimpleImageMixin(object):
     full_size = None
@@ -131,7 +130,6 @@ class SimpleImageMixin(object):
         except IndexError:
             return None
 
-
     @classmethod
     def set_default(cls, obj, value, oldvalue, initiator):
         if value:
@@ -139,7 +137,6 @@ class SimpleImageMixin(object):
                        filters=(cls.id != obj.id), return_query=True)\
                             .update({'default': False},
                                     synchronize_session='fetch')
-
 
     @classmethod
     def set_sizes(cls, full):
@@ -204,7 +201,7 @@ class Image(File):
         >>> from aybu.core.models.file import Image
         >>> Image.initialize(session, base="/tmp/testme", private="/tmp")
 
-        Define sizes if you want thumbnails (width,height)
+        Define sizes if you want thumbnails (width, height)
         >>> Image.thumb_sizes = dict(small=(120,120), medium=(300, 300))
 
         Set full_size to a tuple to set the original image max size (w, h)
@@ -277,7 +274,7 @@ class Image(File):
         try:
             if oldvalue.name == "NO_VALUE":
                 # When constructing object, sqlalchemy calls this event
-                # using NO VALUE symbol as oldvalue
+                # using NO VALUE symbol as old value
                 return
 
         except AttributeError:
