@@ -39,9 +39,9 @@ class BaseProxy(object):
         self._log = logging.getLogger("{}.{}".format(__name__,
                                                     self.__class__.__name__))
         self.hostname = request.host.split(":")[0]
-        self.address = Setting.get(session, 'proxy_address')
-        self.port = Setting.get(session, 'proxy_port')
-        self.timeout = Setting.get(session, 'proxy_purge_timeout')
+        self.address = Setting.get(session, 'proxy_address').value
+        self.port = Setting.get(session, 'proxy_port').value
+        self.timeout = Setting.get(session, 'proxy_purge_timeout').value
 
     def ban(self, paths):
         raise NotImplementedError
