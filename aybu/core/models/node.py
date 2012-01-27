@@ -212,6 +212,8 @@ class Node(Base):
         raise NoResultFound('No translation for %s.' % language.lang)
 
     def to_dict(self, language=None, recursive=True):
+        # Import statement to avoid circular imports.
+        from aybu.core.models.media import MediaItemPage
         return dict(id=self.id,
                     type=self.type,
                     iconCls=self.type,
@@ -224,7 +226,7 @@ class Node(Base):
                     expanded=True if self.children else False,
                     children=[child.to_dict(language, recursive)
                               for child in self.children
-                              if recursive])
+                              if recursive and not isinstance(child, MediaItemPage)])
 
 
 class Menu(Node):

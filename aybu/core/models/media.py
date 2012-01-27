@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import Base, Node, NodeInfo, Page, PageInfo
+from aybu.core.models import Base, Page, PageInfo
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
