@@ -73,7 +73,6 @@ class BaseRequest(PyramidRequest):
         cls.SessionFactory = SessionFactory
         cls.DBScopedSession = cls.get_session
 
-
     @classmethod
     def set_db_engine(cls, engine, **kwargs):
 
@@ -85,7 +84,6 @@ class BaseRequest(PyramidRequest):
         # per-process
         cls.DBScopedSession = scoped_session(sessionmaker(engine, **kwargs))
         init_session_events(session=cls.DBScopedSession)
-
 
 
 class Request(BaseRequest):
