@@ -18,10 +18,13 @@ limitations under the License.
 
 __version__ = (0, 2, 0, 'dev', 0)
 
-import warnings
-from sqlalchemy import exc as sa_exc
-
-warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+try:
+    import warnings
+    from sqlalchemy import exc as sa_exc
+    warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+except ImportError:
+    # this is needed so that versiontools can import this file
+    pass
 
 
 def main(*args):
