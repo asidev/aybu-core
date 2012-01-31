@@ -44,6 +44,11 @@ from aybu.core.models.user import (User,
                                    Group)
 from aybu.core.models.view import (View,
                                    ViewDescription)
+from aybu.core.models.media import (MediaPage,
+                                    MediaCollectionPage,
+                                    MediaItemPage,
+                                    MediaCollectionPageInfo,
+                                    MediaItemPageInfo)
 from aybu.core.utils import get_object_from_python_path
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
@@ -58,7 +63,9 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'Language', 'ExternalLink', 'InternalLink', 'Menu', 'Node', 'Page',
            'Section', 'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
-           'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription']
+           'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription',
+           'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
+           'MediaCollectionPageInfo', 'MediaItemPageInfo']
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')
@@ -191,11 +198,15 @@ def before_flush(session, *args):
 
 def add_default_data(session, data):
 
+    seq_classes = {}
     for params in data:
 
         cls = 'aybu.core.models.%s' % params.pop('cls_')
         cls = get_object_from_python_path(cls)
         mapper = class_mapper(cls)
+
+        if hasattr(cls, "id_seq") and not cls.__name__ in seq_classes:
+            seq_classes[cls.__name__] = cls
 
         for key, value in params.iteritems():
 
@@ -211,13 +222,11 @@ def add_default_data(session, data):
 
                 try:
                     class_ = property_.argument.class_
+
                 except AttributeError:
                     class_ = property_.argument()
 
-                #log.debug('class: %s', class_)
-
                 query = session.query(class_)
-
                 if not property_.uselist and len(mapper.primary_key) == 1:
                     params[key] = query.get(value)
                     continue
@@ -251,3 +260,18 @@ def add_default_data(session, data):
 
         obj = cls(**params)
         obj = session.merge(obj)
+
+    for cls in seq_classes.values():
+        """ This works (and is needed) only on postrgresql to fix
+            autoincrement
+        """
+        log.debug("Fixing sequence for cls %s", cls)
+        tablename = cls.__tablename__
+        seqname = "{}_id_seq".format(tablename)
+        try:
+            session.execute(
+                "SELECT setval('{}', max(id)) FROM {};".format(seqname,
+                                                               tablename)
+            )
+        except sqlalchemy.exc.OperationalError:
+            pass
