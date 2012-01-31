@@ -122,7 +122,7 @@ class NodeTests(TransactionalTestsBase):
         self.assertEqual(Node.get_max_weight(self.session, parent=node1), 20)
         self.assertEqual(Node.get_max_weight(self.session, parent=node2), 30)
         # Node.get_max_weight return None when the query is empty.
-        self.assertEqual(Node.get_max_weight(self.session, parent=node3), None)
+        self.assertEqual(Node.get_max_weight(self.session, parent=node3), 0)
 
     def test_validate_parent_for_menu(self):
         menu = Menu(id=1, parent=None)
