@@ -43,11 +43,12 @@ users_groups = Table('users_groups',
                             ForeignKey('users.username',
                                        onupdate="cascade",
                                        ondelete="cascade")),
-                            Column('groups_name',
-                                   Unicode(32),
-                                   ForeignKey('groups.name',
-                                              onupdate="cascade",
-                                              ondelete="cascade")))
+                     Column('groups_name',
+                            Unicode(32),
+                            ForeignKey('groups.name',
+                                       onupdate="cascade",
+                                       ondelete="cascade")),
+                     mysql_engine='InnoDB')
 
 
 class User(Base):
@@ -80,7 +81,7 @@ class User(Base):
             enc_password = crypt.crypt(password, user.password[0:length])
             assert user.password == enc_password
 
-        except (AssertionError, NoResultFound) :
+        except (AssertionError, NoResultFound):
             log.warn('Invalid login for %s', username)
             raise ValueError('invalid username or password')
 
