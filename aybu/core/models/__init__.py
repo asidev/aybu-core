@@ -203,7 +203,6 @@ def add_default_data(session, data):
 
                 try:
                     property_ = mapper.get_property(key)
-                    #log.debug('property: %s', property_)
                 except:
                     continue
 
@@ -221,10 +220,8 @@ def add_default_data(session, data):
 
                 if not property_.uselist and len(mapper.primary_key) == 1:
                     params[key] = query.get(value)
-                    #log.debug('param: %s', params[key])
                     continue
 
-                #log.debug('param was not updated: %s', params[key])
         """
                 # The code below is needed when data specifies relationships
                 # as list or scalar of primary keys.

@@ -28,6 +28,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import Unicode
+from sqlalchemy.schema import Sequence
 
 
 __all__ = ['Language']
@@ -40,16 +41,17 @@ class Language(Base):
     __table_args__ = (UniqueConstraint('lang', 'country'),
                       {'mysql_engine': 'InnoDB'})
 
-    id = Column(Integer, primary_key=True)
+    id_seq = Sequence("{}_id_seq".format(__tablename__))
+    id = Column(Integer, id_seq, primary_key=True)
     lang = Column(Unicode(2), nullable=False)
     country = Column(Unicode(2), nullable=False)
     enabled = Column(Boolean, default=True)
 
     def __repr__(self):
         try:
-            return "<Language %s_%s [%s]>" % (self.lang,
-                                              self.country,
-                                              "enabled" if self.enabled else "disabled")
+            return "<Language %s_%s [%s]>" % \
+                (self.lang, self.country,
+                "enabled" if self.enabled else "disabled")
         except:
             return super(Language, self).__repr__()
 

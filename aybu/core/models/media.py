@@ -16,11 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import Base, Page, PageInfo
+from aybu.core.models import Page, PageInfo
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 import logging
 

@@ -91,7 +91,6 @@ class Setting(Base):
 
         super(Setting, self).__init__(**kwargs)
 
-
     def _get_cast(self, type_=None):
         def noop(value):
             return value
@@ -121,8 +120,8 @@ class Setting(Base):
 
         except:
             log.exception('Cast failed.')
-            raise ValueError("v must be of type %s: '%s'"  % (self.type.raw_type,
-                                                              v))
+            raise ValueError("v must be of type %s: '%s'"\
+                                % (self.type.raw_type, v))
 
         else:
             self.raw_value = unicode(v)

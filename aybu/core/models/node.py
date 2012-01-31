@@ -38,13 +38,10 @@ from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import cast
-from sqlalchemy.ext.declarative import declared_attr
-import warnings
+from sqlalchemy.schema import Sequence
 
 
 __all__ = []
-
-
 log = getLogger(__name__)
 
 
@@ -56,7 +53,8 @@ class Node(Base):
     discriminator = Column('row_type', String(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
 
-    id = Column(Integer, primary_key=True)
+    id_seq = Sequence("{}_id_seq".format(__tablename__))
+    id = Column(Integer, id_seq, primary_key=True)
     enabled = Column(Boolean, default=True)
     hidden = Column(Boolean, default=False)
     weight = Column(Integer, nullable=False)
@@ -92,7 +90,7 @@ class Node(Base):
     def all(cls, session, start=None, limit=None):
         # query_options must not be in the method signature:
         # the user should not use SQLA internals.
-        query_options = [joinedload('parent'), joinedload('children'),]
+        query_options = [joinedload('parent'), joinedload('children')]
         if hasattr(cls, 'translations'):
             query_options.append(joinedload('translations'))
         return super(Node, cls).all(session, start=start, limit=limit,
@@ -226,7 +224,8 @@ class Node(Base):
                     expanded=True if self.children else False,
                     children=[child.to_dict(language, recursive)
                               for child in self.children
-                              if recursive and not isinstance(child, MediaItemPage)])
+                              if recursive \
+                                and not isinstance(child, MediaItemPage)])
 
 
 class Menu(Node):
@@ -407,11 +406,13 @@ class InternalLink(Node):
                                               onupdate='cascade',
                                               ondelete='cascade'),)
 
-    linked_to = relationship('Page',
-                             backref=backref('linked_by', lazy='joined'),
-                             remote_side=Page.id,
-                             primaryjoin='Page.id == InternalLink.linked_to_id',
-                             lazy='joined')
+    linked_to = relationship(
+            'Page',
+            backref=backref('linked_by', lazy='joined'),
+            remote_side=Page.id,
+            primaryjoin='Page.id == InternalLink.linked_to_id',
+            lazy='joined'
+    )
 
     @validates('linked_to')
     def validate_linked_to(self, key, value):

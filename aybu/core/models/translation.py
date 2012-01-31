@@ -26,22 +26,19 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
-from sqlalchemy.orm.exc import (NoResultFound,
-                                MultipleResultsFound)
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.schema import Sequence
 from aybu.core.models.base import Base
-from aybu.core.models.node import Menu, Section, Page
+from aybu.core.models.node import (Section,
+                                   Page)
 from aybu.core.htmlmodifier import (update_img_src,
                                     associate_pages,
                                     associate_files,
                                     associate_images,
                                     remove_target_attributes)
 from BeautifulSoup import BeautifulSoup
-from sqlalchemy.orm import validates
-from sqlalchemy.orm.session import object_session
 
 __all__ = []
 
@@ -55,7 +52,9 @@ class NodeInfo(Base):
                       {'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', String(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
-    id = Column(Integer, primary_key=True)
+
+    id_seq = Sequence("{}_id_seq".format(__tablename__))
+    id = Column(Integer, id_seq, primary_key=True)
     label = Column(Unicode(64), nullable=False)
     node_id = Column(Integer, ForeignKey('nodes.id',
                                          onupdate='cascade',
@@ -199,7 +198,8 @@ class CommonInfo(NodeInfo):
 
                         if a['href'] == old_url:
                             log.debug('Found %s in %s', obj.label, old_url)
-                            a['href'] = new_url + '.html' if has_ext else new_url
+                            a['href'] = new_url + '.html' \
+                                            if has_ext else new_url
 
                         elif has_ext:
                             a['href'] = a['href'] + '.html'
@@ -229,7 +229,8 @@ class CommonInfo(NodeInfo):
 
     def create_translation(self, **kwargs):
         kwargs['title'] = self.title + '[{}]'.format(kwargs['language'].lang)
-        kwargs['url_part'] = self.url_part + '[{}]'.format(kwargs['language'].lang)
+        kwargs['url_part'] = self.url_part + \
+                                '[{}]'.format(kwargs['language'].lang)
         kwargs['meta_description'] = self.meta_description
         kwargs['head_content'] = self.head_content
         return super(CommonInfo, self).create_translation(**kwargs)

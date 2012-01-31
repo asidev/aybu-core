@@ -46,11 +46,12 @@ class Keyword(Base):
                                   ForeignKey('node_infos.id',
                                              onupdate="cascade",
                                              ondelete="cascade")),
-                                  Column('keyword_name',
-                                         Unicode(64),
-                                         ForeignKey('keywords.name',
-                                                    onupdate="cascade",
-                                                    ondelete="cascade")))
+                           Column('keyword_name',
+                                  Unicode(64),
+                                  ForeignKey('keywords.name',
+                                             onupdate="cascade",
+                                             ondelete="cascade")),
+                           mysql_engine='InnoDB')
     used_by = relationship('NodeInfo',
                            secondary=_used_by_table,
                            backref=backref('keywords'))

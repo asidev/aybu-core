@@ -27,6 +27,7 @@ from sqlalchemy import UnicodeText
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import Sequence
 
 
 __all__ = ['View', 'ViewDescription']
@@ -39,7 +40,8 @@ class View(Base):
     __tablename__ = 'views'
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
-    id = Column(Integer, primary_key=True)
+    id_seq = Sequence("{}_id_seq".format(__tablename__))
+    id = Column(Integer, id_seq, primary_key=True)
     name = Column(Unicode(255), unique=True)
     fs_view_path = Column(String(255), unique=True)
 
@@ -57,14 +59,14 @@ class View(Base):
                                     query_options=query_options)
 
 
-
 class ViewDescription(Base):
 
     __tablename__ = 'views_descriptions'
     __table_args__ = (UniqueConstraint('view_id', 'lang_id'),
                       {'mysql_engine': 'InnoDB'})
 
-    id = Column(Integer, primary_key=True)
+    id_seq = Sequence("{}_id_seq".format(__tablename__))
+    id = Column(Integer, id_seq, primary_key=True)
     description = Column(UnicodeText, default=u'')
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',

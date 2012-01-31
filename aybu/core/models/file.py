@@ -43,7 +43,6 @@ class File(FileSystemEntity, Base):
     """
         Simple class that keeps the file on disk.
     """
-
     __tablename__ = 'files'
     __table_args__ = ({'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', Unicode(50))
@@ -53,7 +52,8 @@ class File(FileSystemEntity, Base):
     def create_new(cls, newobj, args, kwargs):
         """ This method is called upon user-called constructor invocation
             as it is set by pufferfish as the 'init' instance event callback
-            http://www.sqlalchemy.org/docs/orm/events.html#sqlalchemy.orm.events.InstanceEvents.init
+            http://www.sqlalchemy.org/docs/orm/events.html
+            #sqlalchemy.orm.events.InstanceEvents.init
         """
         try:
             session = kwargs['session']
