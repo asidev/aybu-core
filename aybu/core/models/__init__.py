@@ -44,11 +44,6 @@ from aybu.core.models.user import (User,
                                    Group)
 from aybu.core.models.view import (View,
                                    ViewDescription)
-
-from aybu.core.models.media import (MediaCollectionPage,
-                                    MediaCollectionPageInfo,
-                                    MediaItemPage,
-                                    MediaItemPageInfo)
 from aybu.core.utils import get_object_from_python_path
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
