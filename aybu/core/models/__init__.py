@@ -274,4 +274,8 @@ def add_default_data(session, data):
                                                                tablename)
             )
         except sqlalchemy.exc.OperationalError:
+            # raised by MySQLdb
+            pass
+        except sqlalchemy.exc.ProgrammingError:
+            # raised by oursql
             pass
