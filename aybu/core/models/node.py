@@ -162,6 +162,8 @@ class Node(Base):
 
         if not previous_node_id is None:
             previous = Node.get(session, previous_node_id)
+        else:
+            previous = None
 
         q = session.query(Node).filter(Node.parent == parent)
 
@@ -174,6 +176,7 @@ class Node(Base):
             q = q.filter(Node.weight > previous.weight)
 
         q.update({'weight': Node.weight + 1})
+        session.flush()
         node.weight = weight
         node.parent = parent
 
