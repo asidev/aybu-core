@@ -309,7 +309,7 @@
         "cls_": "Setting",
         "name": "reseller_link",
         "raw_value": "http://www.asidev.com",
-        "ui_administrable": false,
+        "ui_administrable": true,
         "type": "txt"
     },
     {
