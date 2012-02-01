@@ -19,7 +19,8 @@ limitations under the License.
 from aybu.core.models import Setting
 import logging
 
-__all__ = [ 'Proxy' ]
+
+__all__ = ['Proxy']
 
 
 class Proxy(object):
@@ -72,7 +73,6 @@ class BaseProxy(object):
             self.ban(r'^/[a-z]{2}/.*.html')
 
 
-
 class DummyProxy(BaseProxy):
     """ A do-nothing-proxy """
 
@@ -106,5 +106,5 @@ class HttpCachePurgerProxy(BaseProxy):
 
     def purge(self, paths=None):
         self._log.warning('{}.purge is currently implemented as a ban'\
-                         .format(self.__class__.name__))
+                         .format(self.__class__.__name__))
         return self.ban(paths)
