@@ -83,19 +83,21 @@ def init_attrs_events(mapper, class_):
     elif class_ is Image:
         sqlalchemy.event.listen(Image.name, 'set', Image.on_name_update)
 
-    elif class_ is SectionInfo or class_ is PageInfo:
+    elif class_ in (SectionInfo,
+                    PageInfo, MediaCollectionPageInfo, MediaItemPageInfo):
         sqlalchemy.event.listen(class_.url_part,
                                 'set',
                                 Base.on_attr_update)
         sqlalchemy.event.listen(class_.node,
                                 'set',
                                 Base.on_attr_update)
-        if class_ is PageInfo:
+        if class_ in (PageInfo, MediaCollectionPageInfo, MediaItemPageInfo):
             sqlalchemy.event.listen(class_.content,
                                     'set',
                                     Base.on_attr_update)
 
-    elif class_ is Section or class_ is Page:
+    elif class_ in (Section,
+                    Page, MediaPage, MediaCollectionPage, MediaItemPage):
         sqlalchemy.event.listen(class_.parent_id, 'set', Base.on_attr_update)
 
 
