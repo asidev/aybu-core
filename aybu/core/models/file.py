@@ -125,7 +125,7 @@ class SimpleImageMixin(object):
     def get_default(cls, session):
         try:
             return cls.search(session,
-                              filters=(Banner.default == True,),
+                              filters=(getattr(cls, 'default') == True,),
                               start=0, limit=1)[0]
         except IndexError:
             return None
