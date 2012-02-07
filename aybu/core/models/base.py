@@ -81,16 +81,10 @@ class AybuBase(object):
         """
         query = session.query(cls).options(*query_options)
 
-        #log.debug('Filters: %s', filters)
-        #log.debug('Start: %s.', start)
-        #log.debug('Limit: %s.', limit)
-        #log.debug('Sort by: %s.', sort_by)
-        #log.debug('Sort order: %s.', sort_order)
-
         try:
             for filter_ in filters:
                 query = query.filter(filter_)
-        except TypeError as e:
+        except TypeError:
             # 'filters' is not an iterable.
             query = query.filter(filters)
 

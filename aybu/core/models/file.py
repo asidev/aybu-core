@@ -123,9 +123,14 @@ class SimpleImageMixin(object):
 
     @classmethod
     def get_default(cls, session):
+
         try:
+            default = getattr(cls, 'default')
+            discriminator = getattr(cls, 'discriminator')
+            identity = getattr(cls, '__mapper_args__')['polymorphic_identity']
             return cls.search(session,
-                              filters=(getattr(cls, 'default') == True,),
+                              filters=(default == True,
+                                       discriminator == identity),
                               start=0, limit=1)[0]
         except IndexError:
             return None
@@ -156,7 +161,7 @@ class SimpleImageMixin(object):
             if self.full_size:
                 log.debug('Resizing %s to %s', self.__class__.__name__,
                           self.full_size)
-                handle = handle.resize(self.full_size, PIL.Image.ANTIALIAS)
+                handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
 
             handle.save(self.path)
 
