@@ -16,11 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (User, Language, init_session_events)
+from aybu.core.models import (User,
+                              RemoteUser,
+                              Language,
+                              init_session_events)
 from logging import getLogger
 from pyramid.decorator import reify
 from pyramid.request import Request as PyramidRequest
-from pyramid.i18n import get_localizer, TranslationStringFactory
+from pyramid.i18n import (get_localizer,
+                          TranslationStringFactory)
 from pyramid.security import unauthenticated_userid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (scoped_session,
@@ -50,7 +54,14 @@ class BaseRequest(PyramidRequest):
     @property
     def user(self):
         userid = unauthenticated_userid(self)
-        return None if userid is None else User.get(self.db_session, userid)
+        if not userid:
+            return None
+
+        remote = self.registry.settings.get('remote_login_url')
+        if remote:
+            return RemoteUser.get(self, userid)
+
+        return User.get(self.db_session, userid)
 
     @reify
     def _settings(self):

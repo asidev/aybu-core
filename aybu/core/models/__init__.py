@@ -41,6 +41,7 @@ from aybu.core.models.setting import (Setting,
 from aybu.core.models.theme import (Keyword,
                                     Theme)
 from aybu.core.models.user import (User,
+                                   RemoteUser,
                                    Group)
 from aybu.core.models.view import (View,
                                    ViewDescription)
@@ -65,7 +66,7 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
            'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription',
            'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
-           'MediaCollectionPageInfo', 'MediaItemPageInfo']
+           'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser']
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')

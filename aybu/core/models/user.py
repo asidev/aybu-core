@@ -19,6 +19,9 @@ limitations under the License.
 from aybu.core.models.base import Base
 import crypt
 import re
+import requests
+import urllib
+import json
 from logging import getLogger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -34,6 +37,81 @@ from sqlalchemy.orm.exc import NoResultFound
 __all__ = []
 
 log = getLogger(__name__)
+
+
+class RemoteUser(object):
+    """ This class is used in place of the User class when
+        remote API login management is used in place of local
+        database """
+
+    def __init__(self, url, username, crypted_password, groups=[]):
+        self.url = url
+        self.username = username
+        self.crypted_password = crypted_password
+        self.groups = groups
+
+    @classmethod
+    def get(cls, request, username):
+        return cls(url=None, username=username, crypted_password=None,
+                   groups=[])
+
+    @property
+    def password(self):
+        return self.crypted_password
+
+    @password.setter
+    def password(self, password):
+        raise NotImplementedError()
+
+    @classmethod
+    def check(cls, request, username, password):
+        url = "{}/{}".format(
+            request.registry.settings.get('remote_login_url'),
+            username
+        )
+        params = dict(
+            domain=request.host,
+            password=password,
+            action="login"
+        )
+        try:
+            #query = "?"
+            #for k, v in params.iteritems():
+            #    query = "{}&{}={}".format(query, k, v)
+            query = "?{}".format(urllib.urlencode(params))
+            query = "{}{}".format(url, query)
+            log.debug("GET %s", query)
+            response = requests.get(query)
+            response.raise_for_status()
+            content = json.loads(response.content)
+
+        except requests.exceptions.RequestException as e:
+            log.critical("Error connection to API: {} - {}"\
+                                                .format(type(e).__name__, e))
+            raise ValueError('Cannot connect to API')
+
+        except Exception:
+            log.error('Invalid login: %s', response.status_code)
+            raise ValueError('Invalid login, upstream return %s',
+                             response.status_code)
+
+        except ValueError:
+            log.exception("Cannot decode JSON")
+            raise
+
+        else:
+            return RemoteUser(url=url, username=username,
+                              crypted_password=password,
+                              groups=content['groups'])
+
+    def has_permission(self, perm):
+        return bool(set((perm, 'admin')) & set(self.groups))
+
+    def check_password(self, password):
+        return self.__class__.check(None, self.username, password)
+
+    def __repr__(self):
+        return "<RemoteUser {}>".format(self.username)
 
 
 users_groups = Table('users_groups',

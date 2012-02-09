@@ -34,7 +34,6 @@ class AuthenticationPolicy(SessionAuthenticationPolicy):
         super(AuthenticationPolicy, self).remember(request, principal, **kw)
         request.session.save()
 
-
     def forget(self, request):
         super(AuthenticationPolicy, self).forget(request)
         request.session.delete()
