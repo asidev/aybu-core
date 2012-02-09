@@ -56,6 +56,7 @@ from sqlalchemy.orm import Session
 import sqlalchemy.orm
 import sqlalchemy.event
 from sqlalchemy.util.langhelpers import symbol
+import os
 
 log = getLogger(__name__)
 
@@ -67,6 +68,25 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription',
            'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
            'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser']
+
+__entities__ = [Theme,
+                Keyword,
+                SettingType,
+                Setting,
+                Language,
+                View,
+                ViewDescription,
+                File,
+                Banner,
+                Logo,
+                Image,
+                Menu,
+                Section,
+                Page,
+                ExternalLink,
+                InternalLink,
+                MediaCollectionPage,
+                MediaItemPage]
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')
@@ -282,3 +302,157 @@ def add_default_data(session, data):
         except sqlalchemy.exc.ProgrammingError:
             # raised by oursql
             pass
+
+
+def import_(session, data, sources, dst):
+
+    entities = {}
+
+    for entity in __entities__:
+
+        entities[entity.__name__] = []
+
+        if entity.__name__ not in data or not data[entity.__name__]:
+            print 'No data for %s' % entity.__name__
+            continue
+
+        for item in data[entity.__name__]:
+
+            if issubclass(entity, Image):
+                private = os.path.join(dst,
+                                       'static')
+                base = os.path.join(private,
+                                    'uploads',
+                                    'images')
+                Image.initialize(base=base,
+                                 private=private,
+                                 url_prefix='static')
+                size = session.query(Setting).get('image_full_size').value
+                Image.set_sizes(full=(size, size * 3),
+                                thumbs=dict(thumb=(120, 120)))
+                path = os.path.join(sources, item.pop('path'))
+                if os.path.exists(path):
+                    item['source'] = path
+                    item['session'] = session
+                    obj = Image(**item)
+                    session.add(obj)
+                    session.flush()
+
+            elif issubclass(entity, Banner):
+                private = os.path.join(dst,
+                                       'static')
+                base = os.path.join(private,
+                                    'uploads',
+                                    'banners')
+                Banner.initialize(base=base,
+                                  private=private,
+                                  url_prefix='static')
+                banner_width = session.query(Setting).get('banner_width').value
+                banner_height = session.query(Setting).get('banner_height').value
+                Banner.set_sizes(full=(banner_width, banner_height))
+                path = os.path.join(sources, item.pop('path'))
+                if os.path.exists(path):
+                    item['source'] = path
+                    item['session'] = session
+                    obj = Banner(**item)
+                    session.add(obj)
+                    session.flush()
+
+            elif issubclass(entity, Logo):
+                private = os.path.join(dst,
+                                       'static')
+                base = os.path.join(private,
+                                    'uploads',
+                                    'logo')
+                Logo.initialize(base=base,
+                                private=private,
+                                url_prefix='static')
+                logo_width = session.query(Setting).get('logo_width').value
+                logo_height = session.query(Setting).get('logo_height').value
+                Logo.set_sizes(full=(logo_width, logo_height))
+
+            elif issubclass(entity, File):
+                private = os.path.join(dst,
+                                       'static')
+                base = os.path.join(private,
+                                    'uploads',
+                                    'files')
+                File.initialize(base=base,
+                                private=private,
+                                url_prefix='static')
+
+            elif issubclass(entity, Setting):
+                # Add the key 'type' with SettingType object.
+                for obj in entities['SettingType']:
+                    if obj.name == item['type_name']:
+                        item['type'] = obj
+
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            elif issubclass(entity, Menu):
+                translations = item.pop('translations', [])
+                item['translations'] = []
+                for translation in translations:
+                    info = MenuInfo(**translation)
+                    item['translations'].append(info)
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            elif issubclass(entity, Section):
+                translations = item.pop('translations', [])
+                item['translations'] = []
+                for translation in translations:
+                    lang = session.query(Language).get(translation['lang_id'])
+                    translation['lang'] = lang
+                    info = SectionInfo(**translation)
+                    item['translations'].append(info)
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            elif issubclass(entity, Page):
+                translations = item.pop('translations', [])
+                item['translations'] = []
+                for translation in translations:
+                    lang = session.query(Language).get(translation['lang_id'])
+                    translation['lang'] = lang
+                    info = PageInfo(**translation)
+                    item['translations'].append(info)
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            elif issubclass(entity, ExternalLink):
+                translations = item.pop('translations', [])
+                item['translations'] = []
+                for translation in translations:
+                    obj = ExternalLinkInfo(**translation)
+                    item['translations'].append(obj)
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            elif issubclass(entity, InternalLink):
+                translations = item.pop('translations', [])
+                item['translations'] = []
+                for translation in translations:
+                    obj = InternalLinkInfo(**translation)
+                    item['translations'].append(obj)
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
+
+            else:
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
+                entities[entity.__name__].append(obj)
