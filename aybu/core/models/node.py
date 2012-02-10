@@ -373,7 +373,6 @@ class Page(Node):
 
 class Section(Node):
     __mapper_args__ = {'polymorphic_identity': 'section'}
-    banners = relationship('Banner', secondary=node_banners)
 
     def to_dict(self, language=None, recursive=True):
 
