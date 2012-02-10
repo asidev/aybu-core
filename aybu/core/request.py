@@ -16,9 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from aybu.core.models import (User,
-                              RemoteUser,
-                              Language,
+from aybu.core.models import (Language,
                               init_session_events)
 from logging import getLogger
 from pyramid.decorator import reify
@@ -57,11 +55,12 @@ class BaseRequest(PyramidRequest):
         if not userid:
             return None
 
-        remote = self.registry.settings.get('remote_login_url')
-        if remote:
-            return RemoteUser.get(self, userid)
+        elif self.registry.settings.get('remote_login_url'):
+            return self.session['_user']
 
-        return User.get(self.db_session, userid)
+        else:
+            user = self.db_session.merge(self.session['_user'])
+            return user
 
     @reify
     def _settings(self):
