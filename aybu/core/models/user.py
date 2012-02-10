@@ -71,7 +71,6 @@ class RemoteUser(object):
         )
         params = dict(
             domain=request.host,
-            password=password,
             action="login"
         )
         try:
@@ -81,7 +80,7 @@ class RemoteUser(object):
             query = "?{}".format(urllib.urlencode(params))
             query = "{}{}".format(url, query)
             log.debug("GET %s", query)
-            response = requests.get(query)
+            response = requests.get(query, auth=(username, password))
             response.raise_for_status()
             content = json.loads(response.content)
 
