@@ -17,6 +17,7 @@ limitations under the License.
 """
 
 from aybu.core.models.base import Base
+import collections
 import crypt
 import re
 import requests
@@ -35,8 +36,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 
 __all__ = []
-
 log = getLogger(__name__)
+RemoteGroup = collections.namedtuple('Group', ['name'])
 
 
 class RemoteUser(object):
@@ -44,16 +45,18 @@ class RemoteUser(object):
         remote API login management is used in place of local
         database """
 
-    def __init__(self, url, username, crypted_password, groups=[]):
+    def __init__(self, url, username, crypted_password, cleartext_password,
+                 remote, groups):
         self.url = url
         self.username = username
         self.crypted_password = crypted_password
-        self.groups = groups
+        self.cleartext_password = cleartext_password
+        self._groups = groups
+        self.remote = remote
 
-    @classmethod
-    def get(cls, request, username):
-        return cls(url=None, username=username, crypted_password=None,
-                   groups=[])
+    @property
+    def groups(self):
+        return [RemoteGroup(name=g) for g in self._groups]
 
     @property
     def password(self):
@@ -61,22 +64,40 @@ class RemoteUser(object):
 
     @password.setter
     def password(self, password):
-        raise NotImplementedError()
+        url = "{}/{}".format(self.remote, self.username)
+        try:
+            response = requests.put(
+                    url,
+                    auth=(self.username, self.cleartext_password),
+                    data=dict(password=password)
+            )
+            response.raise_for_status()
+            content = json.loads(response.content)
+
+        except requests.exceptions.RequestException as e:
+            log.critical("Error connection to API: {} - {}"\
+                                                .format(type(e).__name__, e))
+            raise ValueError('Cannot connect to API')
+
+        except Exception:
+            log.exception('Invalid login: %s', response.status_code)
+            raise ValueError('Invalid login, upstream returned {}'\
+                            .format(response.status_code))
+
+        else:
+            log.info("Updated password for %s", self.username)
+            self.crypted_password = content['crypted_password']
+            self.cleartext_password = password
 
     @classmethod
     def check(cls, request, username, password):
-        url = "{}/{}".format(
-            request.registry.settings.get('remote_login_url'),
-            username
-        )
+        remote = request.registry.settings.get('remote_login_url')
+        url = "{}/{}".format(remote, username)
         params = dict(
             domain=request.host,
             action="login"
         )
         try:
-            #query = "?"
-            #for k, v in params.iteritems():
-            #    query = "{}&{}={}".format(query, k, v)
             query = "?{}".format(urllib.urlencode(params))
             query = "{}{}".format(url, query)
             log.debug("GET %s", query)
@@ -89,25 +110,28 @@ class RemoteUser(object):
                                                 .format(type(e).__name__, e))
             raise ValueError('Cannot connect to API')
 
+        except ValueError:
+            log.exception("Cannot decode JSON")
+            raise
+
         except Exception:
             log.error('Invalid login: %s', response.status_code)
             raise ValueError('Invalid login, upstream return %s',
                              response.status_code)
 
-        except ValueError:
-            log.exception("Cannot decode JSON")
-            raise
-
         else:
             return RemoteUser(url=url, username=username,
-                              crypted_password=password,
-                              groups=content['groups'])
+                              crypted_password=content['crypted_password'],
+                              cleartext_password=password,
+                              groups=content['groups'],
+                              remote=remote)
 
     def has_permission(self, perm):
-        return bool(set((perm, 'admin')) & set(self.groups))
+        return bool(set((perm, 'admin')) & set(self._groups))
 
     def check_password(self, password):
-        return self.__class__.check(None, self.username, password)
+        if not self.cleartext_password == password:
+            raise ValueError('Invalid username or password')
 
     def __repr__(self):
         return "<RemoteUser {}>".format(self.username)
@@ -163,7 +187,7 @@ class User(Base):
             raise ValueError('invalid username or password')
 
         else:
-            return True
+            return user
 
     @hybrid_property
     def password(self):
