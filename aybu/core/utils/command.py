@@ -37,7 +37,6 @@ from aybu.core.models import (add_default_data,
                               Group,
                               __entities__,
                               import_)
-from aybu.website import add_assets
 
 
 class SetupApp(Command):
@@ -155,7 +154,7 @@ class Convert(Command):
         for entity in __entities__:
             entity = entity.__name__
             if entity not in data:
-                print '%s not in data.' % entity
+                print 'No %s entities in data file.' % entity
                 continue
 
             entity_data = data[entity]
@@ -245,29 +244,41 @@ class Convert(Command):
                     item.pop('content_type')
                     item.pop('url')
 
-        logo_path = os.path.join(base_path,
-                                 'static',
+        logo_tmp_path = os.path.join(base_path,
+                                     'static',
+                                     'uploads',
+                                     'images',
+                                     logo)
+        logo_path = os.path.join('static',
                                  'uploads',
                                  'images',
-                                  logo)
-        if os.path.exists(logo_path):
+                                 logo)
+        if os.path.exists(logo_tmp_path):
             if 'Logo' not in data:
                 data['Logo'] = []
             data['Logo'].append(dict(name=logo,
                                      path=logo_path,
                                      default=True))
+        else:
+            print 'NO LOGO!!!'
 
-        banner_path = os.path.join(base_path,
-                                   'static',
+        banner_tmp_path = os.path.join(base_path,
+                                       'static',
+                                       'uploads',
+                                       'images',
+                                       banner)
+        banner_path = os.path.join('static',
                                    'uploads',
                                    'images',
                                    banner)
-        if os.path.exists(banner_path):
+        if os.path.exists(banner_tmp_path):
             if 'Banner' not in data:
                 data['Banner'] = []
             data['Banner'].append(dict(name=banner,
                                        path=banner_path,
                                        default=True))
+        else:
+            print 'NO DEFAULT BANNER!!!'
 
         tar = tarfile.open(file_name, 'w:gz')
         tar.add(os.path.join(base_path, 'static'), 'static')
@@ -304,7 +315,7 @@ class Import(Command):
 
         # Setup logging via the logging module's fileConfig function
         # with the specified 'config_file', if applicable.
-        self.logging_file_config(file_name)
+        self.logging_file_config(file_name.split('#')[0])
 
         config = appconfig('config:{}'.format(file_name))
         engine = engine_from_config(config, 'sqlalchemy.')
@@ -328,13 +339,12 @@ class Import(Command):
         tar.close()
         json_data = os.path.join(base_path, 'data.json')
         data = json.load(open(json_data, 'r'), encoding='utf-8')
-
+        import_(session, data, base_path, dst)
         try:
-            import_(session, data, base_path, dst)
-
+            pass
         except Exception as e:
             session.rollback()
-            print e
+            raise e
 
         else:
             session.commit()
