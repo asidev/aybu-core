@@ -324,6 +324,8 @@ def import_(session, data, sources, dst):
                 base = os.path.join(private,
                                     'uploads',
                                     'images')
+                if not os.path.exists(base):
+                    os.mkdirs(base)
                 Image.initialize(base=base,
                                  private=private,
                                  url_prefix='static')
@@ -338,12 +340,36 @@ def import_(session, data, sources, dst):
                     session.add(obj)
                     session.flush()
 
+            elif issubclass(entity, Logo):
+                private = os.path.join(dst,
+                                       'static')
+                base = os.path.join(private,
+                                    'uploads',
+                                    'logo')
+                if not os.path.exists(base):
+                    os.mkdirs(base)
+                Logo.initialize(base=base,
+                                private=private,
+                                url_prefix='static')
+                logo_width = session.query(Setting).get('logo_width').value
+                logo_height = session.query(Setting).get('logo_height').value
+                Logo.set_sizes(full=(logo_width, logo_height))
+                path = os.path.join(sources, item.pop('path'))
+                if os.path.exists(path):
+                    item['source'] = path
+                    item['session'] = session
+                    obj = Logo(**item)
+                    session.add(obj)
+                    session.flush()
+
             elif issubclass(entity, Banner):
                 private = os.path.join(dst,
                                        'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'banners')
+                if not os.path.exists(base):
+                    os.mkdirs(base)
                 Banner.initialize(base=base,
                                   private=private,
                                   url_prefix='static')
@@ -358,25 +384,14 @@ def import_(session, data, sources, dst):
                     session.add(obj)
                     session.flush()
 
-            elif issubclass(entity, Logo):
-                private = os.path.join(dst,
-                                       'static')
-                base = os.path.join(private,
-                                    'uploads',
-                                    'logo')
-                Logo.initialize(base=base,
-                                private=private,
-                                url_prefix='static')
-                logo_width = session.query(Setting).get('logo_width').value
-                logo_height = session.query(Setting).get('logo_height').value
-                Logo.set_sizes(full=(logo_width, logo_height))
-
             elif issubclass(entity, File):
                 private = os.path.join(dst,
                                        'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'files')
+                if not os.path.exists(base):
+                    os.mkdirs(base)
                 File.initialize(base=base,
                                 private=private,
                                 url_prefix='static')
@@ -422,6 +437,12 @@ def import_(session, data, sources, dst):
                 for translation in translations:
                     lang = session.query(Language).get(translation['lang_id'])
                     translation['lang'] = lang
+                    # Pop images, files and links
+                    # The application rebuilds them!
+                    # FIXME: ADD CHECK!
+                    images = translation.pop('images')
+                    files = translation.pop('files')
+                    links = translation.pop('links')
                     info = PageInfo(**translation)
                     item['translations'].append(info)
                 obj = entity(**item)
