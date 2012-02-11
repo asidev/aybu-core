@@ -339,9 +339,8 @@ class Import(Command):
         tar.close()
         json_data = os.path.join(base_path, 'data.json')
         data = json.load(open(json_data, 'r'), encoding='utf-8')
-        import_(session, data, base_path, dst)
         try:
-            pass
+            import_(session, data, base_path, dst)
         except Exception as e:
             session.rollback()
             raise e
