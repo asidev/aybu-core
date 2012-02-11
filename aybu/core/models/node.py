@@ -67,7 +67,8 @@ class Node(Base):
                                             remote_side=[id]),
                             primaryjoin='Node.id == Node.parent_id',
                             lazy='immediate',
-                            join_depth=5)
+                            join_depth=5,
+                            order_by=weight)
 
     @property
     def type(self):
