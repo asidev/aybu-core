@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import ast
 from aybu.core.models.base import Base
 import collections
 import crypt
@@ -46,13 +47,14 @@ class RemoteUser(object):
         database """
 
     def __init__(self, url, username, crypted_password, cleartext_password,
-                 remote, groups):
+                 remote, groups, verify_ssl):
         self.url = url
         self.username = username
         self.crypted_password = crypted_password
         self.cleartext_password = cleartext_password
         self._groups = groups
         self.remote = remote
+        self.verify_ssl = verify_ssl
 
     @property
     def groups(self):
@@ -69,7 +71,8 @@ class RemoteUser(object):
             response = requests.put(
                     url,
                     auth=(self.username, self.cleartext_password),
-                    data=dict(password=password)
+                    data=dict(password=password),
+                    verify=self.verify_ssl
             )
             response.raise_for_status()
             content = json.loads(response.content)
@@ -92,6 +95,8 @@ class RemoteUser(object):
     @classmethod
     def check(cls, request, username, password):
         remote = request.registry.settings.get('remote_login_url')
+        verify_ssl = ast.literal_eval(
+                        request.registry.settings.get('remote_login_ssl'))
         url = "{}/{}".format(remote, username)
         params = dict(
             domain=request.host,
@@ -101,7 +106,8 @@ class RemoteUser(object):
             query = "?{}".format(urllib.urlencode(params))
             query = "{}{}".format(url, query)
             log.debug("GET %s", query)
-            response = requests.get(query, auth=(username, password))
+            response = requests.get(query, auth=(username, password),
+                                     verify=verify_ssl)
             response.raise_for_status()
             content = json.loads(response.content)
 
@@ -124,7 +130,7 @@ class RemoteUser(object):
                               crypted_password=content['crypted_password'],
                               cleartext_password=password,
                               groups=content['groups'],
-                              remote=remote)
+                              remote=remote, verify_ssl=verify_ssl)
 
     def has_permission(self, perm):
         return bool(set((perm, 'admin')) & set(self._groups))
