@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 from alembic.config import Config
 from alembic import command
 from paste.script.command import BadCommand
@@ -37,6 +38,8 @@ from aybu.core.models import (add_default_data,
                               Group,
                               __entities__,
                               import_)
+
+log = logging.getLogger(__name__)
 
 
 class SetupApp(Command):
@@ -319,11 +322,13 @@ class Import(Command):
 
         config = appconfig('config:{}'.format(file_name))
         engine = engine_from_config(config, 'sqlalchemy.')
-        dst = pkg_resources.resource_filename('aybu.instances',
-                                              config['instance'])
+        dst = pkg_resources.resource_filename('aybu.instances.{}'\
+                                               .format(config['instance']),
+                                               "static")
+        log.info('Using %s for static files', dst)
         Base.metadata.bind = engine
         Base.metadata.drop_all()
-        base = os.path.join(dst, 'static', 'uploads')
+        base = os.path.join(dst, 'uploads')
         for dir_ in ['banners', 'images', 'files', 'logo']:
             dir_ = os.path.join(base, dir_)
             if os.path.exists(dir_):

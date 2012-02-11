@@ -304,7 +304,7 @@ def add_default_data(session, data):
             pass
 
 
-def import_(session, data, sources, dst):
+def import_(session, data, sources, private):
 
     entities = {}
 
@@ -319,13 +319,11 @@ def import_(session, data, sources, dst):
         for item in data[entity.__name__]:
 
             if issubclass(entity, Image):
-                private = os.path.join(dst,
-                                       'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'images')
                 if not os.path.exists(base):
-                    os.mkdirs(base)
+                    os.makedirs(base)
                 Image.initialize(base=base,
                                  private=private,
                                  url_prefix='static')
@@ -341,13 +339,11 @@ def import_(session, data, sources, dst):
                     session.flush()
 
             elif issubclass(entity, Logo):
-                private = os.path.join(dst,
-                                       'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'logo')
                 if not os.path.exists(base):
-                    os.mkdirs(base)
+                    os.makedirs(base)
                 Logo.initialize(base=base,
                                 private=private,
                                 url_prefix='static')
@@ -363,13 +359,11 @@ def import_(session, data, sources, dst):
                     session.flush()
 
             elif issubclass(entity, Banner):
-                private = os.path.join(dst,
-                                       'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'banners')
                 if not os.path.exists(base):
-                    os.mkdirs(base)
+                    os.makedirs(base)
                 Banner.initialize(base=base,
                                   private=private,
                                   url_prefix='static')
@@ -385,13 +379,11 @@ def import_(session, data, sources, dst):
                     session.flush()
 
             elif issubclass(entity, File):
-                private = os.path.join(dst,
-                                       'static')
                 base = os.path.join(private,
                                     'uploads',
                                     'files')
                 if not os.path.exists(base):
-                    os.mkdirs(base)
+                    os.makedirs(base)
                 File.initialize(base=base,
                                 private=private,
                                 url_prefix='static')
