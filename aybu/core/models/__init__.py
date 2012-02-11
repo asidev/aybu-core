@@ -420,20 +420,23 @@ def import_(session, data, sources, dst):
 
             elif issubclass(entity, Section):
                 translations = item.pop('translations', [])
-                item['translations'] = []
+                item['parent'] = session.query(Node).get(item.get('parent_id'))
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
                 for translation in translations:
                     lang = session.query(Language).get(translation['lang_id'])
                     translation['lang'] = lang
                     info = SectionInfo(**translation)
-                    item['translations'].append(info)
-                obj = entity(**item)
-                session.add(obj)
+                    obj.translations.append(info)
                 session.flush()
                 entities[entity.__name__].append(obj)
 
             elif issubclass(entity, Page):
                 translations = item.pop('translations', [])
-                item['translations'] = []
+                obj = entity(**item)
+                session.add(obj)
+                session.flush()
                 for translation in translations:
                     lang = session.query(Language).get(translation['lang_id'])
                     translation['lang'] = lang
@@ -444,9 +447,7 @@ def import_(session, data, sources, dst):
                     files = translation.pop('files')
                     links = translation.pop('links')
                     info = PageInfo(**translation)
-                    item['translations'].append(info)
-                obj = entity(**item)
-                session.add(obj)
+                    obj.translations.append(info)
                 session.flush()
                 entities[entity.__name__].append(obj)
 
