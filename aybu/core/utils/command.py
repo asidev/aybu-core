@@ -135,6 +135,16 @@ class Convert(Command):
         data = json.load(data, encoding='utf-8')
         banner = None
         logo = None
+
+        # Import SettingsType from aybu.core default data.
+        # We ignore SettingTypes from the aybu1.0 data.
+        default_data = pkg_resources.resource_stream('aybu.core.data',
+                                                     'default_data.json')
+        data['SettingType'] = [
+            dict(name=d['name'], raw_type=d['raw_type'])
+            for d in default_data if d['cls_'] == "SettingType"
+        ]
+
         # Change Setting structure.
         for setting in data['Setting']:
             if setting['name'] == 'banner':
@@ -144,15 +154,34 @@ class Convert(Command):
                 logo = setting['value']
 
             # Remove the key 'raw_type'.
-            raw_type = setting.pop('raw_type')
-            # Add the key 'raw_value'
-            setting['raw_value'] = setting['value']
-            # Change SettingType structure
-            for type_ in data['SettingType']:
-                if setting['type_name'] == type_['name'] and \
-                   'raw_type' not in type_:
+            old_raw_type = setting.pop('raw_type')
+            old_type_name = setting.pop('type_name')
 
-                    type_['raw_type'] = raw_type
+            # Add the key 'raw_value'
+            setting['raw_value'] = setting.pop('value')
+            # Change SettingType structure
+            if old_raw_type == 'int':
+                setting['type_name'] = 'integer'
+
+            elif old_raw_type == 'bool':
+                setting['type_name'] = 'checkbox'
+
+            elif old_raw_type == 'str':
+                setting['type_name'] = 'string'
+
+            elif old_raw_type == 'unicode':
+                if setting['name'].startswith('contact_dst_email'):
+                    setting['type_name'] = 'email'
+
+                elif old_type_name in ('image', 'txt', 'html'):
+                    setting['type_name'] = old_type_name
+
+                else:
+                    raise TypeError('Unknow setting type name {}'\
+                                    .format(old_type_name))
+
+            else:
+                raise TypeError("Unknow raw type {}".format(old_raw_type))
 
         for entity in __entities__:
             entity = entity.__name__
