@@ -5,3 +5,4 @@ syntax: glob
 ./.coverage
 ./aybu_core.egg-info
 .rvmrc
+versiontools*
