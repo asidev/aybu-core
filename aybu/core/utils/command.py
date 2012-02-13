@@ -346,6 +346,15 @@ class Import(Command):
         data = json.load(open(json_data, 'r'), encoding='utf-8')
         try:
             import_(session, data, base_path, dst)
+            if config.get('default_user.username') and \
+               config.get('default_user.password'):
+                user = User(username=config['default_user.username'],
+                            password=config['default_user.password'])
+                session.merge(user)
+                group = Group(name=u'admin')
+                group.users.append(user)
+                session.merge(group)
+                session.flush()
         except Exception as e:
             session.rollback()
             raise e
