@@ -138,8 +138,10 @@ class Convert(Command):
 
         # Import SettingsType from aybu.core default data.
         # We ignore SettingTypes from the aybu1.0 data.
-        default_data = pkg_resources.resource_stream('aybu.core.data',
-                                                     'default_data.json')
+        default_data = json.load(
+                            pkg_resources.resource_stream('aybu.core.data',
+                                                          'default_data.json'))
+
         data['SettingType'] = [
             dict(name=d['name'], raw_type=d['raw_type'])
             for d in default_data if d['cls_'] == "SettingType"
@@ -147,6 +149,9 @@ class Convert(Command):
 
         # Change Setting structure.
         for setting in data['Setting']:
+            if setting['name'] == 'theme_name':
+                setting['value'] = setting['value'].replace("-", "_")
+
             if setting['name'] == 'banner':
                 banner = setting['value']
 
@@ -208,6 +213,11 @@ class Convert(Command):
                     item.pop('linked_to_id')
                     item.pop('url')
                     for translation in item['translations']:
+                        if item['id'] == 1:
+                            translation['label'] = "Menù Principale"
+                        else:
+                            translation['label'] = 'Pagine Orfane'
+
                         translation.pop('title')
                         translation.pop('url_part')
                         translation.pop('keywords')
@@ -270,6 +280,9 @@ class Convert(Command):
                         translation.pop('files')
                         translation.pop('images')
                         translation.pop('links')
+
+                elif entity == 'Theme':
+                    item['name'] = item['name'].replace("-", "_")
 
                 elif entity in ('File', 'Image', 'Banner', 'Logo'):
                     item.pop('size')
