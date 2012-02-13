@@ -138,6 +138,7 @@ class Convert(Command):
         data = json.load(data, encoding='utf-8')
         banner = None
         logo = None
+        file_max_id = 0
 
         # Import SettingsType from aybu.core default data.
         # We ignore SettingTypes from the aybu1.0 data.
@@ -291,6 +292,8 @@ class Convert(Command):
                     item.pop('size')
                     item.pop('content_type')
                     item.pop('url')
+                    if int(item['id']) > file_max_id:
+                        file_max_id = int(item['id'])
 
         logo_tmp_path = os.path.join(base_path,
                                      'static',
@@ -304,9 +307,12 @@ class Convert(Command):
         if os.path.exists(logo_tmp_path):
             if 'Logo' not in data:
                 data['Logo'] = []
-            data['Logo'].append(dict(name=logo,
+            data['Logo'].append(dict(id=file_max_id + 1,
+                                     name=logo,
                                      path=logo_path,
                                      default=True))
+            file_max_id = file_max_id + 1
+
         else:
             print 'NO LOGO!!!'
 
@@ -322,9 +328,11 @@ class Convert(Command):
         if os.path.exists(banner_tmp_path):
             if 'Banner' not in data:
                 data['Banner'] = []
-            data['Banner'].append(dict(name=banner,
+            data['Banner'].append(dict(id=file_max_id + 1,
+                                       name=banner,
                                        path=banner_path,
                                        default=True))
+            file_max_id = file_max_id + 1
         else:
             print 'NO DEFAULT BANNER!!!'
 
