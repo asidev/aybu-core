@@ -36,6 +36,9 @@ from aybu.core.models import (add_default_data,
                               User,
                               Base,
                               Group,
+                              Language,
+                              View,
+                              ViewDescription,
                               __entities__,
                               import_)
 
@@ -388,16 +391,52 @@ class Import(Command):
         data = json.load(open(json_data, 'r'), encoding='utf-8')
         try:
             import_(session, data, base_path, dst)
+
+            # add default users
             if config.get('default_user.username') and \
                config.get('default_user.password'):
                 user = User(username=config['default_user.username'],
                             password=config['default_user.password'])
-                session.merge(user)
+                session.add(user)
                 group = Group(name=u'admin')
                 group.users.append(user)
-                session.merge(group)
+                session.add(group)
                 session.flush()
+
+            default_data = json.load(
+                    pkg_resources.resource_stream('aybu.core.data',
+                                                  'default_data.json')
+            )
+
+            # add View and ViewDescription for Media Collections
+            mview_data = [v for v in default_data
+                          if v['cls_'] == 'View'
+                          and v['name'].startswith('MEDIA')][0]
+            def_id = mview_data.pop('id')
+            cls_ = mview_data.pop('cls_')
+            mview = View(**mview_data)
+            session.add(mview)
+            session.flush()  # assign id to view.
+
+            # readd cls_ to avoid keyerrors
+            mview_data['cls_'] = cls_
+            italian = [d for d in default_data
+                      if d['cls_'] == 'Language' and d['lang'] == 'it'][0]
+
+            mv_descr_data = [d for d in default_data
+                             if d['cls_'] == 'ViewDescription'
+                             and d['view'] == def_id
+                             and d['language'] == italian['id']][0]
+            mv_descr_data.pop('id')
+            mv_descr_data.pop('cls_')
+            mv_descr_data['view'] = mview
+            mv_descr_data['language'] = Language.get_by_lang(session, 'it')
+
+            session.add(ViewDescription(**mv_descr_data))
+            session.flush()
+
         except Exception as e:
+            log.exception('Error in import')
             session.rollback()
             raise e
 
