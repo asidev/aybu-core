@@ -51,6 +51,7 @@ from aybu.core.models.media import (MediaPage,
                                     MediaCollectionPageInfo,
                                     MediaItemPageInfo)
 from aybu.core.utils import get_object_from_python_path
+from pufferfish import FileSystemEntity
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
 import sqlalchemy.orm
@@ -288,8 +289,8 @@ def add_default_data(session, data):
         """ This works (and is needed) only on postrgresql to fix
             autoincrement
         """
-        log.debug("Fixing sequence for cls %s", cls)
         tablename = cls.__tablename__
+        log.debug("Fixing sequence for cls %s (%s)", cls, tablename)
         seqname = "{}_id_seq".format(tablename)
         try:
             session.execute(
@@ -307,7 +308,7 @@ def add_default_data(session, data):
 def import_(session, data, sources, private):
 
     entities = {}
-
+    seq_classes = []
     for entity in __entities__:
 
         entities[entity.__name__] = []
@@ -315,6 +316,9 @@ def import_(session, data, sources, private):
         if entity.__name__ not in data or not data[entity.__name__]:
             print 'No data for %s' % entity.__name__
             continue
+
+        if hasattr(entity, "id_seq") and not entity in seq_classes:
+            seq_classes.append(entity)
 
         for item in data[entity.__name__]:
 
@@ -435,9 +439,9 @@ def import_(session, data, sources, private):
                     # Pop images, files and links
                     # The application rebuilds them!
                     # FIXME: ADD CHECK!
-                    images = translation.pop('images')
-                    files = translation.pop('files')
-                    links = translation.pop('links')
+                    translation.pop('images')
+                    translation.pop('files')
+                    translation.pop('links')
                     info = PageInfo(**translation)
                     obj.translations.append(info)
                 session.flush()
@@ -470,3 +474,38 @@ def import_(session, data, sources, private):
                 session.add(obj)
                 session.flush()
                 entities[entity.__name__].append(obj)
+
+    visited = set()
+    for cls in seq_classes:
+        """ This works (and is needed) only on postrgresql to fix
+            autoincrement
+        """
+        tablename = cls.__tablename__
+
+        if issubclass(cls, FileSystemEntity):
+            seqname = "pufferfish_id_seq"
+        else:
+            seqname = "{}_id_seq".format(tablename)
+
+        if seqname in visited:
+            continue
+
+        try:
+            visited.add(seqname)
+            log.debug("Fixing sequence %s", seqname)
+            session.execute(
+                "SELECT setval('{}', max(id)) FROM {};".format(seqname,
+                                                               tablename)
+            )
+
+        except sqlalchemy.exc.OperationalError:
+            # raised by MySQLdb
+            pass
+
+        except sqlalchemy.exc.ProgrammingError:
+            # raised by oursql
+            pass
+
+        except:
+            log.exception('Cannot fix sequence for cls %s', cls)
+            raise
