@@ -363,6 +363,7 @@ def import_(session, data, sources, private):
                     session.flush()
 
             elif issubclass(entity, Banner):
+                log.debug("Importging banner %s", item)
                 base = os.path.join(private,
                                     'uploads',
                                     'banners')
@@ -381,6 +382,8 @@ def import_(session, data, sources, private):
                     obj = Banner(**item)
                     session.add(obj)
                     session.flush()
+                else:
+                    log.warn("Path does not exists %s: %s", sources, path)
 
             elif issubclass(entity, File):
                 base = os.path.join(private,
@@ -442,8 +445,12 @@ def import_(session, data, sources, private):
                     translation.pop('images')
                     translation.pop('files')
                     translation.pop('links')
+                    banners = translation.pop('banners')
                     info = PageInfo(**translation)
                     obj.translations.append(info)
+                    for banner in banners:
+                        info.banners.append(Banner.get(session, banner['id']))
+
                 session.flush()
                 entities[entity.__name__].append(obj)
 
