@@ -394,6 +394,13 @@ def import_(session, data, sources, private):
                 File.initialize(base=base,
                                 private=private,
                                 url_prefix='static')
+                path = os.path.join(sources, item.pop('path'))
+                if os.path.exists(path):
+                    item['source'] = path
+                    item['session'] = session
+                    obj = File(**item)
+                    session.add(obj)
+                    session.flush()
 
             elif issubclass(entity, Setting):
                 # Add the key 'type' with SettingType object.
