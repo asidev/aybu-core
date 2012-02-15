@@ -96,7 +96,7 @@ class RemoteUser(object):
     def check(cls, request, username, password):
         remote = request.registry.settings.get('remote_login_url')
         verify_ssl = ast.literal_eval(
-                        request.registry.settings.get('remote_login_ssl'))
+                    request.registry.settings.get('remote_login_verify_ssl'))
         url = "{}/{}".format(remote, username)
         params = dict(
             domain=request.host,
