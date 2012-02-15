@@ -202,7 +202,17 @@ class Request(BaseRequest):
             lang = self.db_session.merge(self.session['lang'])
             log.debug("Got language %s", lang)
         else:
+            log.debug("Using default locale %s",
+                      self._settings['default_locale_name'])
             lang = Language.\
                         get_by_lang(self.db_session,
                                     self._settings['default_locale_name'])
+            if not lang.enabled:
+                log.warn("Default locale is disabled")
+                lang = Language.get_by_enabled(self.db_session,
+                                               enabled=True,
+                                               start=0,
+                                               limit=1)[0]
+                log.info("Selected first enabled lang %s", lang)
+
         self.language = lang
