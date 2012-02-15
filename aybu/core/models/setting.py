@@ -57,7 +57,7 @@ class Setting(Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
 
     name = Column(Unicode(128), primary_key=True)
-    raw_value = Column(Unicode(512), name='value', nullable=False)
+    raw_value = Column(Unicode(1024), name='value', nullable=False)
     ui_administrable = Column(Boolean, default=False)
 
     type_name = Column(Unicode(64), ForeignKey('setting_types.name',
