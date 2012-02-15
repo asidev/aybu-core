@@ -87,7 +87,8 @@ __entities__ = [Theme,
                 ExternalLink,
                 InternalLink,
                 MediaCollectionPage,
-                MediaItemPage]
+                MediaItemPage,
+                NodeInfo]
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')
@@ -313,12 +314,12 @@ def import_(session, data, sources, private):
 
         entities[entity.__name__] = []
 
+        if hasattr(entity, "id_seq") and not entity in seq_classes:
+            seq_classes.append(entity)
+
         if entity.__name__ not in data or not data[entity.__name__]:
             print 'No data for %s' % entity.__name__
             continue
-
-        if hasattr(entity, "id_seq") and not entity in seq_classes:
-            seq_classes.append(entity)
 
         for item in data[entity.__name__]:
 
