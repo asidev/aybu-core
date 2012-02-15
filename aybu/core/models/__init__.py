@@ -433,7 +433,7 @@ def import_(session, data, sources, private):
 
             elif issubclass(entity, Page):
                 translations = item.pop('translations', [])
-                banners = translation.pop('banners', [])
+                banners = item.pop('banners', [])
                 obj = entity(**item)
                 session.add(obj)
                 session.flush()
