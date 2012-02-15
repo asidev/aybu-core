@@ -109,6 +109,7 @@ class RemoteUser(object):
             response = requests.get(query, auth=(username, password),
                                      verify=verify_ssl)
             response.raise_for_status()
+            log.debug("Response: %s", response)
             content = json.loads(response.content)
 
         except requests.exceptions.RequestException as e:
