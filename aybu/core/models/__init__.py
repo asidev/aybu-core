@@ -433,9 +433,16 @@ def import_(session, data, sources, private):
 
             elif issubclass(entity, Page):
                 translations = item.pop('translations', [])
+                banners = translation.pop('banners', [])
                 obj = entity(**item)
                 session.add(obj)
                 session.flush()
+
+                for banner in banners:
+                    obj.banners.append(Banner.get(session, banner['id']))
+
+                session.flush()
+
                 for translation in translations:
                     lang = session.query(Language).get(translation['lang_id'])
                     translation['lang'] = lang
@@ -445,11 +452,8 @@ def import_(session, data, sources, private):
                     translation.pop('images')
                     translation.pop('files')
                     translation.pop('links')
-                    banners = translation.pop('banners')
                     info = PageInfo(**translation)
                     obj.translations.append(info)
-                    for banner in banners:
-                        info.banners.append(Banner.get(session, banner['id']))
 
                 session.flush()
                 entities[entity.__name__].append(obj)

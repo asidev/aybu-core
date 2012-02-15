@@ -250,10 +250,8 @@ class Convert(Command):
                 elif entity == 'Page':
                     item.pop('linked_to_id')
                     item.pop('url')
-                    banners = item.pop('banners')
                     for translation in item['translations']:
                         translation.pop('keywords')
-                        translation['banners'] = banners
 
                 elif entity == 'ExternalLink':
                     item.pop('home')
