@@ -216,6 +216,7 @@ class Convert(Command):
                     item.pop('view_id')
                     item.pop('linked_to_id')
                     item.pop('url')
+                    item.pop('banners')
                     for translation in item['translations']:
                         if item['id'] == 1:
                             translation['label'] = "Menù Principale"
@@ -238,6 +239,7 @@ class Convert(Command):
                     item.pop('view_id')
                     item.pop('linked_to_id')
                     item.pop('url')
+                    item.pop('banners')
                     for translation in item['translations']:
                         translation.pop('keywords')
                         translation.pop('content')
@@ -248,14 +250,17 @@ class Convert(Command):
                 elif entity == 'Page':
                     item.pop('linked_to_id')
                     item.pop('url')
+                    banners = item.pop('banners')
                     for translation in item['translations']:
                         translation.pop('keywords')
+                        translation['banners'] = banners
 
                 elif entity == 'ExternalLink':
                     item.pop('home')
                     item.pop('sitemap_priority')
                     item.pop('view_id')
                     item.pop('linked_to_id')
+                    item.pop('banners')
                     url = item.pop('url')
                     for translation in item['translations']:
                         translation.pop('title')
@@ -274,6 +279,7 @@ class Convert(Command):
                     item.pop('sitemap_priority')
                     item.pop('view_id')
                     item.pop('url')
+                    item.pop('banners')
                     for translation in item['translations']:
                         translation.pop('title')
                         translation.pop('url_part')
