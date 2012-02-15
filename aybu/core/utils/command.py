@@ -291,7 +291,9 @@ class Convert(Command):
 
                 elif entity == 'Theme':
                     item['name'] = item['name'].replace("-", "_")
-                    item['parent_name'] = item['parent_name'].replace("-", "_")
+                    if item['parent_name']:
+                        item['parent_name'] = item['parent_name']\
+                                                        .replace("-", "_")
 
                 elif entity in ('File', 'Image', 'Banner', 'Logo'):
                     item.pop('size')
