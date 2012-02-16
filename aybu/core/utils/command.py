@@ -206,11 +206,33 @@ class Convert(Command):
                     print 'Unused SettingType: set raw_type to Unicode.'
                     print item
                     item['raw_type'] = u'unicode'
+                    continue
 
                 elif entity == 'Setting':
                     continue
 
-                elif entity == 'Menu':
+                elif entity == 'Theme':
+                    item['name'] = item['name'].replace("-", "_")
+                    if item['parent_name']:
+                        item['parent_name'] = item['parent_name']\
+                                                        .replace("-", "_")
+                    continue
+
+                elif entity in ('File', 'Image', 'Banner', 'Logo'):
+                    item.pop('size')
+                    item.pop('content_type')
+                    item.pop('url')
+                    if int(item['id']) > file_max_id:
+                        file_max_id = int(item['id'])
+                    continue
+
+                elif entity == 'Node':
+                    item_entity = item['__class__']
+
+                else:
+                    continue
+
+                if item_entity == 'Menu':
                     item.pop('home')
                     item.pop('sitemap_priority')
                     item.pop('view_id')
@@ -233,7 +255,7 @@ class Convert(Command):
                         translation.pop('images')
                         translation.pop('links')
 
-                elif entity == 'Section':
+                elif item_entity == 'Section':
                     item.pop('home')
                     item.pop('sitemap_priority')
                     item.pop('view_id')
@@ -247,13 +269,13 @@ class Convert(Command):
                         translation.pop('images')
                         translation.pop('links')
 
-                elif entity == 'Page':
+                elif item_entity == 'Page':
                     item.pop('linked_to_id')
                     item.pop('url')
                     for translation in item['translations']:
                         translation.pop('keywords')
 
-                elif entity == 'ExternalLink':
+                elif item_entity == 'ExternalLink':
                     item.pop('home')
                     item.pop('sitemap_priority')
                     item.pop('view_id')
@@ -272,7 +294,7 @@ class Convert(Command):
                         translation.pop('links')
                         translation['ext_url'] = url
 
-                elif entity == 'InternalLink':
+                elif item_entity == 'InternalLink':
                     item.pop('home')
                     item.pop('sitemap_priority')
                     item.pop('view_id')
@@ -288,19 +310,6 @@ class Convert(Command):
                         translation.pop('files')
                         translation.pop('images')
                         translation.pop('links')
-
-                elif entity == 'Theme':
-                    item['name'] = item['name'].replace("-", "_")
-                    if item['parent_name']:
-                        item['parent_name'] = item['parent_name']\
-                                                        .replace("-", "_")
-
-                elif entity in ('File', 'Image', 'Banner', 'Logo'):
-                    item.pop('size')
-                    item.pop('content_type')
-                    item.pop('url')
-                    if int(item['id']) > file_max_id:
-                        file_max_id = int(item['id'])
 
         logo_tmp_path = os.path.join(base_path,
                                      'static',

@@ -51,6 +51,7 @@ from aybu.core.models.media import (MediaPage,
                                     MediaCollectionPageInfo,
                                     MediaItemPageInfo)
 from aybu.core.utils import get_object_from_python_path
+from aybu.core.exc import ValidationError
 from pufferfish import FileSystemEntity
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import Session
@@ -81,14 +82,7 @@ __entities__ = [Theme,
                 Banner,
                 Logo,
                 Image,
-                Menu,
-                Section,
-                Page,
-                ExternalLink,
-                InternalLink,
-                MediaCollectionPage,
-                MediaItemPage,
-                NodeInfo]
+                Node]
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')
@@ -314,7 +308,6 @@ def import_(session, data, sources, private):
     for entity in __entities__:
 
         entities[entity.__name__] = []
-        errors[entity.__name__] = []
 
         if hasattr(entity, "id_seq") and not entity in seq_classes:
             seq_classes.append(entity)
@@ -323,18 +316,23 @@ def import_(session, data, sources, private):
             print 'No data for %s' % entity.__name__
             continue
 
-        for item in data[entity.__name__]:
+        entity_name = entity.__name__
+
+        for item in data[entity_name]:
+
+            if entity_name == 'Node':
+                import node
+                entity = getattr(node, item.pop('__class__'))
+                if entity.__name__ not in entities:
+                    entities[entity.__name__] = []
 
             try:
                 create_entity(session,
                               entities, entity, item, sources, private)
 
-            except:
-                errors[entity.__name__].append(item)
-
-    for entity in errors:
-        for item in errors[entity.__name__]:
-            create_entity(session, entities, entity, item, sources, private)
+            except ValidationError:
+                log.exception('ValidationError during first create.')
+                raise
 
     visited = set()
     for cls in seq_classes:
@@ -473,21 +471,17 @@ def create_entity(session, entities, entity, item, sources, private):
             item['translations'].append(info)
         obj = entity(**item)
         session.add(obj)
-        session.flush()
         entities[entity.__name__].append(obj)
 
     elif issubclass(entity, Section):
         translations = item.pop('translations', [])
-        item['parent'] = session.query(Node).get(item.get('parent_id'))
         obj = entity(**item)
         session.add(obj)
-        session.flush()
         for translation in translations:
             lang = session.query(Language).get(translation['lang_id'])
             translation['lang'] = lang
             info = SectionInfo(**translation)
             obj.translations.append(info)
-        session.flush()
         entities[entity.__name__].append(obj)
 
     elif issubclass(entity, Page):
@@ -495,12 +489,9 @@ def create_entity(session, entities, entity, item, sources, private):
         banners = item.pop('banners', [])
         obj = entity(**item)
         session.add(obj)
-        session.flush()
 
         for banner in banners:
             obj.banners.append(Banner.get(session, banner['id']))
-
-        session.flush()
 
         for translation in translations:
             lang = session.query(Language).get(translation['lang_id'])
@@ -514,7 +505,6 @@ def create_entity(session, entities, entity, item, sources, private):
             info = PageInfo(**translation)
             obj.translations.append(info)
 
-        session.flush()
         entities[entity.__name__].append(obj)
 
     elif issubclass(entity, ExternalLink):
@@ -525,7 +515,6 @@ def create_entity(session, entities, entity, item, sources, private):
             item['translations'].append(obj)
         obj = entity(**item)
         session.add(obj)
-        session.flush()
         entities[entity.__name__].append(obj)
 
     elif issubclass(entity, InternalLink):
@@ -536,7 +525,6 @@ def create_entity(session, entities, entity, item, sources, private):
             item['translations'].append(obj)
         obj = entity(**item)
         session.add(obj)
-        session.flush()
         entities[entity.__name__].append(obj)
 
     else:
