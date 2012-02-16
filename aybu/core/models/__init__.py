@@ -310,9 +310,11 @@ def import_(session, data, sources, private):
 
     entities = {}
     seq_classes = []
+    errors = {}
     for entity in __entities__:
 
         entities[entity.__name__] = []
+        errors[entity.__name__] = []
 
         if hasattr(entity, "id_seq") and not entity in seq_classes:
             seq_classes.append(entity)
@@ -323,176 +325,16 @@ def import_(session, data, sources, private):
 
         for item in data[entity.__name__]:
 
-            if issubclass(entity, Image):
-                base = os.path.join(private,
-                                    'uploads',
-                                    'images')
-                if not os.path.exists(base):
-                    os.makedirs(base)
-                Image.initialize(base=base,
-                                 private=private,
-                                 url_prefix='static')
-                size = session.query(Setting).get('image_full_size').value
-                Image.set_sizes(full=(size, size * 3),
-                                thumbs=dict(thumb=(120, 120)))
-                path = os.path.join(sources, item.pop('path'))
-                if os.path.exists(path):
-                    item['source'] = path
-                    item['session'] = session
-                    obj = Image(**item)
-                    session.add(obj)
-                    session.flush()
+            try:
+                create_entity(session,
+                              entities, entity, item, sources, private)
 
-            elif issubclass(entity, Logo):
-                base = os.path.join(private,
-                                    'uploads',
-                                    'logo')
-                if not os.path.exists(base):
-                    os.makedirs(base)
-                Logo.initialize(base=base,
-                                private=private,
-                                url_prefix='static')
-                logo_width = session.query(Setting).get('logo_width').value
-                logo_height = session.query(Setting).get('logo_height').value
-                Logo.set_sizes(full=(logo_width, logo_height))
-                path = os.path.join(sources, item.pop('path'))
-                if os.path.exists(path):
-                    item['source'] = path
-                    item['session'] = session
-                    obj = Logo(**item)
-                    session.add(obj)
-                    session.flush()
+            except:
+                errors[entity.__name__].append(item)
 
-            elif issubclass(entity, Banner):
-                log.debug("Importging banner %s", item)
-                base = os.path.join(private,
-                                    'uploads',
-                                    'banners')
-                if not os.path.exists(base):
-                    os.makedirs(base)
-                Banner.initialize(base=base,
-                                  private=private,
-                                  url_prefix='static')
-                banner_width = session.query(Setting).get('banner_width').value
-                banner_height = session.query(Setting).get('banner_height').value
-                Banner.set_sizes(full=(banner_width, banner_height))
-                path = os.path.join(sources, item.pop('path'))
-                if os.path.exists(path):
-                    item['source'] = path
-                    item['session'] = session
-                    obj = Banner(**item)
-                    session.add(obj)
-                    session.flush()
-                else:
-                    log.warn("Path does not exists %s: %s", sources, path)
-
-            elif issubclass(entity, File):
-                base = os.path.join(private,
-                                    'uploads',
-                                    'files')
-                if not os.path.exists(base):
-                    os.makedirs(base)
-                File.initialize(base=base,
-                                private=private,
-                                url_prefix='static')
-                path = os.path.join(sources, item.pop('path'))
-                if os.path.exists(path):
-                    item['source'] = path
-                    item['session'] = session
-                    obj = File(**item)
-                    session.add(obj)
-                    session.flush()
-
-            elif issubclass(entity, Setting):
-                # Add the key 'type' with SettingType object.
-                for obj in entities['SettingType']:
-                    if obj.name == item['type_name']:
-                        item['type'] = obj
-
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            elif issubclass(entity, Menu):
-                translations = item.pop('translations', [])
-                item['translations'] = []
-                for translation in translations:
-                    info = MenuInfo(**translation)
-                    item['translations'].append(info)
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            elif issubclass(entity, Section):
-                translations = item.pop('translations', [])
-                item['parent'] = session.query(Node).get(item.get('parent_id'))
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                for translation in translations:
-                    lang = session.query(Language).get(translation['lang_id'])
-                    translation['lang'] = lang
-                    info = SectionInfo(**translation)
-                    obj.translations.append(info)
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            elif issubclass(entity, Page):
-                translations = item.pop('translations', [])
-                banners = item.pop('banners', [])
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-
-                for banner in banners:
-                    obj.banners.append(Banner.get(session, banner['id']))
-
-                session.flush()
-
-                for translation in translations:
-                    lang = session.query(Language).get(translation['lang_id'])
-                    translation['lang'] = lang
-                    # Pop images, files and links
-                    # The application rebuilds them!
-                    # FIXME: ADD CHECK!
-                    translation.pop('images')
-                    translation.pop('files')
-                    translation.pop('links')
-                    info = PageInfo(**translation)
-                    obj.translations.append(info)
-
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            elif issubclass(entity, ExternalLink):
-                translations = item.pop('translations', [])
-                item['translations'] = []
-                for translation in translations:
-                    obj = ExternalLinkInfo(**translation)
-                    item['translations'].append(obj)
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            elif issubclass(entity, InternalLink):
-                translations = item.pop('translations', [])
-                item['translations'] = []
-                for translation in translations:
-                    obj = InternalLinkInfo(**translation)
-                    item['translations'].append(obj)
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                entities[entity.__name__].append(obj)
-
-            else:
-                obj = entity(**item)
-                session.add(obj)
-                session.flush()
-                entities[entity.__name__].append(obj)
+    for entity in errors:
+        for item in errors[entity.__name__]:
+            create_entity(session, entities, entity, item, sources, private)
 
     visited = set()
     for cls in seq_classes:
@@ -528,3 +370,177 @@ def import_(session, data, sources, private):
         except:
             log.exception('Cannot fix sequence for cls %s', cls)
             raise
+
+
+def create_entity(session, entities, entity, item, sources, private):
+
+    if issubclass(entity, Image):
+        base = os.path.join(private,
+                            'uploads',
+                            'images')
+        if not os.path.exists(base):
+            os.makedirs(base)
+        Image.initialize(base=base,
+                         private=private,
+                         url_prefix='static')
+        size = session.query(Setting).get('image_full_size').value
+        Image.set_sizes(full=(size, size * 3),
+                        thumbs=dict(thumb=(120, 120)))
+        path = os.path.join(sources, item.pop('path'))
+        if os.path.exists(path):
+            item['source'] = path
+            item['session'] = session
+            obj = Image(**item)
+            session.add(obj)
+            session.flush()
+
+    elif issubclass(entity, Logo):
+        base = os.path.join(private,
+                            'uploads',
+                            'logo')
+        if not os.path.exists(base):
+            os.makedirs(base)
+        Logo.initialize(base=base,
+                        private=private,
+                        url_prefix='static')
+        logo_width = session.query(Setting).get('logo_width').value
+        logo_height = session.query(Setting).get('logo_height').value
+        Logo.set_sizes(full=(logo_width, logo_height))
+        path = os.path.join(sources, item.pop('path'))
+        if os.path.exists(path):
+            item['source'] = path
+            item['session'] = session
+            obj = Logo(**item)
+            session.add(obj)
+            session.flush()
+
+    elif issubclass(entity, Banner):
+        log.debug("Importging banner %s", item)
+        base = os.path.join(private,
+                            'uploads',
+                            'banners')
+        if not os.path.exists(base):
+            os.makedirs(base)
+        Banner.initialize(base=base,
+                          private=private,
+                          url_prefix='static')
+        banner_width = session.query(Setting).get('banner_width').value
+        banner_height = session.query(Setting).get('banner_height').value
+        Banner.set_sizes(full=(banner_width, banner_height))
+        path = os.path.join(sources, item.pop('path'))
+        if os.path.exists(path):
+            item['source'] = path
+            item['session'] = session
+            obj = Banner(**item)
+            session.add(obj)
+            session.flush()
+        else:
+            log.warn("Path does not exists %s: %s", sources, path)
+
+    elif issubclass(entity, File):
+        base = os.path.join(private,
+                            'uploads',
+                            'files')
+        if not os.path.exists(base):
+            os.makedirs(base)
+        File.initialize(base=base,
+                        private=private,
+                        url_prefix='static')
+        path = os.path.join(sources, item.pop('path'))
+        if os.path.exists(path):
+            item['source'] = path
+            item['session'] = session
+            obj = File(**item)
+            session.add(obj)
+            session.flush()
+
+    elif issubclass(entity, Setting):
+        # Add the key 'type' with SettingType object.
+        for obj in entities['SettingType']:
+            if obj.name == item['type_name']:
+                item['type'] = obj
+
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    elif issubclass(entity, Menu):
+        translations = item.pop('translations', [])
+        item['translations'] = []
+        for translation in translations:
+            info = MenuInfo(**translation)
+            item['translations'].append(info)
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    elif issubclass(entity, Section):
+        translations = item.pop('translations', [])
+        item['parent'] = session.query(Node).get(item.get('parent_id'))
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        for translation in translations:
+            lang = session.query(Language).get(translation['lang_id'])
+            translation['lang'] = lang
+            info = SectionInfo(**translation)
+            obj.translations.append(info)
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    elif issubclass(entity, Page):
+        translations = item.pop('translations', [])
+        banners = item.pop('banners', [])
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+
+        for banner in banners:
+            obj.banners.append(Banner.get(session, banner['id']))
+
+        session.flush()
+
+        for translation in translations:
+            lang = session.query(Language).get(translation['lang_id'])
+            translation['lang'] = lang
+            # Pop images, files and links
+            # The application rebuilds them!
+            # FIXME: ADD CHECK!
+            translation.pop('images')
+            translation.pop('files')
+            translation.pop('links')
+            info = PageInfo(**translation)
+            obj.translations.append(info)
+
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    elif issubclass(entity, ExternalLink):
+        translations = item.pop('translations', [])
+        item['translations'] = []
+        for translation in translations:
+            obj = ExternalLinkInfo(**translation)
+            item['translations'].append(obj)
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    elif issubclass(entity, InternalLink):
+        translations = item.pop('translations', [])
+        item['translations'] = []
+        for translation in translations:
+            obj = InternalLinkInfo(**translation)
+            item['translations'].append(obj)
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        entities[entity.__name__].append(obj)
+
+    else:
+        obj = entity(**item)
+        session.add(obj)
+        session.flush()
+        entities[entity.__name__].append(obj)
