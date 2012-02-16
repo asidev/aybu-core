@@ -215,7 +215,7 @@ def before_flush(session, *args):
         old = obj._attrs_updates['url_part']['old']
         new = obj._attrs_updates['url_part']['new']
 
-        if old not in nones or old == new:
+        if old in nones or old == new:
             continue
 
         obj.update_children_parent_url()
