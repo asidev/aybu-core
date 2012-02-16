@@ -190,7 +190,7 @@ class Node(Base):
         elif not isinstance(self, Menu) and\
              not isinstance(value, (Menu, Section, Page)):
 
-            msg = '%s: parent=%s is not allowed.' % value
+            msg = '%s: parent=%s is not allowed.' % (self, value)
             raise ValidationError(msg)
 
         if not value is None:
