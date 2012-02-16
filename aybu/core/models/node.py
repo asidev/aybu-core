@@ -202,7 +202,7 @@ class Node(Base):
         #FIXME: check usage!
         if isinstance(self, (ExternalLink, InternalLink)):
             if value != None or value != []:
-                raise ValidationError()
+                raise ValidationError('children')
         return value
 
     def get_translation(self, language):
@@ -307,12 +307,12 @@ class Page(Node):
     @validates('view')
     def validate_view(self, key, value):
         if value is None:
-            raise ValidationError()
+            raise ValidationError('view: cannot be None.')
 
         # The following control should be already checked by sqlalchemy when
         # the object is added to the session
         if not isinstance(value, View):
-            raise ValidationError()
+            raise ValidationError('view: is not a View instance.')
 
         return value
 
@@ -321,7 +321,7 @@ class Page(Node):
         if value > 100 or value < 1:
             # CHECK
             # We can set the default value or raise the exception
-            raise ValidationError()
+            raise ValidationError('sitemap_priority: wrong value.')
         return value
 
     @validates('home')
@@ -422,7 +422,7 @@ class InternalLink(Node):
     def validate_linked_to(self, key, value):
         #log.debug('Validate linked_to : %s, %s,%s', self, key, value)
         if not isinstance(value, (Page)):
-            raise ValidationError()
+            raise ValidationError('linked_to: is not a Page instance.')
 
         return value
 
