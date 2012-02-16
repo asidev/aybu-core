@@ -362,6 +362,7 @@ class Page(Node):
     def to_dict(self, language=None, recursive=True):
 
         dict_ = super(Page, self).to_dict(language, recursive)
+        dict_['home'] = self.home
 
         for translation in self.translations:
             if translation.lang == language:

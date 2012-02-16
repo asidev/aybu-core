@@ -58,6 +58,16 @@ class View(Base):
         return super(View, cls).all(session, start=start, limit=limit,
                                     query_options=query_options)
 
+    @classmethod
+    def get_by_name(cls, session, name):
+        query_options = (joinedload('descriptions'),
+                         joinedload('descriptions.language'))
+        return super(View, cls).search(session,
+                                       filters=(View.name == name,),
+                                       start=0,
+                                       limit=1,
+                                       query_options=query_options)
+
 
 class ViewDescription(Base):
 
