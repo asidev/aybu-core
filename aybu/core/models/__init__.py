@@ -82,7 +82,8 @@ __entities__ = [Theme,
                 Banner,
                 Logo,
                 Image,
-                Node]
+                Node,
+                NodeInfo]
 
 
 @sqlalchemy.event.listens_for(sqlalchemy.orm.mapper, 'mapper_configured')
@@ -145,7 +146,7 @@ def before_flush(session, *args):
         elif obj.node is None:
             obj.node = Node.get(session, obj.node_id)
 
-        #log.debug("Update 'parent_url' of %s", obj.label)
+        log.info("Update 'parent_url' of %s", obj.label)
         obj.update_parent_url()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -154,7 +155,7 @@ def before_flush(session, *args):
         if not isinstance(obj, PageInfo):
             continue
 
-        #log.debug("Update associations of %s", obj.label)
+        log.info("Update associations of %s", obj.label)
         obj.update_associations()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -165,7 +166,7 @@ def before_flush(session, *args):
            'content' not in obj._attrs_updates:
             continue
 
-        #log.debug("Update associations of %s", obj.label)
+        log.info("Update associations of %s", obj.label)
         obj.update_associations()
 
     # First phase.
@@ -178,6 +179,7 @@ def before_flush(session, *args):
            'node' not in obj._attrs_updates:
             continue
 
+        log.info("Update parent_url of %s", obj.label)
         obj.update_parent_url()
 
     # Second phase: handle Page|Section objects changes.
@@ -193,7 +195,7 @@ def before_flush(session, *args):
         #log.debug('Update translations of %s', obj.id)
 
         for translation in obj.translations:
-            #log.debug('Update translation: %s', translation.label)
+            log.info('Update translation: %s', translation.label)
             translation.update_parent_url()
 
     # Third phase: handle CommonInfo.url_part changes.
@@ -212,6 +214,7 @@ def before_flush(session, *args):
         if old in nones or old == new:
             continue
 
+        log.info("Update children of %s", obj.label)
         obj.update_children_parent_url()
 
 
@@ -250,33 +253,6 @@ def add_default_data(session, data):
                     params[key] = query.get(value)
                     continue
 
-        """
-                # The code below is needed when data specifies relationships
-                # as list or scalar of primary keys.
-                # This feature is not needed now.
-                if not property_.uselist:
-                    for i, col in enumerate(mapper.primary_key):
-                        attr = getattr(class_, col.name)
-                        query = query.filter(attr == value[i])
-                    params[key] = query.one()
-                    continue
-
-                if len(mapper.primary_key) == 1:
-                    values = []
-                    for elem in value:
-                        attr = getattr(class_, mapper.primary_key[0].name)
-                        values.append(query.filter(attr == elem).one())
-                    params[key] = values
-                    continue
-
-                values = []
-                for elem in value:
-                    for i, col in enumerate(mapper.primary_key):
-                        attr = getattr(class_, col.name)
-                        values.append(query.filter(attr == elem[i]).one())
-                params[key] = values
-        """
-
         obj = cls(**params)
         obj = session.merge(obj)
 
@@ -300,11 +276,10 @@ def add_default_data(session, data):
             pass
 
 
-def import_(session, data, sources, private):
+def import_(engine_uri, session, data, sources, private):
 
     entities = {}
     seq_classes = []
-    errors = {}
     for entity in __entities__:
 
         entities[entity.__name__] = []
@@ -325,6 +300,11 @@ def import_(session, data, sources, private):
                 entity = getattr(node, item.pop('__class__'))
                 if entity.__name__ not in entities:
                     entities[entity.__name__] = []
+            elif entity_name == 'NodeInfo':
+                import translation
+                entity = getattr(translation, item.pop('__class__'))
+                if entity.__name__ not in entities:
+                    entities[entity.__name__] = []
 
             try:
                 create_entity(session,
@@ -333,6 +313,8 @@ def import_(session, data, sources, private):
             except ValidationError:
                 log.exception('ValidationError during first create.')
                 raise
+
+        session.flush()
 
     visited = set()
     for cls in seq_classes:
@@ -385,12 +367,12 @@ def create_entity(session, entities, entity, item, sources, private):
         Image.set_sizes(full=(size, size * 3),
                         thumbs=dict(thumb=(120, 120)))
         path = os.path.join(sources, item.pop('path'))
-        if os.path.exists(path):
-            item['source'] = path
-            item['session'] = session
-            obj = Image(**item)
-            session.add(obj)
-            session.flush()
+        if not os.path.exists(path):
+            log.warn("Path does not exists %s: %s", sources, path)
+            return
+
+        item['source'] = path
+        item['session'] = session
 
     elif issubclass(entity, Logo):
         base = os.path.join(private,
@@ -405,12 +387,12 @@ def create_entity(session, entities, entity, item, sources, private):
         logo_height = session.query(Setting).get('logo_height').value
         Logo.set_sizes(full=(logo_width, logo_height))
         path = os.path.join(sources, item.pop('path'))
-        if os.path.exists(path):
-            item['source'] = path
-            item['session'] = session
-            obj = Logo(**item)
-            session.add(obj)
-            session.flush()
+        if not os.path.exists(path):
+            log.warn("Path does not exists %s: %s", sources, path)
+            return
+
+        item['source'] = path
+        item['session'] = session
 
     elif issubclass(entity, Banner):
         log.debug("Importging banner %s", item)
@@ -426,14 +408,12 @@ def create_entity(session, entities, entity, item, sources, private):
         banner_height = session.query(Setting).get('banner_height').value
         Banner.set_sizes(full=(banner_width, banner_height))
         path = os.path.join(sources, item.pop('path'))
-        if os.path.exists(path):
-            item['source'] = path
-            item['session'] = session
-            obj = Banner(**item)
-            session.add(obj)
-            session.flush()
-        else:
+        if not os.path.exists(path):
             log.warn("Path does not exists %s: %s", sources, path)
+            return
+
+        item['source'] = path
+        item['session'] = session
 
     elif issubclass(entity, File):
         base = os.path.join(private,
@@ -445,12 +425,12 @@ def create_entity(session, entities, entity, item, sources, private):
                         private=private,
                         url_prefix='static')
         path = os.path.join(sources, item.pop('path'))
-        if os.path.exists(path):
-            item['source'] = path
-            item['session'] = session
-            obj = File(**item)
-            session.add(obj)
-            session.flush()
+        if not os.path.exists(path):
+            log.warn("Path does not exists %s: %s", sources, path)
+            return
+
+        item['source'] = path
+        item['session'] = session
 
     elif issubclass(entity, Setting):
         # Add the key 'type' with SettingType object.
@@ -458,77 +438,18 @@ def create_entity(session, entities, entity, item, sources, private):
             if obj.name == item['type_name']:
                 item['type'] = obj
 
-        obj = entity(**item)
-        session.add(obj)
-        session.flush()
-        entities[entity.__name__].append(obj)
-
-    elif issubclass(entity, Menu):
-        translations = item.pop('translations', [])
-        item['translations'] = []
-        for translation in translations:
-            info = MenuInfo(**translation)
-            item['translations'].append(info)
-        obj = entity(**item)
-        session.add(obj)
-        entities[entity.__name__].append(obj)
-
-    elif issubclass(entity, Section):
-        translations = item.pop('translations', [])
-        obj = entity(**item)
-        session.add(obj)
-        for translation in translations:
-            lang = session.query(Language).get(translation['lang_id'])
-            translation['lang'] = lang
-            info = SectionInfo(**translation)
-            obj.translations.append(info)
-        entities[entity.__name__].append(obj)
+    elif issubclass(entity, NodeInfo):
+        item['lang'] = session.query(Language).get(item['lang_id'])
+        item['node'] = session.query(Node).get(item['node_id'])
 
     elif issubclass(entity, Page):
-        translations = item.pop('translations', [])
-        banners = item.pop('banners', [])
-        obj = entity(**item)
-        session.add(obj)
+        banners = item.pop('banners')
 
+    obj = entity(**item)
+    session.add(obj)
+
+    if issubclass(entity, Page):
         for banner in banners:
             obj.banners.append(Banner.get(session, banner['id']))
 
-        for translation in translations:
-            lang = session.query(Language).get(translation['lang_id'])
-            translation['lang'] = lang
-            # Pop images, files and links
-            # The application rebuilds them!
-            # FIXME: ADD CHECK!
-            translation.pop('images')
-            translation.pop('files')
-            translation.pop('links')
-            info = PageInfo(**translation)
-            obj.translations.append(info)
-
-        entities[entity.__name__].append(obj)
-
-    elif issubclass(entity, ExternalLink):
-        translations = item.pop('translations', [])
-        item['translations'] = []
-        for translation in translations:
-            obj = ExternalLinkInfo(**translation)
-            item['translations'].append(obj)
-        obj = entity(**item)
-        session.add(obj)
-        entities[entity.__name__].append(obj)
-
-    elif issubclass(entity, InternalLink):
-        translations = item.pop('translations', [])
-        item['translations'] = []
-        for translation in translations:
-            obj = InternalLinkInfo(**translation)
-            item['translations'].append(obj)
-        obj = entity(**item)
-        session.add(obj)
-        entities[entity.__name__].append(obj)
-
-    else:
-        obj = entity(**item)
-        session.add(obj)
-        session.flush()
-        entities[entity.__name__].append(obj)
+    entities[entity.__name__].append(obj)

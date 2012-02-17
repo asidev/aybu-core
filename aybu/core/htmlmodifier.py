@@ -54,7 +54,7 @@ def match_pageinfo_urls(value, type_, session):
         return key
 
     except:
-        log.debug('No %s with url %s', type_.__name__, value)
+        log.info('No %s with url %s', type_.__name__, value)
         return None
 
 
