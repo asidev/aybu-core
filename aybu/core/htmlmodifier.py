@@ -21,22 +21,28 @@ import logging
 import re
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.exc import NoResultFound
-from BeautifulSoup import BeautifulSoup
 
 
 log = logging.getLogger(__name__)
 __all__ = ['associate_images', 'associate_files',
-           'associate_pages', 'update_img_src',
-           'change_href']
+           'associate_pages', 'update_img_src']
 
 
 Tag = collections.namedtuple('Tag', 'name attribute')
 
+
 def match_pufferfish_urls(value, type_, session):
-    match = re.search(r"%s/(\d+)/" % (type_.url_base), value)
+
+    if not hasattr(type_, "url_prefix"):
+        log.warning("%s has not attribute url_prefix", type_)
+        return
+
+    url_base = "/{}/uploads/{}".format(type_.url_prefix, type_.dirname)
+    log.error(url_base)
+    match = re.search(r"%s/(\d+)/" % (url_base), value)
     if not match:
         log.debug("Tag %s is local to the webserver, "
-                    "but did not match %s/\d+/", value, type_.url_base)
+                    "but did not match %s/\d+/", value, url_base)
         return None
     id_ = match.groups()[0].replace("/", "")
     log.debug("%s matches as pufferfish url with id %s", value, id_)
@@ -60,14 +66,12 @@ def match_pageinfo_urls(value, type_, session):
 
 def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
                           attr_name=None):
-    pginfo_cls = pginfo.__class__
     if attr_name:
         pginfo_attr = attr_name
+
     else:
         pginfo_attr = "{}s".format(type_.__name__.lower())
-    #log.debug("Updating %s.%s associations for %s",
-    #          pginfo_cls.__name__, pginfo_attr, pginfo)
-    old_associations = list(getattr(pginfo, pginfo_attr))
+
     session = object_session(pginfo)
 
     # empty the relation first
@@ -105,14 +109,6 @@ def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
                       static_obj, pginfo, pginfo_attr)
             getattr(pginfo, pginfo_attr).append(static_obj)
 
-    #log.debug("%s %s has obj.%s = %s",
-    #          pginfo_cls.__name__, pginfo.id, pginfo_attr,
-    #          [s.id for s in getattr(pginfo, pginfo_attr)])
-
-    #log.debug("%ss %s are no more associated with obj %s",
-    #          type_.__name__,
-    #          [s.id for s in old_associations if s not in getattr(pginfo, pginfo_attr)],
-    #          pginfo.id)
     return soup
 
 

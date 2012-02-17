@@ -47,6 +47,8 @@ class File(FileSystemEntity, Base):
     __table_args__ = ({'mysql_engine': 'InnoDB'})
     discriminator = Column('row_type', Unicode(50))
     __mapper_args__ = {'polymorphic_on': discriminator}
+    url_prefix = "static"
+    dirname = 'files'
 
     @classmethod
     def create_new(cls, newobj, args, kwargs):
@@ -110,12 +112,14 @@ class File(FileSystemEntity, Base):
                           query_options=query_options, filters=filters)
 
     def __repr__(self):  # pragma: nocover
-        return "<%s %s at %s : %s>" % (self.__class__.__name__,
-                                       self.id, self.path, self.url)
+        try:
+            return "<%s %s at %s : %s>" % (self.__class__.__name__,
+                                           self.id, self.path, self.url)
+        except:
+            return "<%s - uninit >" % (self.__class__.__name__)
 
 
 class SimpleImageMixin(object):
-    full_size = None
 
     @declared_attr
     def default(self):
@@ -135,6 +139,22 @@ class SimpleImageMixin(object):
         except IndexError:
             return None
 
+    @property
+    def full_size(self):
+
+        try:
+            self._full_size
+
+        except AttributeError:
+            session = object_session(self)
+            prefix = self.__class__.__name__.lower()
+            w = Setting.get(session, "{}_width".format(prefix)).value
+            h = Setting.get(session, "{}_height".format(prefix)).value
+            self._full_size = (w, h)
+
+        finally:
+            return self._full_size
+
     @classmethod
     def set_default(cls, obj, value, oldvalue, initiator):
         if value:
@@ -142,10 +162,6 @@ class SimpleImageMixin(object):
                        filters=(cls.id != obj.id), return_query=True)\
                             .update({'default': False},
                                     synchronize_session='fetch')
-
-    @classmethod
-    def set_sizes(cls, full):
-        cls.full_size = tuple(full) if full else None
 
     def save_file(self, source):
         """ Called when saving source """
@@ -156,13 +172,9 @@ class SimpleImageMixin(object):
         if self.content_type.partition('/')[0] == 'image':
             # only resize images
             handle = PIL.Image.open(source)
-            log.debug('%s size %s', self.__class__.__name__, self.full_size)
-
-            if self.full_size:
-                log.debug('Resizing %s to %s', self.__class__.__name__,
-                          self.full_size)
-                handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
-
+            log.debug('Resizing %s to %s', self.__class__.__name__,
+                      self.full_size)
+            handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
             handle.save(self.path)
 
         else:
@@ -189,10 +201,12 @@ class SimpleImageMixin(object):
 
 class Banner(SimpleImageMixin, File):
     __mapper_args__ = {'polymorphic_identity': 'banner'}
+    dirname = 'banners'
 
 
 class Logo(Banner):
     __mapper_args__ = {'polymorphic_identity': 'logo'}
+    dirname = 'logo'
 
 
 class Image(File):
@@ -200,28 +214,10 @@ class Image(File):
         It automatically creates thumbnails if desired.
         Since it inherits from FileSystemEntity, it is
         transaction-safe.
-
-        This class must be configured prior to use
-
-        >>> from aybu.core.models.file import Image
-        >>> Image.initialize(session, base="/tmp/testme", private="/tmp")
-
-        Define sizes if you want thumbnails (width, height)
-        >>> Image.thumb_sizes = dict(small=(120,120), medium=(300, 300))
-
-        Set full_size to a tuple to set the original image max size (w, h)
-        >>> Image.full_size = (600, 600)
     """
 
     __mapper_args__ = {'polymorphic_identity': 'image'}
-
-    full_size = None
-    thumb_sizes = {}
-
-    @classmethod
-    def set_sizes(cls, full=None, thumbs={}):
-        cls.full_size = tuple(full) if full else None
-        cls.thumb_sizes = dict(thumbs)
+    dirname = 'images'
 
     @property
     def thumbnails(self):
@@ -238,6 +234,27 @@ class Image(File):
     def height(self):
         return PIL.Image.open(self.source).size[1]
 
+    @property
+    def full_size(self):
+
+        try:
+            self._full_size
+
+        except AttributeError:
+            session = object_session(self)
+            prefix = self.__class__.__name__.lower()
+            w = Setting.get(session, "image_full_size".format(prefix)).value
+            h = w * 3
+            self._full_size = (w, h)
+
+        finally:
+            return self._full_size
+
+    @property
+    def thumb_sizes(self):
+        # FIXME: add a setting!
+        return dict(thumb=(120, 120))
+
     def create_thumbnail(self, source):
         """ Called when saving image, both on create and on update.
         """
@@ -252,9 +269,7 @@ class Image(File):
 
     def save_file(self, handle):
         """ Called when saving source """
-        if self.full_size:
-            handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
-
+        handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
         handle.save(self.path)
 
     def to_dict(self, ref_pages=False, paths=False):
@@ -288,6 +303,9 @@ class Image(File):
         if oldvalue == cls.temporary_name or value == oldvalue:
             # No need to update links when name was temporary
             # or when it does not change
+            return
+
+        if not hasattr(obj, 'pages'):
             return
 
         obj.old_name = oldvalue

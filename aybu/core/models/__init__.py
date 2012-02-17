@@ -125,7 +125,6 @@ def init_session_events(session=Session):
 def before_flush(session, *args):
     """ Set 'parent_url' and update it when 'url_part' was changed.
     """
-
     nones = (symbol('NO_VALUE'), symbol('NEVER_SET'), None)
 
     # NOTE: cannot know objects order in session.new and session.dirty,
