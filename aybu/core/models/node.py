@@ -115,22 +115,22 @@ class Node(Base):
         return value
 
     @classmethod
-    def delete(cls, session, id_):
+    def remove(cls, session, id_):
         """ Delete (and all its translations) a node from the database.
         """
         node = Node.get(session, id_)
 
         if isinstance(node, Menu):
-            raise ConstraintError('Menu deletion is not allowed.')
+            raise ConstraintError('0001:Menu deletion is not allowed.')
 
         if isinstance(node, Page) and \
            Page.count(session, Page.enabled == True) < 2:
-            raise ConstraintError('Last Page cannot be deleted.')
+            raise ConstraintError('0002:Last Page cannot be deleted.')
 
         if node.children:
             # This constraint simplify node deletion:
             # update of children (weight, parent and urls) is not needed.
-            raise ConstraintError('Cannot delete a Node with children.')
+            raise ConstraintError('0003:Cannot delete a Node with children.')
 
         if isinstance(node, Page):
             # FIXME: add constraint!
@@ -140,7 +140,7 @@ class Node(Base):
 
                 if PageInfo.count(session,
                                   PageInfo.links.contains(page_info)):
-                    raise ConstraintError('Cannot delete a referred Page.')
+                    raise ConstraintError('0004:Cannot delete a referred Page.')
 
                 # FIXME: test Pufferfish to verify files deletion.
                 page_info.delete()
