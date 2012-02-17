@@ -158,6 +158,7 @@ class CommonInfo(NodeInfo):
             # This CommonInfo belong to Section|Page under a Menu.
             # 'parent_url' format must be: '/en', '/it', ...
             parent_url = '/{}'.format(self.lang.lang)
+
         return parent_url
 
     @parent_url.expression

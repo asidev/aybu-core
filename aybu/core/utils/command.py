@@ -40,7 +40,9 @@ from aybu.core.models import (add_default_data,
                               View,
                               ViewDescription,
                               __entities__,
-                              import_)
+                              import_,
+                              CommonInfo,
+                              PageInfo)
 
 log = logging.getLogger(__name__)
 
@@ -229,6 +231,9 @@ class Convert(Command):
                 elif entity == 'Node':
                     item_entity = item['__class__']
 
+                elif entity == 'NodeInfo':
+                    item_entity = item['__class__']
+
                 else:
                     continue
 
@@ -239,21 +244,22 @@ class Convert(Command):
                     item.pop('linked_to_id')
                     item.pop('url')
                     item.pop('banners')
-                    for translation in item['translations']:
-                        if item['id'] == 1:
-                            translation['label'] = "Menù Principale"
-                        else:
-                            translation['label'] = 'Pagine Orfane'
 
-                        translation.pop('title')
-                        translation.pop('url_part')
-                        translation.pop('keywords')
-                        translation.pop('meta_description')
-                        translation.pop('head_content')
-                        translation.pop('content')
-                        translation.pop('files')
-                        translation.pop('images')
-                        translation.pop('links')
+                elif item_entity == 'MenuInfo':
+                    if item['node_id'] == 1:
+                        item['label'] = "Menù Principale"
+                    else:
+                        item['label'] = 'Pagine Orfane'
+
+                    item.pop('title')
+                    item.pop('url_part')
+                    item.pop('keywords')
+                    item.pop('meta_description')
+                    item.pop('head_content')
+                    item.pop('content')
+                    item.pop('files')
+                    item.pop('images')
+                    item.pop('links')
 
                 elif item_entity == 'Section':
                     item.pop('home')
@@ -262,18 +268,25 @@ class Convert(Command):
                     item.pop('linked_to_id')
                     item.pop('url')
                     item.pop('banners')
-                    for translation in item['translations']:
-                        translation.pop('keywords')
-                        translation.pop('content')
-                        translation.pop('files')
-                        translation.pop('images')
-                        translation.pop('links')
+
+                elif item_entity == 'SectionInfo':
+                    item.pop('meta_description')
+                    item.pop('head_content')
+                    item.pop('content')
+                    item.pop('keywords')
+                    item.pop('files')
+                    item.pop('images')
+                    item.pop('links')
 
                 elif item_entity == 'Page':
                     item.pop('linked_to_id')
                     item.pop('url')
-                    for translation in item['translations']:
-                        translation.pop('keywords')
+
+                elif item_entity == 'PageInfo':
+                    item.pop('keywords')
+                    item.pop('files')
+                    item.pop('images')
+                    item.pop('links')
 
                 elif item_entity == 'ExternalLink':
                     item.pop('home')
@@ -281,18 +294,18 @@ class Convert(Command):
                     item.pop('view_id')
                     item.pop('linked_to_id')
                     item.pop('banners')
-                    url = item.pop('url')
-                    for translation in item['translations']:
-                        translation.pop('title')
-                        translation.pop('url_part')
-                        translation.pop('keywords')
-                        translation.pop('meta_description')
-                        translation.pop('head_content')
-                        translation.pop('content')
-                        translation.pop('files')
-                        translation.pop('images')
-                        translation.pop('links')
-                        translation['ext_url'] = url
+                    item.pop('url')
+
+                elif item_entity == 'ExternalLinkInfo':
+                    item.pop('title')
+                    item.pop('url_part')
+                    item.pop('keywords')
+                    item.pop('meta_description')
+                    item.pop('head_content')
+                    item.pop('content')
+                    item.pop('files')
+                    item.pop('images')
+                    item.pop('links')
 
                 elif item_entity == 'InternalLink':
                     item.pop('home')
@@ -300,16 +313,17 @@ class Convert(Command):
                     item.pop('view_id')
                     item.pop('url')
                     item.pop('banners')
-                    for translation in item['translations']:
-                        translation.pop('title')
-                        translation.pop('url_part')
-                        translation.pop('keywords')
-                        translation.pop('meta_description')
-                        translation.pop('head_content')
-                        translation.pop('content')
-                        translation.pop('files')
-                        translation.pop('images')
-                        translation.pop('links')
+
+                elif item_entity == 'InternalLinkInfo':
+                    item.pop('title')
+                    item.pop('url_part')
+                    item.pop('keywords')
+                    item.pop('meta_description')
+                    item.pop('head_content')
+                    item.pop('content')
+                    item.pop('files')
+                    item.pop('images')
+                    item.pop('links')
 
         logo_tmp_path = os.path.join(base_path,
                                      'static',
@@ -375,7 +389,8 @@ class Import(Command):
     def command(self):
 
         if not self.args or len(self.args) < 2:
-            raise BadCommand('You must give a configuration file and an archive.')
+            msg = 'You must give a configuration file and an archive.'
+            raise BadCommand(msg)
 
         file_name = self.args[0]
         if not file_name.startswith("/"):
@@ -414,8 +429,9 @@ class Import(Command):
         json_data = os.path.join(base_path, 'data.json')
         data = json.load(open(json_data, 'r'), encoding='utf-8')
         try:
-            import_(session, data, base_path, dst)
-
+            import_(unicode(engine.url), session, data, base_path, dst)
+            for info in session.query(PageInfo).all():
+                info.update_associations()
             # add default users
             if config.get('default_user.username') and \
                config.get('default_user.password'):
