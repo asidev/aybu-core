@@ -95,8 +95,14 @@ class RemoteUser(object):
     @classmethod
     def check(cls, request, username, password):
         remote = request.registry.settings.get('remote_login_url')
-        verify_ssl = ast.literal_eval(
-                    request.registry.settings.get('remote_login_verify_ssl'))
+        log.info("Using API server at %s", remote)
+        try:
+            verify_ssl = ast.literal_eval(
+                        request.registry.settings.get('remote_login_verify_ssl'))
+        except:
+            log.exception('Error in ast.literal_eval')
+            verify_ssl = False
+
         url = "{}/{}".format(remote, username)
         params = dict(
             domain=request.host,
