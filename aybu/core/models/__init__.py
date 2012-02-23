@@ -146,7 +146,7 @@ def before_flush(session, *args):
         elif obj.node is None:
             obj.node = Node.get(session, obj.node_id)
 
-        log.info("Update 'parent_url' of %s", obj.label)
+        #log.info("Update 'parent_url' of %s", obj.label)
         obj.update_parent_url()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -155,7 +155,7 @@ def before_flush(session, *args):
         if not isinstance(obj, PageInfo):
             continue
 
-        log.info("Update associations of %s", obj.label)
+        #log.info("Update associations of %s", obj.label)
         obj.update_associations()
 
     # Handle 'PageInfo.content' for 'new' objects.
@@ -166,7 +166,7 @@ def before_flush(session, *args):
            'content' not in obj._attrs_updates:
             continue
 
-        log.info("Update associations of %s", obj.label)
+        #log.info("Update associations of %s", obj.label)
         obj.update_associations()
 
     # First phase.
@@ -179,7 +179,7 @@ def before_flush(session, *args):
            'node' not in obj._attrs_updates:
             continue
 
-        log.info("Update parent_url of %s", obj.label)
+        #log.info("Update parent_url of %s", obj.label)
         obj.update_parent_url()
 
     # Second phase: handle Page|Section objects changes.
@@ -195,7 +195,7 @@ def before_flush(session, *args):
         #log.debug('Update translations of %s', obj.id)
 
         for translation in obj.translations:
-            log.info('Update translation: %s', translation.label)
+            #log.info('Update translation: %s', translation.label)
             translation.update_parent_url()
 
     # Third phase: handle CommonInfo.url_part changes.
@@ -214,7 +214,7 @@ def before_flush(session, *args):
         if old in nones or old == new:
             continue
 
-        log.info("Update children of %s", obj.label)
+        #log.info("Update children of %s", obj.label)
         obj.update_children_parent_url()
 
 
