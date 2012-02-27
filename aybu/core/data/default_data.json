@@ -111,6 +111,41 @@
     },
     {
         "cls_": "Setting",
+        "name": "footer_info2",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "html"
+    },
+    {
+        "cls_": "Setting",
+        "name": "footer_link",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "html"
+    },
+    {
+        "cls_": "Setting",
+        "name": "footer_link2",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "html"
+    },
+    {
+        "cls_": "Setting",
+        "name": "footer_link3",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "html"
+    },
+    {
+        "cls_": "Setting",
+        "name": "footer_news",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "html"
+    },
+    {
+        "cls_": "Setting",
         "name": "template_levels",
         "raw_value": "3",
         "ui_administrable": false,
@@ -322,6 +357,27 @@
     {
         "cls_": "Setting",
         "name": "slogan",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "txt"
+    },
+    {
+        "cls_": "Setting",
+        "name": "slogan_2",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "txt"
+    },
+    {
+        "cls_": "Setting",
+        "name": "designer_link",
+        "raw_value": "",
+        "ui_administrable": true,
+        "type": "txt"
+    },
+    {
+        "cls_": "Setting",
+        "name": "designer_name",
         "raw_value": "",
         "ui_administrable": true,
         "type": "txt"

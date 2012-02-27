@@ -34,6 +34,10 @@ class MediaPage(Page):
                                          ondelete='restrict'))
     file = relationship('File', lazy='joined')
 
+    @classmethod
+    def remove(cls, session, id_):
+        session.query(cls).filter(cls.id == id_).delete()
+
 
 class MediaCollectionPage(MediaPage):
     __mapper_args__ = {'polymorphic_identity': 'media_collection_page'}

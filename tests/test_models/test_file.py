@@ -46,7 +46,7 @@ def create_page(session, copy_from=None):
         session.add(page)
     else:
         lang = copy_from.lang
-        page = Page(weight=copy_from.node.weight +1)
+        page = Page(weight=copy_from.node.weight + 1)
         session.add(page)
 
     pageinfo = PageInfo(node=page, lang=lang, label=unicode(page.weight),
@@ -101,7 +101,8 @@ class FileTests(FileTestsBase):
 
     def test_referred(self):
         tmpfile = self._create_tmp_file()
-        newfile = File(name='testfile.txt', source=tmpfile, session=self.session)
+        newfile = File(name='testfile.txt', source=tmpfile,
+                       session=self.session)
         self.session.commit()
         source = self._get_test_file('sample.png')
         newimage = Image(source=source, name="original.png",
@@ -131,21 +132,6 @@ class FileTests(FileTestsBase):
         self.assertNotIn('used_by', d)
         d = newfile.to_dict(ref_pages=True)
         self.assertIn('used_by', d)
-
-    def test_max_files(self):
-        tmpfile = self._create_tmp_file(content=self._generate_rand_string(),
-                                        suffix='txt')
-        Setting(name='max_files', value=1,
-                type=SettingType(name='integer', raw_type='int'))
-        File(name='testfile.txt', source=tmpfile,
-             session=self.session)
-        self.session.commit()
-
-        with self.assertRaises(QuotaError):
-            File(name="testfile2.txt", source=tmpfile,
-                              session=self.session)
-            self.session.commit()
-
 
     def test_delete(self):
         tmpfile = self._create_tmp_file()
@@ -190,12 +176,14 @@ class BannerTests(FileTestsBase):
         self.session.rollback()
 
     def test_resize(self):
-        size = (300, 400)
+        """ Banners are not streched anymore """
+        full_size = (300, 400)
+        real_size = (1, 1)
         test_file = self._get_test_file('sample.png')
-        Banner.set_sizes(full=size)
+        Banner.set_sizes(full=full_size)
         b = Banner(source=test_file, session=self.session)
         banner_size = PIL.Image.open(b.path).size
-        self.assertEqual(banner_size, size)
+        self.assertEqual(banner_size, real_size)
         self.session.rollback()
 
     def test_default(self):
@@ -217,9 +205,6 @@ class BannerTests(FileTestsBase):
         self.session.rollback()
 
 
-
-
-
 class ImageTests(FileTestsBase):
 
     def test_set_full_size(self):
@@ -228,12 +213,12 @@ class ImageTests(FileTestsBase):
         self.assertEqual(Image.full_size, size)
 
     def test_set_thumb_sizes(self):
-        thumbs = dict(first=(300,300), second=(600,300))
+        thumbs = dict(first=(300, 300), second=(600, 300))
         Image.set_sizes(thumbs=thumbs)
         self.assertEqual(thumbs, Image.thumb_sizes)
 
     def test_create(self):
-        thumbs = dict(small=(100,100), medium=(300,300))
+        thumbs = dict(small=(100, 100), medium=(300, 300))
         full_size = (600, 400)
         handle = PIL.Image.open(self._get_test_file('sample.png'))
         big_handle = handle.resize(full_size)
@@ -259,7 +244,7 @@ class ImageTests(FileTestsBase):
 
     def test_rename(self):
         source = self._get_test_file('sample.png')
-        thumbs = dict(small=(100,100))
+        thumbs = dict(small=(100, 100))
         Image.set_sizes(thumbs=thumbs)
         image = Image(source=source, name="original.png", session=self.session)
         self.session.commit()
@@ -270,7 +255,7 @@ class ImageTests(FileTestsBase):
 
     def test_to_dict(self):
         source = self._get_test_file('sample.png')
-        thumbs = dict(small=(100,100))
+        thumbs = dict(small=(100, 100))
         Image.set_sizes(thumbs=thumbs)
         image = Image(source=source, name="original.png", session=self.session)
         self.session.commit()
