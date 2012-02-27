@@ -79,11 +79,15 @@ class AybuBase(object):
         """ Perform or return a query which filters dataset using criterions
             specified by 'filters'.
         """
+        if return_query and (start or limit):
+            raise TypeError('Cannot use start or limit when returning query')
+
         query = session.query(cls).options(*query_options)
 
         try:
             for filter_ in filters:
                 query = query.filter(filter_)
+
         except TypeError:
             # 'filters' is not an iterable.
             query = query.filter(filters)
