@@ -314,6 +314,41 @@ class NodeTests(TransactionalTestsBase):
         self.assertIn(home_info, team_info.links)
         self.assertIn(contact_info, team_info.links)
 
+    def test_move_end(self):
+        menu = Menu(id=1, parent=None, weight=0)
+        self.session.add(menu)
+        page = Page(id=2, parent=menu, weight=1)
+        self.session.add(page)
+        section = Section(id=3, parent=menu, weight=2)
+        self.session.add(section)
+        page2 = Page(id=4, parent=section, weight=3)
+        self.session.add(page2)
+        external_link = ExternalLink(id=5, parent=menu, weight=4)
+        self.session.add(external_link)
+        internal_link = InternalLink(id=6, parent=menu, weight=5)
+        self.session.add(internal_link)
+        self.session.flush()
+        # Test move node at the end of branch.
+        weight = page2.weight + 1
+        Node.move(self.session,
+                  id_=5, parent_id=3, previous_node_id=4, next_node_id=None)
+        self.session.flush()
+        self.assertEqual(weight, external_link.weight)
+
+        # Test move node at the beginning of branch
+        weight = page2.weight
+        Node.move(self.session,
+                  id_=6, parent_id=3, previous_node_id=None, next_node_id=4)
+        self.session.flush()
+        self.assertEqual(weight, internal_link.weight)
+
+        # Test move node in the middle of branch
+        weight = section.weight
+        Node.move(self.session,
+                  id_=6, parent_id=1, previous_node_id=2, next_node_id=3)
+        self.session.flush()
+        self.assertEqual(weight, internal_link.weight)
+
 
 class PageTests(TransactionalTestsBase):
 
