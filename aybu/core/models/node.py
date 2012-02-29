@@ -148,11 +148,13 @@ class Node(Base):
         session.delete(node)
 
     @classmethod
-    def move(cls, session, id_, parent_id, previous_node_id):
+    def move(cls, session, id_, parent_id, previous_node_id, next_node_id):
         """ Move a node from position to another in the Node tree.
         """
         node = Node.get(session, id_)
+        log.debug("Node is: %s" % node)
         parent = Node.get(session, parent_id)
+        log.debug("Parent is: %s" % parent)
 
         if isinstance(node, Menu):
             raise ConstraintError('Menu cannot be moved.')
@@ -166,20 +168,47 @@ class Node(Base):
         else:
             previous = None
 
-        q = session.query(Node).filter(Node.parent == parent)
+        log.debug("Previous is: %s" % previous)
 
-        if previous is None:
-            weight = 1
-            q = q.filter(Node.weight >= 0)
+        if not next_node_id is None:
+            next = Node.get(session, next_node_id)
+        else:
+            next = None
+
+        log.debug("Next is: %s" % next)
+
+        if not next is None:
+            # The node was moved at the beginning/middle of the branch.
+            log.debug('Move at the beginning/middle of branch.')
+            weight = next.weight
+            start = parent.children.index(next)
+
+        elif not previous is None and next is None:
+            # The node was moved at the end of the branch.
+            log.debug('Move at the end of branch.')
+            weight = previous.weight + 1
+            start = None
 
         else:
-            weight = previous.weight + 1
-            q = q.filter(Node.weight > previous.weight)
+            # The node was moved in a empty branch.
+            log.debug('Move in empty branch.')
+            weight = 0
+            start = None
 
-        q.update({'weight': Node.weight + 1})
-        session.flush()
+        log.debug("Weight is: %s", weight)
+        log.debug("Start is: %s", start)
+
+        if not start is None:
+            # Update weights of nodes in parent.children.
+            log.debug('Children: %s' % parent.children)
+            for obj in reversed(parent.children[start:]):
+                obj.weight += 1
+                log.debug("Increased weight of: %s" % obj)
+                session.flush()
+
         node.weight = weight
         node.parent = parent
+        log.debug("Update node: %s" % node)
 
     @validates('parent')
     def validate_parent(self, key, value):
