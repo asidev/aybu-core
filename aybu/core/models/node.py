@@ -143,8 +143,10 @@ class Node(Base):
                     raise ConstraintError('0004:Cannot delete a referred Page.')
 
                 # FIXME: test Pufferfish to verify files deletion.
-                page_info.delete()
+                #page_info.delete()
 
+        for translation in node.translations:
+            translation.delete()
         session.delete(node)
 
     @classmethod
