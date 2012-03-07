@@ -256,7 +256,7 @@ class Node(Base):
                     weight=self.weight,
                     checked=False,
                     allowChildren=True,
-                    leaf=False if self.children else True,
+                    leaf=False,
                     expanded=True if self.children else False,
                     children=[child.to_dict(language, recursive)
                               for child in self.children
