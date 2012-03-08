@@ -6,3 +6,4 @@ syntax: glob
 ./aybu_core.egg-info
 .rvmrc
 versiontools*
+.env
