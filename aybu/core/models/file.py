@@ -26,7 +26,7 @@ from sqlalchemy.ext.declarative import declared_attr
 import logging
 import os
 import shutil
-import PIL.Image
+import wand.image
 
 from aybu.core.models.base import Base
 from aybu.core.models.translation import PageInfo
@@ -37,6 +37,24 @@ from pufferfish import FileSystemEntity
 
 __all__ = ['File', 'Image', 'Banner']
 log = logging.getLogger(__name__)
+DEFAULT_BLUR = 0.5
+
+
+def thumbnail(handle, width, height, filter='triangle', blur=DEFAULT_BLUR):
+
+    x = handle.width
+    y = handle.height
+
+    if x > width:
+        y = max(y * width / x, 1)
+        x = width
+
+    if y > height:
+        x = max(x * height / y, 1)
+        y = height
+
+    handle.resize(x, y, filter=filter, blur=blur)
+    return x, y
 
 
 class File(FileSystemEntity, Base):
@@ -155,15 +173,15 @@ class SimpleImageMixin(object):
         # FIXME support SWF / Videos!
         if self.content_type.partition('/')[0] == 'image':
             # only resize images
-            handle = PIL.Image.open(source)
+            handle = wand.image.Image(file=source)
             log.debug('%s size %s', self.__class__.__name__, self.full_size)
 
             if self.full_size:
                 log.debug('Resizing %s to %s', self.__class__.__name__,
                           self.full_size)
-                handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
+                thumbnail(handle, width=self.full_size, height=self.full_size)
 
-            handle.save(self.path)
+            handle.save(filename=self.path)
 
         else:
             raise ValueError('Unsupported file format: %' %
@@ -232,16 +250,19 @@ class Image(File):
 
     @property
     def width(self):
-        return PIL.Image.open(self.source).size[0]
+        with wand.image.Image(file=self.source) as img:
+            return img.width
 
     @property
     def height(self):
-        return PIL.Image.open(self.source).size[1]
+        with wand.image.Image(file=self.source) as img:
+            return img.height
 
     def create_thumbnail(self, source):
         """ Called when saving image, both on create and on update.
         """
-        handle = PIL.Image.open(source)
+        log.debug(source)
+        handle = wand.image.Image(file=source)
         for thumb in self.thumbnails.values():
             thumb.save(handle)
         return handle
@@ -253,9 +274,9 @@ class Image(File):
     def save_file(self, handle):
         """ Called when saving source """
         if self.full_size:
-            handle.thumbnail(self.full_size, PIL.Image.ANTIALIAS)
+            thumbnail(handle, width=self.full_size, height=self.full_size)
 
-        handle.save(self.path)
+        handle.save(filename=self.path)
 
     def to_dict(self, ref_pages=False, paths=False):
         res = super(Image, self).to_dict(ref_pages)
@@ -330,10 +351,10 @@ class Thumbnail(object):
         shutil.move(old_path, new_path)
 
     def save(self, handle):
-        copy = handle.copy()
-        copy.thumbnail((self.width, self.height), PIL.Image.ANTIALIAS)
-        log.debug('Saving thumbnail to %s', self.path)
-        copy.save(self.path)
+        with handle.clone() as copy:
+            thumbnail(copy, self.width, self.height)
+            log.debug('Saving thumbnail to %s', self.path)
+            copy.save(filename=self.path)
 
     def __repr__(self):  # pragma: nocover
         return "<Thumbnail '%s' (image: %d) [%sx%s]>" % (self.name,
