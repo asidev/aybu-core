@@ -38,8 +38,7 @@ from aybu.core.models.translation import (MenuInfo,
                                           InternalLinkInfo)
 from aybu.core.models.setting import (Setting,
                                       SettingType)
-from aybu.core.models.theme import (Keyword,
-                                    Theme)
+from aybu.core.models.theme import Theme
 from aybu.core.models.user import (User,
                                    RemoteUser,
                                    Group)
@@ -67,12 +66,11 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'Language', 'ExternalLink', 'InternalLink', 'Menu', 'Node', 'Page',
            'Section', 'MenuInfo', 'NodeInfo', 'PageInfo', 'SectionInfo',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
-           'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription',
+           'Theme', 'User', 'Group', 'View', 'ViewDescription',
            'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
            'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser']
 
 __entities__ = [Theme,
-                Keyword,
                 SettingType,
                 Setting,
                 Language,
