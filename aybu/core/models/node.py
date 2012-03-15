@@ -285,12 +285,15 @@ node_banners = Table('nodes_banners__files',
                             Integer,
                             ForeignKey('nodes.id',
                                        onupdate="cascade",
-                                       ondelete="cascade")),
+                                       ondelete="cascade"),
+                            primary_key=True),
                      Column('files_id',
                             Integer,
                             ForeignKey('files.id',
                                        onupdate="cascade",
-                                       ondelete="cascade")))
+                                       ondelete="cascade"),
+                            primary_key=True)
+               )
 
 
 class Page(Node):
