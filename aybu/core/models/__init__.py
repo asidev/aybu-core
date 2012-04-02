@@ -28,7 +28,8 @@ from aybu.core.models.node import (ExternalLink,
                                    Menu,
                                    Node,
                                    Page,
-                                   Section)
+                                   Section,
+                                   PageBanner)
 from aybu.core.models.translation import (MenuInfo,
                                           NodeInfo,
                                           CommonInfo,
@@ -69,7 +70,8 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'ExternalLinkInfo', 'InternalLinkInfo', 'Setting', 'SettingType',
            'Keyword', 'Theme', 'User', 'Group', 'View', 'ViewDescription',
            'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
-           'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser']
+           'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser', 'export',
+           'PageBanner']
 
 __entities__ = [Theme,
                 Keyword,
