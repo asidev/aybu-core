@@ -36,7 +36,7 @@ from aybu.core.exc import ConstraintError, QuotaError
 from pufferfish import FileSystemEntity
 
 
-__all__ = ['File', 'Image', 'Banner']
+__all__ = ['File', 'Image', 'Banner', 'Logo']
 log = logging.getLogger(__name__)
 DEFAULT_BLUR = 0.5
 
