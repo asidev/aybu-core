@@ -84,22 +84,27 @@ class File(FileSystemEntity, Base):
         except KeyError:
             return
 
-        try:
-            setting = 'max_{}s'.format(cls.__name__.lower())
-            max_files = Setting.get(session, setting).value
-            num_files = cls.count(session=session)
-            log.debug("Current %s objects: %d, max: %d",
-                      cls.__name__, num_files, max_files)
-            if max_files > 0 and num_files >= max_files:
-                raise QuotaError('Maximum number of {} reached'\
-                                 .format(cls.__name__))
+        if cls.__name__.lower() == 'file':
+            max_files = Setting.get(session, 'max_files').value
+            num_files = File.count(session, (File.discriminator == None))
+            type_ = "files"
 
-            # TODO Check if disk space is reach
-            super(File, cls).create_new(newobj, args, kwargs)
+        else:
+            max_files = Setting.get(session, 'max_images').value
+            num_files= File.count(session, (File.discriminator.in_(('image',
+                                                                 'logo',
+                                                                 'banner'))))
+            type_ = 'images/banners/logos'
 
-        except NoResultFound:
-            # there is no limit for this file type
-            super(File, cls).create_new(newobj, args, kwargs)
+        log.debug("Current %s objects: %d, max: %d",
+                  cls.__name__, num_files, max_files)
+        if max_files > 0 and num_files >= max_files:
+            raise QuotaError('Maximum number of {} reached'\
+                             .format(type_))
+
+        # TODO Check if disk space is reach
+        super(File, cls).create_new(newobj, args, kwargs)
+
 
     @property
     def pages(self):
