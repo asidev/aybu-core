@@ -259,12 +259,15 @@ class PageInfo(CommonInfo):
                                 Integer,
                                 ForeignKey('node_infos.id',
                                            onupdate="cascade",
-                                           ondelete="cascade")),
+                                           ondelete="cascade"),
+                                primary_key=True),
                          Column('files_id',
                                 Integer,
                                 ForeignKey('files.id',
                                            onupdate="cascade",
-                                           ondelete="cascade")))
+                                           ondelete="cascade"),
+                                primary_key=True)
+                   )
     files = relationship('File', secondary=_files_table)
 
     _images_table = Table('node_infos_images__files',
@@ -273,12 +276,15 @@ class PageInfo(CommonInfo):
                                  Integer,
                                  ForeignKey('node_infos.id',
                                             onupdate="cascade",
-                                            ondelete="cascade")),
+                                            ondelete="cascade"),
+                                 primary_key=True),
                           Column('files_id',
                                  Integer,
                                  ForeignKey('files.id',
                                             onupdate="cascade",
-                                            ondelete="cascade")))
+                                            ondelete="cascade"),
+                                 primary_key=True)
+                    )
     images = relationship('Image', secondary=_images_table)
 
     _links_table = Table('node_infos_links__node_infos',
@@ -287,12 +293,15 @@ class PageInfo(CommonInfo):
                                 Integer,
                                 ForeignKey('node_infos.id',
                                            onupdate="cascade",
-                                           ondelete="cascade")),
+                                           ondelete="cascade"),
+                                primary_key=True),
                          Column('links_id',
                                 Integer,
                                 ForeignKey('node_infos.id',
                                            onupdate="cascade",
-                                           ondelete="cascade")))
+                                           ondelete="cascade"),
+                                primary_key=True)
+                   )
     links = relationship('PageInfo', secondary=_links_table,
                          primaryjoin=NodeInfo.id == _links_table.c.inverse_id,
                          secondaryjoin=NodeInfo.id == _links_table.c.links_id,
