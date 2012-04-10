@@ -24,7 +24,6 @@ README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 
-
 setup(name='aybu-core',
       version=':versiontools:aybu.core:',
       description='aybu-core',
@@ -61,6 +60,9 @@ setup(name='aybu-core',
 
       [paste.paster_command]
       uwsgi = pasteuwsgi.serve:ServeCommand
+      aybu-setup = aybu.core.utils.command:SetupApp
+      aybu-import = aybu.core.utils.command:Import
+      aybu-export = aybu.core.utils.command:Export
 
       [nose.plugins.0.10]
       aybuconfig = aybu.core.testing:ReadAybuConfigPlugin

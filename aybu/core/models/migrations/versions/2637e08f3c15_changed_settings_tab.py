@@ -14,7 +14,6 @@ from alembic import op
 import sqlalchemy as sa
 
 
-
 def upgrade():
     op.alter_column('settings', 'value', type_=sa.Unicode(1024),
                     existing_server_default=None, existing_nullable=False)

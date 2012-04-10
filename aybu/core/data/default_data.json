@@ -795,5 +795,20 @@
         "cls_": "Theme",
         "name": "moma",
         "parent": "uffizi"
+    },
+    {
+        "cls_": "Theme",
+        "name": "wellness",
+        "parent": "base"
+    },
+    {
+        "cls_": "Theme",
+        "name": "wellness_grey",
+        "parent": "wellness"
+    },
+    {
+        "cls_": "Theme",
+        "name": "wellness_gokart",
+        "parent": "wellness_grey"
     }
 ]
