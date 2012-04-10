@@ -298,6 +298,10 @@ class PageBanner(Base):
     page = relationship('Page')
     banner = relationship('Banner')
 
+    @property
+    def url(self):
+        return self.banner.url
+
 
 class Page(Node):
 
