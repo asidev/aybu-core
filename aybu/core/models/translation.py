@@ -334,9 +334,9 @@ class PageInfo(CommonInfo):
     def create_translation(self, **kwargs):
         kwargs['content'] = self.content
         kwargs['node'] = self.node
-        kwargs['files'] = [file_ for file_ in self.files]
-        kwargs['images'] = [image for image in self.images]
-        kwargs['links'] = [link for link in self.links]
+        #kwargs['files'] = [file_ for file_ in self.files]
+        #kwargs['images'] = [image for image in self.images]
+        #kwargs['links'] = [link for link in self.links]
         return super(PageInfo, self).create_translation(**kwargs)
 
     @classmethod
