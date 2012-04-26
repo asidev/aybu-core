@@ -243,7 +243,9 @@ class Node(Base):
             if translation.lang == language:
                 return translation
 
-        raise NoResultFound('No translation for %s.' % language.lang)
+        msg = 'No translation of {} for language {}.'.format(self.id,
+                                                             language.lang)
+        raise NoResultFound(msg)
 
     def to_dict(self, language=None, recursive=True):
         # Import statement to avoid circular imports.
