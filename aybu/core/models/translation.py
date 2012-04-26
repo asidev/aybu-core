@@ -94,6 +94,8 @@ class NodeInfo(Base):
                 log.debug('Added translation to the session.')
                 session.add(obj)
 
+            translation.node.translations.append(obj)
+
             translations.append(obj)
 
         return translations
