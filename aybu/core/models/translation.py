@@ -84,7 +84,8 @@ class NodeInfo(Base):
         translations = []
 
         criterion = cls.lang.has(id=src_lang_id)
-        for translation in session.query(cls).filter(criterion).all():
+        query = session.query(cls).filter(criterion).order_by(cls.node_id)
+        for translation in query.all():
 
             obj = translation.create_translation(language=dst_language)
             log.debug('Translation created: %s', obj)
