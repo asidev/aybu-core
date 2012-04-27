@@ -94,8 +94,9 @@ class AybuBase(object):
 
         if sort_by:
             sort_by = getattr(cls, sort_by)
-            sort_order = getattr(sqlalchemy.sql.expression, sort_order)
-            query = query.order_by(sort_order(sort_by))
+            sort_order = getattr(sort_by, sort_order)
+            log.debug("Sorted by {}, {}".format(sort_by, sort_order))
+            query = query.order_by(sort_order())
 
         if return_query:
             return query
