@@ -18,6 +18,8 @@ limitations under the License.
 
 import logging
 
+__all__ = ['get_object_from_python_path']
+
 log = logging.getLogger(__name__)
 
 

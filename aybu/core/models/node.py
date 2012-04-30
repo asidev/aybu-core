@@ -281,21 +281,29 @@ class Menu(Node):
         return dict_
 
 
-node_banners = Table('nodes_banners__files',
-                     Base.metadata,
-                     Column('nodes_id',
-                            Integer,
-                            ForeignKey('nodes.id',
-                                       onupdate="cascade",
-                                       ondelete="cascade"),
-                            primary_key=True),
-                     Column('files_id',
-                            Integer,
-                            ForeignKey('files.id',
-                                       onupdate="cascade",
-                                       ondelete="cascade"),
-                            primary_key=True)
-               )
+class PageBanner(Base):
+
+    __tablename__ = 'nodes_banners__files'
+    __table_args__ = ({'mysql_engine': 'InnoDB'})
+    node_id = Column('nodes_id',
+                     Integer,
+                     ForeignKey('nodes.id',
+                                onupdate='cascade',
+                                ondelete='cascade'),
+                     primary_key=True)
+    file_id = Column('files_id',
+                     Integer,
+                     ForeignKey('files.id',
+                                onupdate='cascade',
+                                ondelete='cascade'),
+                     primary_key=True)
+    weight = Column(Integer, default=0)
+    page = relationship('Page')
+    banner = relationship('Banner')
+
+    @property
+    def url(self):
+        return self.banner.url
 
 
 class Page(Node):
@@ -304,7 +312,7 @@ class Page(Node):
 
     home = Column(Boolean, default=False)
     sitemap_priority = Column(Integer, default=50)
-    banners = relationship('Banner', secondary=node_banners)
+    banners = relationship('PageBanner')
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',
                                          ondelete='restrict'))
