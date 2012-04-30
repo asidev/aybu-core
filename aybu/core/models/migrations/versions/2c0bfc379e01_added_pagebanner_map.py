@@ -8,7 +8,7 @@ Create Date: 2012-04-02 14:24:16.271417
 
 # downgrade revision identifier, used by Alembic.
 revision = '2c0bfc379e01'
-down_revision = '2637e08f3c15'
+down_revision = '18da1d3c685a'
 
 from alembic import op
 import sqlalchemy as sa
