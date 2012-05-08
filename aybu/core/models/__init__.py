@@ -21,7 +21,8 @@ from aybu.core.models.base import Base
 from aybu.core.models.file import (Banner,
                                    File,
                                    Image,
-                                   Logo)
+                                   Logo,
+                                   Background)
 from aybu.core.models.language import Language
 from aybu.core.models.node import (ExternalLink,
                                    InternalLink,
@@ -70,7 +71,7 @@ __all__ = ['add_default_data', 'Base', 'Banner', 'Image', 'File',
            'Theme', 'User', 'Group', 'View', 'ViewDescription',
            'MediaPage', 'MediaCollectionPage', 'MediaItemPage',
            'MediaCollectionPageInfo', 'MediaItemPageInfo', 'RemoteUser', 'export',
-           'PageBanner']
+           'PageBanner', 'Background']
 
 __entities__ = [Theme,
                 SettingType,
