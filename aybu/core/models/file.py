@@ -91,9 +91,11 @@ class File(FileSystemEntity, Base):
 
         else:
             max_files = Setting.get(session, 'max_images').value
-            num_files= File.count(session, (File.discriminator.in_(('image',
-                                                                 'logo',
-                                                                 'banner'))))
+            num_files = File.count(session,
+                                   (File.discriminator.in_(('image',
+                                                            'logo',
+                                                            'banner',
+                                                            'background'))))
             type_ = 'images/banners/logos'
 
         log.debug("Current %s objects: %d, max: %d",
@@ -104,7 +106,6 @@ class File(FileSystemEntity, Base):
 
         # TODO Check if disk space is reach
         super(File, cls).create_new(newobj, args, kwargs)
-
 
     @property
     def pages(self):
@@ -224,6 +225,10 @@ class Banner(SimpleImageMixin, File):
 
 class Logo(Banner):
     __mapper_args__ = {'polymorphic_identity': 'logo'}
+
+
+class Background(Banner):
+    __mapper_args__ = {'polymorphic_identity': 'background'}
 
 
 class Image(File):
