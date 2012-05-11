@@ -221,6 +221,7 @@ class SimpleImageMixin(object):
     def to_dict(self):
         d = super(SimpleImageMixin, self).to_dict()
         d['default'] = self.default
+        d['weight'] = self.weight
         return d
 
 
