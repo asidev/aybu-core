@@ -236,6 +236,14 @@ class Logo(Banner):
 class Background(Banner):
     __mapper_args__ = {'polymorphic_identity': 'background'}
 
+    @classmethod
+    def all(cls, session, start=None, limit=None, query_options=()):
+        return cls.search(session,
+                          start=start,
+                          limit=limit,
+                          query_options=query_options,
+                          sort_by='weight')
+
 
 class Image(File):
     """ Simple class that keeps the images on disk.
