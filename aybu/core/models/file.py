@@ -18,7 +18,8 @@ limitations under the License.
 
 from sqlalchemy import (Column,
                         Unicode,
-                        Boolean)
+                        Boolean,
+                        Integer)
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declared_attr
@@ -150,6 +151,10 @@ class SimpleImageMixin(object):
     @declared_attr
     def default(self):
         return Column(Boolean, default=False)
+
+    @declared_attr
+    def weight(self):
+        return Column(Integer, default=0, unique=True)
 
     @classmethod
     def get_default(cls, session):
