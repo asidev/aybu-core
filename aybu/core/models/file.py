@@ -154,7 +154,7 @@ class SimpleImageMixin(object):
 
     @declared_attr
     def weight(self):
-        return Column(Integer, default=0, unique=True)
+        return Column(Integer, default=0, unique=False)
 
     @classmethod
     def get_default(cls, session):
@@ -235,6 +235,14 @@ class Logo(Banner):
 
 class Background(Banner):
     __mapper_args__ = {'polymorphic_identity': 'background'}
+
+    @classmethod
+    def all(cls, session, start=None, limit=None, query_options=()):
+        return cls.search(session,
+                          start=start,
+                          limit=limit,
+                          query_options=query_options,
+                          sort_by='weight')
 
 
 class Image(File):

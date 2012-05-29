@@ -312,7 +312,7 @@ class Page(Node):
 
     home = Column(Boolean, default=False)
     sitemap_priority = Column(Integer, default=50)
-    banners = relationship('PageBanner')
+    banners = relationship('PageBanner', order_by=PageBanner.weight)
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',
                                          ondelete='restrict'))
