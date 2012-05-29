@@ -154,7 +154,7 @@ class SimpleImageMixin(object):
 
     @declared_attr
     def weight(self):
-        return Column(Integer, default=0, unique=True)
+        return Column(Integer, default=0, unique=False)
 
     @classmethod
     def get_default(cls, session):
