@@ -30,7 +30,6 @@ from sqlalchemy import Integer
 from sqlalchemy import BigInteger
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import String
-from sqlalchemy import Table
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import relationship
@@ -312,7 +311,9 @@ class Page(Node):
 
     home = Column(Boolean, default=False)
     sitemap_priority = Column(Integer, default=50)
-    banners = relationship('PageBanner', order_by=PageBanner.weight)
+    banners = relationship('PageBanner',
+                           order_by=PageBanner.weight,
+                           cascade='all, delete-orphan')
     view_id = Column(Integer, ForeignKey('views.id',
                                          onupdate='cascade',
                                          ondelete='restrict'))
