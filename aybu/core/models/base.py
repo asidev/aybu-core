@@ -22,7 +22,6 @@ from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.properties import RelationshipProperty
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.declarative import declarative_base
-import sqlalchemy.sql.expression
 import logging
 
 

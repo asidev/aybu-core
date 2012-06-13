@@ -131,8 +131,8 @@ class Request(BaseRequest):
         log.debug('Set request.locale_name: %s', self._locale_name)
         self._localizer = get_localizer(self)
         log.debug('Set request.localizer: %s', self._localizer)
-        log.debug('Set locale: %s.UTF8', self._locale_name)
-        locale.setlocale(locale.LC_ALL, '%s.UTF8' % self._locale_name)
+        log.debug('Set locale: %s.UTF-8', self._locale_name)
+        locale.setlocale(locale.LC_ALL, '%s.UTF-8' % self._locale_name)
 
     @property
     def language(self):
