@@ -191,7 +191,8 @@ class User(Base):
     def check(cls, session, username, password):
         try:
             user = cls.get(session, username)
-            length = len(cls.hash_re.match(user.password).group())
+            salt = cls.hash_re.match(user.password)
+            length = len(salt.group()) if salt else 2
             enc_password = crypt.crypt(password, user.password[0:length])
             assert user.password == enc_password
 
