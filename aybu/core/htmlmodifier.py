@@ -60,14 +60,14 @@ def match_pageinfo_urls(value, type_, session):
 
 def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
                           attr_name=None):
-    pginfo_cls = pginfo.__class__
+    #pginfo_cls = pginfo.__class__
     if attr_name:
         pginfo_attr = attr_name
     else:
         pginfo_attr = "{}s".format(type_.__name__.lower())
     #log.debug("Updating %s.%s associations for %s",
     #          pginfo_cls.__name__, pginfo_attr, pginfo)
-    old_associations = list(getattr(pginfo, pginfo_attr))
+    #old_associations = list(getattr(pginfo, pginfo_attr))
     session = object_session(pginfo)
 
     # empty the relation first
@@ -103,7 +103,9 @@ def associate_to_pageinfo(soup, pginfo, tag, type_, match_callback,
         else:
             log.debug("Adding %s to %s.%s relation",
                       static_obj, pginfo, pginfo_attr)
-            getattr(pginfo, pginfo_attr).append(static_obj)
+            attr = getattr(pginfo, pginfo_attr)
+            if static_obj not in attr:
+                attr.append(static_obj)
 
     #log.debug("%s %s has obj.%s = %s",
     #          pginfo_cls.__name__, pginfo.id, pginfo_attr,
