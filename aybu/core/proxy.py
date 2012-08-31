@@ -65,10 +65,12 @@ class BaseProxy(object):
 
         if url:
             self.purge(url)
+
         elif language:
             if not isinstance(language, basestring):
                 language = language.lang
             self.ban(r'^/{}/.*.html'.format(language))
+
         elif pages:
             self.ban(r'^/[a-z]{2}/.*.html')
 
@@ -80,7 +82,7 @@ class DummyProxy(BaseProxy):
         self._log = logging.getLogger("{}.{}".format(__name__,
                                                     self.__class__.__name__))
 
-    def ban(self, paths):
+    def ban(self, paths="^/.*"):
         self._log.debug("Banning %s (noop)", paths)
         return
 
@@ -99,12 +101,12 @@ class HttpCachePurgerProxy(BaseProxy):
         return HTTPCachePurger(self.hostname, self.address, self.port,
                                strict=True, timeout=self.timeout)
 
-    def ban(self, paths):
+    def ban(self, paths=[]):
         if isinstance(paths, basestring):
             paths = [paths]
-        self._purger.purge(paths)
+        self._purger.ban(paths)
 
-    def purge(self, paths=None):
-        self._log.warning('{}.purge is currently implemented as a ban'\
-                         .format(self.__class__.__name__))
-        return self.ban(paths)
+    def purge(self, paths=[]):
+        if isinstance(paths, basestring):
+            paths = [paths]
+        return self._purger.purge(paths)
